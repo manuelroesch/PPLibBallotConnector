@@ -5,8 +5,4 @@ import ch.uzh.ifi.pdeboer.pplib.hcomp.{HCompQuery, HCompWorker, HCompAnswer}
 /**
  * Created by mattia on 06.07.15.
  */
-case class BallotAnswer(
-                    override val query: HCompQuery,
-                    val answer: Long,
-                    override val responsibleWorkers: List[HCompWorker] = {}
-                    ) extends HCompAnswer(query, responsibleWorkers)
+case class BallotAnswer(query: BallotQuery, answer: Long, responsibleWorkers: List[HCompWorker] = Nil) extends HCompAnswer  with Serializable

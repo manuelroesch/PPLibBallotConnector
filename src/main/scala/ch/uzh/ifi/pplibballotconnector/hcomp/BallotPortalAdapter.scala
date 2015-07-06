@@ -12,7 +12,7 @@ import scala.util.Random
  */
 class BallotPortalAdapter(val decorated: HCompPortalAdapter, val dao: DAO = new BallotDAO()) extends HCompPortalAdapter{
 
-  def processQuery(query: BallotQuery, properties: BallotProperties): Option[HCompAnswer] = {
+  override def processQuery(query: BallotQuery, properties: BallotProperties): Option[HCompAnswer] = {
     // Generate random code
     val outputCode = new Random(new DateTime().getMillis).nextLong()
 
