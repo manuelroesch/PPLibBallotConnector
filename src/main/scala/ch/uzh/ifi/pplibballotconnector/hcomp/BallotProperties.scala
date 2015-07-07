@@ -7,8 +7,12 @@ import ch.uzh.ifi.pdeboer.pplib.hcomp.HCompQueryProperties
 /**
  * Created by mattia on 06.07.15.
  */
-case class BallotProperties(
-                        id: Long,
-                        uuid: UUID,
-                        allowedAnswersPerTurker: Int) extends HCompQueryProperties() {
+class BallotProperties(
+                        batch: Batch,
+                        allowedAnswersPerTurker: Int) extends HCompQueryProperties {
+
+  def getBatch() = batch
+  def getAllowedAnswersPerTurker() = allowedAnswersPerTurker
 }
+
+case class Batch(uuid: UUID = UUID.randomUUID())

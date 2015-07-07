@@ -1,33 +1,13 @@
-package persistence
+package ch.uzh.ifi.pplibballotconnector.persistence
+
+import ch.uzh.ifi.pplibballotconnector.util.LazyLogger
+import scalikejdbc._
 
 /**
- * Created by Mattia on 19.01.2015.
+ * Created by mattia on 07.07.15.
  */
+object DBInitializer extends LazyLogger{
 
-import scalikejdbc._
-import scalikejdbc.config._
-
-trait DBSettings {
-  DBSettings.initialize()
-}
-
-object DBSettings {
-
-  private var isInitialized = false
-
-  def initialize(): Unit = this.synchronized {
-    if (isInitialized) return
-    DBs.setupAll()
-
-    GlobalSettings.loggingSQLErrors = true
-    //GlobalSettings.sqlFormatter = SQLFormatterSettings("devteam.misc.HibernateSQLFormatter")
-    DBInitializer.run()
-    isInitialized = true
-  }
-
-}
-
-object DBInitializer {
   def run() {
     DB readOnly { implicit s =>
       //user TABLE
@@ -41,6 +21,8 @@ object DBInitializer {
           }
       }
 
+      logger.debug("Table user created")
+
       //batch TABLE
       try {
         sql"select 1 from batch limit 1".map(_.long(1)).single.apply()
@@ -48,9 +30,11 @@ object DBInitializer {
       catch {
         case e: java.sql.SQLException =>
           DB autoCommit { implicit s =>
-            sql"CREATE TABLE batch (id BIGINT NOT NULL AUTO_INCREMENT,allowed_answers_per_turker INT NOT NULL, PRIMARY KEY(id));".execute().apply()
+            sql"CREATE TABLE batch (id BIGINT NOT NULL AUTO_INCREMENT,allowed_answers_per_turker INT NOT NULL, uuid VARCHAR(255) NOT NULL, PRIMARY KEY(id));".execute().apply()
           }
       }
+      logger.debug("Table batch created")
+
 
       //Question TABLE
       try {
@@ -62,6 +46,8 @@ object DBInitializer {
             sql"CREATE TABLE question (id BIGINT NOT NULL AUTO_INCREMENT,html VARCHAR(10000) NOT NULL,question_type VARCHAR(255) NOT NULL,output_code BIGINT NOT NULL,batch_id BIGINT NOT NULL,create_time datetime NOT NULL,uuid VARCHAR(255) NOT NULL, PRIMARY KEY(id), FOREIGN KEY(batch_id) REFERENCES batch(id));".execute().apply()
           }
       }
+      logger.debug("Table question created")
+
 
       //answer TABLE
       try {
@@ -73,6 +59,8 @@ object DBInitializer {
             sql"CREATE TABLE answer (id BIGINT NOT NULL AUTO_INCREMENT, question_id BIGINT NOT NULL, user_id BIGINT NOT NULL, time datetime NOT NULL, answer_json varchar(1000) NOT NULL, PRIMARY KEY(id), FOREIGN KEY(question_id) REFERENCES question(id), FOREIGN KEY(user_id) REFERENCES user(id));".execute().apply()
           }
       }
+      logger.debug("Table answer created")
+
     }
   }
 }
