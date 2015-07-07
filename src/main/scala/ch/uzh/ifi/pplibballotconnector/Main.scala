@@ -8,8 +8,7 @@ import ch.uzh.ifi.pplibballotconnector.persistence.DBSettings
  */
 object Main extends App with LazyLogger {
 
-  println("Hi")
-  logger.info("TEST logger")
+
 
   DBSettings.initialize()
 }

@@ -10,9 +10,7 @@ libraryDependencies += "pdeboer" % "pplib_2.11" % "0.1-SNAPSHOT"
 
 libraryDependencies += "org.slf4j" % "slf4j-log4j12" % "1.7.5"
 
-libraryDependencies += "junit" % "junit" % "4.12"
-
-libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.0-SNAP4"
+libraryDependencies += 	"junit" % "junit" % "4.8.1" % "test"
 
 libraryDependencies ++= Seq(
   "org.scalikejdbc" %% "scalikejdbc"       % "2.2.7",
@@ -28,7 +26,7 @@ ivyScala := ivyScala.value map { _.copy(overrideScalaVersion = true) }
 transitiveClassifiers in Global := Seq(Artifact.SourceClassifier)
 
 assemblyMergeStrategy in assembly := {
-  case "log4j.properties" => MergeStrategy.concat
+  case "log4j.properties"      => MergeStrategy.concat
   case x =>
     val oldStrategy = (assemblyMergeStrategy in assembly).value
     oldStrategy(x)

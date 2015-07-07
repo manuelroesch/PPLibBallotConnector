@@ -41,7 +41,7 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
     val ans = decorated.sendQueryAndAwaitResult(FreetextQuery(link + "<br> click the link and enter here the code when you are finish:<br> <input type=\"text\" value=\"123\">"), properties)
       .get.asInstanceOf[FreetextAnswer]
 
-    if(ans.answer.equals(outputCode+"")){
+    if (ans.answer.equals(outputCode + "")) {
       val answerJson = dao.getAnswer(questionId).get
       val answer = JSON.parseFull(answerJson).asInstanceOf[Map[String, String]]
 
@@ -61,26 +61,21 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 }
 
 object BallotPortalAdapter {
-  val CONFIG_ACCESS_ID_KEY = "hcomp.ballot.accessKeyID"
-  val CONFIG_SECRET_ACCESS_KEY = "hcomp.ballot.secretAccessKey"
-  val CONFIG_SANDBOX_KEY = "hcomp.ballot.sandbox"
+  val CONFIG_ACCESS_ID_KEY = "hcomp.ballot.decoratedPortalKey"
   val PORTAL_KEY = "ballot"
 }
 
 class BallotPortalBuilder extends HCompPortalBuilder {
 
-  val ACCESS_ID_KEY: String = "accessKeyID"
-  val SECRET_ACCESS_KEY: String = "secretAccessKey"
-  val SANDBOX: String = "sandbox"
+  val DECORATED_PORTAL_KEY = "decoratedPortalKey"
 
-  //FIXME: create new instance of ballotPortalAdapter
-  override def build: HCompPortalAdapter = new BallotPortalAdapter(???)
+  override def build: HCompPortalAdapter = new BallotPortalAdapter(
+    HComp(params(DECORATED_PORTAL_KEY))
+      .asInstanceOf[HCompPortalAdapter with AnswerRejection])
 
-  override def expectedParameters: List[String] = List(ACCESS_ID_KEY, SECRET_ACCESS_KEY)
+  override def expectedParameters: List[String] = List(DECORATED_PORTAL_KEY)
 
   override def parameterToConfigPath: Map[String, String] = Map(
-    ACCESS_ID_KEY -> BallotPortalAdapter.CONFIG_ACCESS_ID_KEY,
-    SECRET_ACCESS_KEY -> BallotPortalAdapter.CONFIG_SECRET_ACCESS_KEY,
-    SANDBOX -> BallotPortalAdapter.CONFIG_SANDBOX_KEY
+    DECORATED_PORTAL_KEY -> BallotPortalAdapter.CONFIG_ACCESS_ID_KEY
   )
 }
