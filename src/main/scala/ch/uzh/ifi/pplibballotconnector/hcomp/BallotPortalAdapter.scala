@@ -20,8 +20,6 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 
   override def processQuery(query: HCompQuery, properties: HCompQueryProperties): Option[HCompAnswer] = {
 
-    val outputCode = new Random(new DateTime().getMillis).nextLong()
-
     val batchId = properties match {
       case p: BallotProperties => {
         dao.getBatchIdByUUID(p.getBatch().uuid.toString).map { id => id }
@@ -30,6 +28,13 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
         }
       }
       case _ => dao.createBatch(0, UUID.randomUUID().toString)
+    }
+
+    val outputCode = properties match {
+      case p: BallotProperties => {
+        p.getOutputCode()
+      }
+      case _ => new Random(new DateTime().getMillis).nextLong()
     }
 
     val html = query.question
@@ -41,9 +46,9 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
     val ans = decorated.sendQueryAndAwaitResult(FreetextQuery(link + "<br> click the link and enter here the code when you are finish:<br> <input type=\"text\" value=\"123\">"), properties)
       .get.asInstanceOf[FreetextAnswer]
 
-    if (ans.answer.equals(outputCode + "")) {
+    if (ans.answer.equals(outputCode+"")) {
       val answerJson = dao.getAnswer(questionId).get
-      val answer = JSON.parseFull(answerJson).asInstanceOf[Map[String, String]]
+      val answer = JSON.parseFull(answerJson).get.asInstanceOf[Map[String, String]]
 
       decorated.approveAndBonusAnswer(ans)
       Some(BallotAnswer(answer, BallotQuery(xml.XML.loadString(html))))

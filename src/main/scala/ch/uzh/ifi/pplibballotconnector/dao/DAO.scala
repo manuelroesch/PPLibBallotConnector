@@ -16,4 +16,5 @@ trait DAO {
   def getQuestionUUID(questionId: Long): Option[String]
 
   def getBatchIdByUUID(uuid: String): Option[Long]
+
 }
