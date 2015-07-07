@@ -12,6 +12,8 @@ libraryDependencies += "org.slf4j" % "slf4j-log4j12" % "1.7.5"
 
 libraryDependencies += 	"junit" % "junit" % "4.8.1" % "test"
 
+libraryDependencies += "com.typesafe" % "config" % "1.3.0"
+
 libraryDependencies ++= Seq(
   "org.scalikejdbc" %% "scalikejdbc"       % "2.2.7",
   "com.h2database"  %  "h2"                % "1.4.184",

@@ -5,6 +5,7 @@ import java.util.UUID
 import ch.uzh.ifi.pdeboer.pplib.hcomp._
 import ch.uzh.ifi.pplibballotconnector.dao.{BallotDAO, DAO}
 import ch.uzh.ifi.pplibballotconnector.hcomp.{BallotAnswer, BallotProperties, BallotQuery}
+import com.typesafe.config.ConfigFactory
 import org.joda.time.DateTime
 import play.api.libs.json.Json
 
@@ -16,7 +17,11 @@ import scala.util.parsing.json.{JSON, JSONObject}
  * Created by mattia on 06.07.15.
  */
 @HCompPortal(builder = classOf[BallotPortalBuilder], autoInit = true)
-class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection, val dao: DAO = new BallotDAO()) extends HCompPortalAdapter {
+class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection, val dao: DAO = new BallotDAO(),
+                          val baseFormUrl: String = ConfigFactory.load().getString("defaultFormUrl")) extends HCompPortalAdapter {
+
+  // TODO: do not store this here
+  var counter = 10
 
   override def processQuery(query: HCompQuery, properties: HCompQueryProperties): Option[HCompAnswer] = {
 
@@ -39,6 +44,24 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 
     val html = query.question
 
+    //TODO: find form action in html and rewrite it to match the correct endpoint
+    val formLabel = (xml.XML.loadString(html) \ "form")
+    if(formLabel.length>0){
+      if(formLabel(0).attribute("action").isDefined){
+        if(!formLabel(0).attribute("action").get.text.equalsIgnoreCase(baseFormUrl)){
+          return None
+        }
+      }else {
+        return None
+      }
+    }else {
+      return None
+    }
+
+
+
+    //TODO: check if form is valid (contains inputs/select/textarea/buttons/...)
+
     val questionId = dao.createQuestion(html, outputCode, batchId)
 
     val link = "http://andreas.ifi.uzh.ch:9000/showQuestion/".concat(dao.getQuestionUUID(questionId).getOrElse("-1"))
@@ -54,7 +77,13 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
       Some(BallotAnswer(answer, BallotQuery(xml.XML.loadString(html))))
     } else {
       decorated.rejectAnswer(ans, "Invalid code")
-      processQuery(query, properties)
+      //TODO: fix counter
+      if(counter <= 0) {
+        counter -= 1
+        processQuery(query, properties)
+      } else {
+        None
+      }
     }
 
   }
@@ -67,20 +96,24 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 
 object BallotPortalAdapter {
   val CONFIG_ACCESS_ID_KEY = "hcomp.ballot.decoratedPortalKey"
+  val FORM_POST_URL = ConfigFactory.load().getString("defaultFormUrl")
   val PORTAL_KEY = "ballot"
 }
 
 class BallotPortalBuilder extends HCompPortalBuilder {
 
   val DECORATED_PORTAL_KEY = "decoratedPortalKey"
+  val BASE_FORM_URL = ConfigFactory.load().getString("defaultFormUrl")
 
   override def build: HCompPortalAdapter = new BallotPortalAdapter(
     HComp(params(DECORATED_PORTAL_KEY))
-      .asInstanceOf[HCompPortalAdapter with AnswerRejection])
+      .asInstanceOf[HCompPortalAdapter with AnswerRejection],
+    baseFormUrl = params(BASE_FORM_URL))
 
-  override def expectedParameters: List[String] = List(DECORATED_PORTAL_KEY)
+  override def expectedParameters: List[String] = List(DECORATED_PORTAL_KEY, BASE_FORM_URL)
 
   override def parameterToConfigPath: Map[String, String] = Map(
-    DECORATED_PORTAL_KEY -> BallotPortalAdapter.CONFIG_ACCESS_ID_KEY
+    DECORATED_PORTAL_KEY -> BallotPortalAdapter.CONFIG_ACCESS_ID_KEY,
+    BASE_FORM_URL -> BallotPortalAdapter.FORM_POST_URL
   )
 }
