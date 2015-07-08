@@ -30,22 +30,6 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 
     var answer: Option[HCompAnswer] = null
 
-    val batchIdFromDB = properties match {
-      case p: BallotProperties => {
-        dao.getBatchIdByUUID(p.batch.uuid.toString).getOrElse {
-          dao.createBatch(p.allowedAnswersPerTurker, UUID.randomUUID().toString)
-        }
-      }
-      case _ => dao.createBatch(0, UUID.randomUUID().toString)
-    }
-
-    val expectedCodeFromDecoratedPortal = properties match {
-      case p: BallotProperties => {
-        p.outputCode
-      }
-      case _ => Math.abs(new Random(new DateTime().getMillis).nextLong())
-    }
-
     if ((htmlToDisplayOnBallotPage \\ "form").nonEmpty) {
       // Check and complete if action is not set or is set wrong
       (htmlToDisplayOnBallotPage \\ "form").foreach(f =>
@@ -62,6 +46,22 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
       answer = None
     }
 
+    val batchIdFromDB = properties match {
+      case p: BallotProperties => {
+        dao.getBatchIdByUUID(p.batch.uuid.toString).getOrElse {
+          dao.createBatch(p.allowedAnswersPerTurker, UUID.randomUUID().toString)
+        }
+      }
+      case _ => dao.createBatch(0, UUID.randomUUID().toString)
+    }
+
+    val expectedCodeFromDecoratedPortal = properties match {
+      case p: BallotProperties => {
+        p.outputCode
+      }
+      case _ => Math.abs(new Random(new DateTime().getMillis).nextLong())
+    }
+    
     if (answer != None) {
       val questionUUID = UUID.randomUUID().toString
       val questionId = dao.createQuestion(htmlToDisplayOnBallotPage.toString(), expectedCodeFromDecoratedPortal, batchIdFromDB, questionUUID)
@@ -98,21 +98,22 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
   //TODO: restructure this
   def ensureFormHasValidInputElements(form: NodeSeq): Boolean = {
     val checkAttributesOfInputElements = new mutable.HashMap[NodeSeq, Map[String, String]]
-    if((form \\ "input").nonEmpty){ checkAttributesOfInputElements += (form \\ "input" ->  Map("type" -> "submit"))}
+    if((form \\ "input").nonEmpty){ checkAttributesOfInputElements += (form \\ "input" ->  Map("type" -> "submit", "name" -> ""))}
     if((form \\ "textarea").nonEmpty){ checkAttributesOfInputElements += (form \\ "textarea" ->  Map("name" -> ""))}
     if((form \\ "button").nonEmpty){ checkAttributesOfInputElements += (form \\ "button" ->  Map("type" -> "submit"))}
     if((form \\ "select").nonEmpty){ checkAttributesOfInputElements += (form \\ "select" ->  Map("name" -> ""))}
+    
     if (checkAttributesOfInputElements.isEmpty) {
       logger.error("The form doesn't contain any input, select, textarea or button.")
       false
     } else {
-      checkAttributesOfInputElements.forall(a => validate(a._1, a._2))
+      checkAttributesOfInputElements.forall(a => checkAttributesValueForInputElements(a._1, a._2))
     }
   }
 
-  def validate(inputElements: NodeSeq, attributesKeyValue: Map[String, String]): Boolean = {
+  def checkAttributesValueForInputElements(inputElements: NodeSeq, attributesKeyValue: Map[String, String]): Boolean = {
     attributesKeyValue.forall(a => {
-      inputElements.exists(element => element.attribute(a._1).exists(attribute => attribute.text.equalsIgnoreCase(a._2)))
+      inputElements.exists(element => element.attribute(a._1).exists(attribute => if(a._2.nonEmpty){attribute.text.equalsIgnoreCase(a._2)}else{attribute.text.nonEmpty}))
     })
   }
 }
