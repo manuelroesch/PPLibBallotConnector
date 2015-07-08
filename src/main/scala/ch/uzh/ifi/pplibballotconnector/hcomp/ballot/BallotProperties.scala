@@ -1,4 +1,4 @@
-package ch.uzh.ifi.pplibballotconnector.hcomp
+package ch.uzh.ifi.pplibballotconnector.hcomp.ballot
 
 import java.util.UUID
 
@@ -10,6 +10,7 @@ import scala.util.Random
 /**
  * Created by mattia on 06.07.15.
  */
+private[ballot]
 class BallotProperties(
                         batch: Batch,
                         allowedAnswersPerTurker: Int,
@@ -20,4 +21,5 @@ class BallotProperties(
   def getOutputCode() = outputCode
 }
 
+private[ballot]
 case class Batch(uuid: UUID = UUID.randomUUID())

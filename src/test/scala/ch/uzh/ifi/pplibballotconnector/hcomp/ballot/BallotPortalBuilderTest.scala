@@ -1,9 +1,7 @@
-package ch.uzh.ifi.pplibballotconnector.hcomp
+package ch.uzh.ifi.pplibballotconnector.hcomp.ballot
 
 import ch.uzh.ifi.pdeboer.pplib.hcomp.HComp
 import ch.uzh.ifi.pdeboer.pplib.hcomp.mturk.MechanicalTurkPortalAdapter
-import ch.uzh.ifi.pplibballotconnector.hcomp.pplibballotconnector.{BallotPortalAdapter, BallotPortalBuilder}
-import com.typesafe.config.ConfigFactory
 import org.junit.{Assert, Test}
 
 /**
@@ -31,7 +29,7 @@ class BallotPortalBuilderTest {
 
     val b = new BallotPortalBuilder()
     b.setParameter(b.DECORATED_PORTAL_KEY, "asd")
-    b.setParameter(b.BASE_FORM_URL, ConfigFactory.load().getString("defaultFormUrl"))
+    b.setParameter(b.BASE_URL, "http://andreas.ifi.uzh.ch:9000/")
 
     val p = b.build.asInstanceOf[BallotPortalAdapter]
 

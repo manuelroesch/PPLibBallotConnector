@@ -1,27 +1,24 @@
-package ch.uzh.ifi.pplibballotconnector.hcomp.pplibballotconnector
+package ch.uzh.ifi.pplibballotconnector.hcomp.ballot
 
 import java.util.UUID
 
 import ch.uzh.ifi.pdeboer.pplib.hcomp._
 import ch.uzh.ifi.pplibballotconnector.dao.{BallotDAO, DAO}
-import ch.uzh.ifi.pplibballotconnector.hcomp.{BallotAnswer, BallotProperties, BallotQuery}
 import com.typesafe.config.ConfigFactory
 import org.joda.time.DateTime
-import play.api.libs.json.Json
 
-import scala.collection.parallel.mutable
 import scala.util.Random
-import scala.util.parsing.json.{JSON, JSONObject}
+import scala.util.parsing.json.JSON
 
 /**
  * Created by mattia on 06.07.15.
  */
 @HCompPortal(builder = classOf[BallotPortalBuilder], autoInit = true)
 class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection, val dao: DAO = new BallotDAO(),
-                          val baseFormUrl: String = ConfigFactory.load().getString("defaultFormUrl")) extends HCompPortalAdapter {
+                          val baseUrl: String) extends HCompPortalAdapter {
 
-  // TODO: do not store this here
-  var counter = 10
+  // Think about moving this variable somewhere else
+  var numRetriesProcessQuery = 10
 
   override def processQuery(query: HCompQuery, properties: HCompQueryProperties): Option[HCompAnswer] = {
 
@@ -44,29 +41,51 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 
     val html = query.question
 
-    //TODO: find form action in html and rewrite it to match the correct endpoint
+    //TODO: rewrite this so that looks good
     val formLabel = (xml.XML.loadString(html) \ "form")
     if(formLabel.length>0){
-      if(formLabel(0).attribute("action").isDefined){
-        if(!formLabel(0).attribute("action").get.text.equalsIgnoreCase(baseFormUrl)){
+      if(formLabel.head.attribute("action").isDefined){
+        val tag = formLabel.head
+        if(!tag.attribute("action").get.text.equalsIgnoreCase(baseUrl+"storeAnswer")){
+          return None
+        }
+        var valid = false
+        for(c <- tag.child){
+          if(!valid && c.label.equalsIgnoreCase("input") && c.attribute("type").isDefined && c.attribute("type").get.text.equalsIgnoreCase("submit")){
+            valid = true
+          }
+          if(!valid && c.label.equalsIgnoreCase("select") && c.attribute("name").isDefined && !c.attribute("name").get.text.isEmpty){
+            if(c.child.length>0){
+              if(c.child.head.label.equalsIgnoreCase("option") && !c.child.head.attribute("value").get.isEmpty){
+                valid = true
+              }
+            }
+          }
+          if(!valid && c.label.equalsIgnoreCase("textarea") && c.attribute("name").isDefined && !c.attribute("name").get.text.isEmpty){
+            valid = true
+          }
+          if(!valid && c.label.equalsIgnoreCase("button") && c.attribute("type").isDefined && !c.attribute("type").get.text.equalsIgnoreCase("submit")){
+            valid = true
+          }
+        }
+        if(!valid){
+          logger.error("Form elements are not valid for query: " + query)
           return None
         }
       }else {
+        logger.error("Action attribute is not defined in the form tag of query: " + query)
         return None
       }
     }else {
+      logger.error("There is no form in the html page for query: " + query)
       return None
     }
 
-
-
-    //TODO: check if form is valid (contains inputs/select/textarea/buttons/...)
-
     val questionId = dao.createQuestion(html, outputCode, batchId)
 
-    val link = "http://andreas.ifi.uzh.ch:9000/showQuestion/".concat(dao.getQuestionUUID(questionId).getOrElse("-1"))
+    val link = baseUrl+"showQuestion/".concat(dao.getQuestionUUID(questionId).getOrElse("-1"))
 
-    val ans = decorated.sendQueryAndAwaitResult(FreetextQuery(link + "<br> click the link and enter here the code when you are finish:<br> <input type=\"text\" value=\"123\">"), properties)
+    val ans = decorated.sendQueryAndAwaitResult(FreetextQuery(link + "<br> click the link and enter here the code when you are finish:<br> <input type=\"text\">"), properties)
       .get.asInstanceOf[FreetextAnswer]
 
     if (ans.answer.equals(outputCode+"")) {
@@ -77,11 +96,12 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
       Some(BallotAnswer(answer, BallotQuery(xml.XML.loadString(html))))
     } else {
       decorated.rejectAnswer(ans, "Invalid code")
-      //TODO: fix counter
-      if(counter <= 0) {
-        counter -= 1
+      
+      if(numRetriesProcessQuery > 0) {
+        numRetriesProcessQuery -= 1
         processQuery(query, properties)
       } else {
+        logger.error("Query reached the maximum number of retry attempts.")
         None
       }
     }
@@ -96,24 +116,24 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 
 object BallotPortalAdapter {
   val CONFIG_ACCESS_ID_KEY = "hcomp.ballot.decoratedPortalKey"
-  val FORM_POST_URL = ConfigFactory.load().getString("defaultFormUrl")
+  val BASE_URL = ConfigFactory.load().getString("hcomp.ballot.baseURL")
   val PORTAL_KEY = "ballot"
 }
 
 class BallotPortalBuilder extends HCompPortalBuilder {
 
   val DECORATED_PORTAL_KEY = "decoratedPortalKey"
-  val BASE_FORM_URL = ConfigFactory.load().getString("defaultFormUrl")
+  val BASE_URL = ConfigFactory.load().getString("hcomp.ballot.baseURL")
 
   override def build: HCompPortalAdapter = new BallotPortalAdapter(
     HComp(params(DECORATED_PORTAL_KEY))
       .asInstanceOf[HCompPortalAdapter with AnswerRejection],
-    baseFormUrl = params(BASE_FORM_URL))
+    baseUrl = params(BASE_URL))
 
-  override def expectedParameters: List[String] = List(DECORATED_PORTAL_KEY, BASE_FORM_URL)
+  override def expectedParameters: List[String] = List(DECORATED_PORTAL_KEY, BASE_URL)
 
   override def parameterToConfigPath: Map[String, String] = Map(
     DECORATED_PORTAL_KEY -> BallotPortalAdapter.CONFIG_ACCESS_ID_KEY,
-    BASE_FORM_URL -> BallotPortalAdapter.FORM_POST_URL
+    BASE_URL -> BallotPortalAdapter.BASE_URL
   )
 }
