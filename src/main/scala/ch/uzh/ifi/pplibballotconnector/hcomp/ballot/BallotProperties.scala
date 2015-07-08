@@ -14,7 +14,7 @@ private[ballot]
 class BallotProperties(
                         batch: Batch,
                         allowedAnswersPerTurker: Int,
-                        outputCode: Long = new Random(new DateTime().getMillis).nextLong()) extends HCompQueryProperties {
+                        outputCode: Long = Math.abs(new Random(new DateTime().getMillis).nextLong())) extends HCompQueryProperties {
 
   def getBatch() = batch
   def getAllowedAnswersPerTurker() = allowedAnswersPerTurker
