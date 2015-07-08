@@ -56,9 +56,10 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 			return None
 		}
 
-		val questionId = dao.createQuestion(htmlToDisplayOnBallotPage.toString(), expectedCodeFromDecoratedPortal, batchIdFromDB)
+		val questionUUID = UUID.randomUUID().toString
+		val questionId = dao.createQuestion(htmlToDisplayOnBallotPage.toString(), expectedCodeFromDecoratedPortal, batchIdFromDB, questionUUID)
 
-		val link = baseURL + "showQuestion/".concat(dao.getQuestionUUID(questionId).getOrElse("-1"))
+		val link = baseURL + "showQuestion/" + questionUUID
 
 		val ans = decorated.sendQueryAndAwaitResult(FreetextQuery(link + "<br> click the link and enter here the code when you are finish:<br> <input type=\"text\">"), properties)
 			.get.asInstanceOf[FreetextAnswer]

@@ -1,8 +1,8 @@
 package ch.uzh.ifi.pplibballotconnector.dao
 
 import java.util.UUID
+
 import scalikejdbc._
-import scalikejdbc.config.DBs
 
 /**
  * Created by mattia on 06.07.15.
@@ -21,9 +21,7 @@ class BallotDAO extends DAO{
     }
   }
 
-  override def createQuestion(html: String, outputCode: Long, batchId: Long): Long = {
-    val uuid = UUID.randomUUID().toString
-
+  override def createQuestion(html: String, outputCode: Long, batchId: Long, uuid: String = UUID.randomUUID().toString): Long = {
     DB readOnly { implicit session =>
       sql"insert into question(html, output_code, batch_id, create_time, uuid) values(${html}, ${outputCode}, ${batchId}, CURRENT, ${uuid})".update.apply()
     }
