@@ -11,11 +11,14 @@ import scala.util.Random
  * Created by mattia on 06.07.15.
  */
 private[ballot]
-case class BallotProperties(
-                        batch: Batch,
-                        allowedAnswersPerTurker: Int,
-                        outputCode: Long = Math.abs(new Random(new DateTime().getMillis).nextLong())) extends HCompQueryProperties {
+class BallotProperties(
+                        batch1: Batch,
+                        allowedAnswersPerTurker1: Int,
+                        outputCode1: Long = Math.abs(new Random(new DateTime().getMillis).nextLong())) extends HCompQueryProperties {
 
+  val batch = batch1
+  val allowedAnswersPerTurker = allowedAnswersPerTurker1
+  val outputCode = outputCode1
 }
 
 private[ballot]

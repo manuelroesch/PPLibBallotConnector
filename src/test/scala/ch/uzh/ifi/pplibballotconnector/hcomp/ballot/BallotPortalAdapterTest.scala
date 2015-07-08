@@ -94,7 +94,7 @@ class BallotPortalAdapterTest {
 				<input type="submit" name="answer" value="yes"/>
 			</form>
 		</div>), new BallotProperties(new Batch(), 1, 123))
-		Assert.assertEquals(ans, None)
+		Assert.assertEquals(ans.asInstanceOf[Option[HTMLQueryAnswer]].get.answers.get("answer").get, "yes")
 	}
 
 	@Test
@@ -105,6 +105,15 @@ class BallotPortalAdapterTest {
 		</div>), new BallotProperties(new Batch(), 1, 123))
 		Assert.assertEquals(ans, None)
 	}
+
+  @Test
+  def testWithoutFormAction: Unit = {
+    val b = new BallotPortalAdapter(new PortalAdapterTest(), new DAOTest(), "http://www.andreas.ifi.uzh.ch:9000/")
+    val ans = b.processQuery(HTMLQuery(<div>
+      <h1>test</h1> <form><input type="submit" value="yes" name="answer" /></form>
+    </div>), new BallotProperties(new Batch(), 1, 123))
+    Assert.assertEquals(ans.asInstanceOf[Option[HTMLQueryAnswer]].get.answers.get("answer").get, "yes")
+  }
 
 }
 
@@ -148,7 +157,7 @@ class DAOTest extends DAO with LazyLogger1 {
 		questions.get(questionId)
 	}
 
-	override def createQuestion(html: String, outputCode: Long, batchId: Long): Long = {
+	override def createQuestion(html: String, outputCode: Long, batchId: Long, uuid: String = UUID.randomUUID().toString): Long = {
 		questions += ((questions.size + 1).toLong -> UUID.randomUUID().toString)
 		answers += ((answers.size + 1).toLong -> "{\"answer\":\"yes\"}")
 		logger.debug("Adding new Question with outputCode: " + outputCode)

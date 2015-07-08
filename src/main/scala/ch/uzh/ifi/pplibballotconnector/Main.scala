@@ -7,7 +7,5 @@ import ch.uzh.ifi.pplibballotconnector.persistence.DBSettings
  */
 object Main extends App  {
 
-
-
   DBSettings.initialize()
 }
