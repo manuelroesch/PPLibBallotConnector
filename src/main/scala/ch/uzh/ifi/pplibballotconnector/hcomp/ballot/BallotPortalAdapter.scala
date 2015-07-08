@@ -23,7 +23,6 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 
   override def processQuery(query: HCompQuery, properties: HCompQueryProperties): Option[HCompAnswer] = {
 
-
     val xml: NodeSeq = query match {
       case q: HTMLQuery => q.html
       case _ => XML.loadString(query.question)
@@ -76,7 +75,7 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
       val answer = JSON.parseFull(answerJson).get.asInstanceOf[Map[String, String]]
 
       decorated.approveAndBonusAnswer(ans)
-      Some(BallotAnswer(answer, BallotQuery(XML.loadString(html))))
+      Some(HTMLQueryAnswer(answer, HTMLQuery(XML.loadString(html))))
     } else {
       decorated.rejectAnswer(ans, "Invalid code")
       
