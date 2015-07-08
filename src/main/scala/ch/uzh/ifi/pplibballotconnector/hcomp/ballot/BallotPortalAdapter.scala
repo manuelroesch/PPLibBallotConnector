@@ -28,24 +28,6 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
       case _ => XML.loadString(query.question)
     }
 
-    var answer: Option[HCompAnswer] = null
-
-    if ((htmlToDisplayOnBallotPage \\ "form").nonEmpty) {
-      // Check and complete if action is not set or is set wrong
-      (htmlToDisplayOnBallotPage \\ "form").foreach(f =>
-        if(!(f.attribute("action").isDefined && f.attribute("action").get.text.equalsIgnoreCase(baseURL+"storeAnswer"))){
-          htmlToDisplayOnBallotPage = XML.loadString(htmlToDisplayOnBallotPage.toString().replace("<"+f.label+">", "<form action=\""+baseURL+"storeAnswer\" method=\"post\">")) \\ "form"
-        }
-      )
-      if (!(htmlToDisplayOnBallotPage \\ "form").exists(form => ensureFormHasValidInputElements(form))) {
-        logger.error("Form is not valid.")
-        answer = None
-      }
-    } else {
-      logger.error("There exists no Form tag in the html page.")
-      answer = None
-    }
-
     val batchIdFromDB = properties match {
       case p: BallotProperties => {
         dao.getBatchIdByUUID(p.batch.uuid.toString).getOrElse {
@@ -61,26 +43,43 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
       }
       case _ => Math.abs(new Random(new DateTime().getMillis).nextLong())
     }
-    
-    if (answer != None) {
-      val questionUUID = UUID.randomUUID().toString
-      val questionId = dao.createQuestion(htmlToDisplayOnBallotPage.toString(), expectedCodeFromDecoratedPortal, batchIdFromDB, questionUUID)
-      val link = baseURL + "showQuestion/" + questionUUID
-      val ans = decorated.sendQueryAndAwaitResult(FreetextQuery(link + "<br> click the link and enter here the code when you are finish:<br> <input type=\"text\">"), properties)
-        .get.asInstanceOf[FreetextAnswer]
 
-      if (ans.answer.equals(expectedCodeFromDecoratedPortal + "")) {
-        answer = extractAnswerFromDatabase(questionId, htmlToDisplayOnBallotPage)
-        decorated.approveAndBonusAnswer(ans)
-      } else {
-        decorated.rejectAnswer(ans, "Invalid code")
-        if (numRetriesProcessQuery > 0) {
-          numRetriesProcessQuery -= 1
-          answer = processQuery(query, properties)
+    val answer: Option[HCompAnswer] = {
+      if ((htmlToDisplayOnBallotPage \\ "form").nonEmpty) {
+        // Check and complete if action is not set or is set wrong 
+        (htmlToDisplayOnBallotPage \\ "form").foreach(f =>
+          if (!(f.attribute("action").isDefined && f.attribute("action").get.text.equalsIgnoreCase(baseURL + "storeAnswer"))) {
+            htmlToDisplayOnBallotPage = XML.loadString(htmlToDisplayOnBallotPage.toString().replace("<" + f.label + ">", "<form action=\"" + baseURL + "storeAnswer\" method=\"post\">")) \\ "form"
+          }
+        )
+        if (!(htmlToDisplayOnBallotPage \\ "form").exists(form => ensureFormHasValidInputElements(form))) {
+          logger.error("Form is not valid.")
+          None
         } else {
-          logger.error("Query reached the maximum number of retry attempts.")
-          answer = None
+          val questionUUID = UUID.randomUUID().toString
+          val questionId = dao.createQuestion(htmlToDisplayOnBallotPage.toString(), expectedCodeFromDecoratedPortal, batchIdFromDB, questionUUID)
+          val link = baseURL + "showQuestion/" + questionUUID
+
+          val ans = decorated.sendQueryAndAwaitResult(FreetextQuery(link + "<br> click the link and enter here the code when you are finish:<br> <input type=\"text\">"), properties)
+            .get.asInstanceOf[FreetextAnswer]
+
+          if (ans.answer.equals(expectedCodeFromDecoratedPortal + "")) {
+            decorated.approveAndBonusAnswer(ans)
+            extractAnswerFromDatabase(questionId, htmlToDisplayOnBallotPage)
+          } else {
+            decorated.rejectAnswer(ans, "Invalid code")
+            if (numRetriesProcessQuery > 0) {
+              numRetriesProcessQuery -= 1
+              processQuery(query, properties)
+            } else {
+              logger.error("Query reached the maximum number of retry attempts.")
+              None
+            }
+          }
         }
+      } else {
+        logger.error("There exists no Form tag in the html page.")
+        None
       }
     }
     answer
@@ -98,11 +97,11 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
   //TODO: restructure this
   def ensureFormHasValidInputElements(form: NodeSeq): Boolean = {
     val checkAttributesOfInputElements = new mutable.HashMap[NodeSeq, Map[String, String]]
-    if((form \\ "input").nonEmpty){ checkAttributesOfInputElements += (form \\ "input" ->  Map("type" -> "submit", "name" -> ""))}
-    if((form \\ "textarea").nonEmpty){ checkAttributesOfInputElements += (form \\ "textarea" ->  Map("name" -> ""))}
-    if((form \\ "button").nonEmpty){ checkAttributesOfInputElements += (form \\ "button" ->  Map("type" -> "submit"))}
-    if((form \\ "select").nonEmpty){ checkAttributesOfInputElements += (form \\ "select" ->  Map("name" -> ""))}
-    
+    if ((form \\ "input").nonEmpty) {checkAttributesOfInputElements += (form \\ "input" -> Map("type" -> "submit", "name" -> ""))}
+    if ((form \\ "textarea").nonEmpty) {checkAttributesOfInputElements += (form \\ "textarea" -> Map("name" -> ""))}
+    if ((form \\ "button").nonEmpty) {checkAttributesOfInputElements += (form \\ "button" -> Map("type" -> "submit"))}
+    if ((form \\ "select").nonEmpty) {checkAttributesOfInputElements += (form \\ "select" -> Map("name" -> ""))}
+
     if (checkAttributesOfInputElements.isEmpty) {
       logger.error("The form doesn't contain any input, select, textarea or button.")
       false
@@ -113,7 +112,11 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 
   def checkAttributesValueForInputElements(inputElements: NodeSeq, attributesKeyValue: Map[String, String]): Boolean = {
     attributesKeyValue.forall(a => {
-      inputElements.exists(element => element.attribute(a._1).exists(attribute => if(a._2.nonEmpty){attribute.text.equalsIgnoreCase(a._2)}else{attribute.text.nonEmpty}))
+      inputElements.exists(element => element.attribute(a._1).exists(attribute => if (a._2.nonEmpty) {
+        attribute.text.equalsIgnoreCase(a._2)
+      } else {
+        attribute.text.nonEmpty
+      }))
     })
   }
 }
