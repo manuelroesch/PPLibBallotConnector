@@ -9,6 +9,7 @@ import org.joda.time.DateTime
 
 import scala.util.Random
 import scala.util.parsing.json.JSON
+import scala.xml.{XML, NodeSeq}
 
 /**
  * Created by mattia on 06.07.15.
@@ -21,6 +22,12 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
   var numRetriesProcessQuery = 10
 
   override def processQuery(query: HCompQuery, properties: HCompQueryProperties): Option[HCompAnswer] = {
+
+
+    val xml: NodeSeq = query match {
+      case q: HTMLQuery => q.html
+      case _ => XML.loadString(query.question)
+    }
 
     val batchId = properties match {
       case p: BallotProperties => {
@@ -41,43 +48,19 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 
     val html = query.question
 
-    //TODO: rewrite this so that looks good
-    val formLabel = (xml.XML.loadString(html) \ "form")
-    if(formLabel.length>0){
-      if(formLabel.head.attribute("action").isDefined){
-        val tag = formLabel.head
-        if(!tag.attribute("action").get.text.equalsIgnoreCase(baseUrl+"storeAnswer")){
-          return None
-        }
-        var valid = false
-        for(c <- tag.child){
-          if(!valid && c.label.equalsIgnoreCase("input") && c.attribute("type").isDefined && c.attribute("type").get.text.equalsIgnoreCase("submit")){
-            valid = true
-          }
-          if(!valid && c.label.equalsIgnoreCase("select") && c.attribute("name").isDefined && !c.attribute("name").get.text.isEmpty){
-            if(c.child.length>0){
-              if(c.child.head.label.equalsIgnoreCase("option") && !c.child.head.attribute("value").get.isEmpty){
-                valid = true
-              }
-            }
-          }
-          if(!valid && c.label.equalsIgnoreCase("textarea") && c.attribute("name").isDefined && !c.attribute("name").get.text.isEmpty){
-            valid = true
-          }
-          if(!valid && c.label.equalsIgnoreCase("button") && c.attribute("type").isDefined && !c.attribute("type").get.text.equalsIgnoreCase("submit")){
-            valid = true
-          }
-        }
-        if(!valid){
-          logger.error("Form elements are not valid for query: " + query)
-          return None
-        }
-      }else {
-        logger.error("Action attribute is not defined in the form tag of query: " + query)
+    val formLabel = (xml \\ "form")
+    if(!formLabel.isEmpty) {
+      if(!formLabel.forall(form => validateForm(form) &&
+        form.attribute("action").isDefined &&
+        form.attribute("action").get.text.equalsIgnoreCase(baseUrl+"storeAnswer") &&
+        form.attribute("method").isDefined &&
+        form.attribute("method").get.text.equalsIgnoreCase("post")
+      )){
+        logger.error("Form is not valid.")
         return None
       }
-    }else {
-      logger.error("There is no form in the html page for query: " + query)
+    } else {
+      logger.error("There exists no form tag in the html page.")
       return None
     }
 
@@ -93,7 +76,7 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
       val answer = JSON.parseFull(answerJson).get.asInstanceOf[Map[String, String]]
 
       decorated.approveAndBonusAnswer(ans)
-      Some(BallotAnswer(answer, BallotQuery(xml.XML.loadString(html))))
+      Some(BallotAnswer(answer, BallotQuery(XML.loadString(html))))
     } else {
       decorated.rejectAnswer(ans, "Invalid code")
       
@@ -111,6 +94,72 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
   override def getDefaultPortalKey: String = decorated.getDefaultPortalKey
 
   override def cancelQuery(query: HCompQuery): Unit = decorated.cancelQuery(query)
+
+  def validateForm(form: NodeSeq) : Boolean = {
+    val inputs = form \\ "input"
+    val selects = form \\ "select"
+    val textareas = form \\ "textarea"
+    val buttons = form \\ "button"
+
+    if(inputs.isEmpty && selects.isEmpty && textareas.isEmpty && buttons.isEmpty){
+      logger.error("The form doesn't contain any input, select, textarea or button.")
+      return false
+    } else {
+      return (
+        (if(!inputs.isEmpty)
+          validateInput(inputs) else true)
+          &&
+          (if(!selects.isEmpty)
+            validateSelect(selects) else true)
+          &&
+          (if(!textareas.isEmpty)
+            validateTextarea(textareas) else true)
+          &&
+          (if(!buttons.isEmpty)
+            validateButton(buttons) else true)
+        )
+    }
+  }
+
+  def validateInput(input: NodeSeq): Boolean = {
+    input.forall(i => {
+      i.attribute("type").isDefined && i.attribute("type").get.text.equalsIgnoreCase("submit")
+    })
+  }
+
+  def validateTextarea(textarea: NodeSeq): Boolean = {
+    textarea.forall(t => {
+      t.attribute("name").isDefined && !t.attribute("name").get.text.isEmpty
+    })
+  }
+
+  def validateButton(button: NodeSeq): Boolean = {
+    button.forall(b => {
+      b.attribute("type").isDefined && b.attribute("type").get.text.equalsIgnoreCase("submit")
+    })
+  }
+
+  def validateSelect(select: NodeSeq): Boolean = {
+    select.forall(s => {
+      if(s.attribute("name").isDefined && !s.attribute("name").get.text.isEmpty) {
+        val options = s \\ "option"
+        if(options.isEmpty){
+          logger.error("The select tag: "+ s + " doesn't contain any options.")
+          false
+        } else {
+          if(!options.forall(o => !o.attribute("value").get.isEmpty )) {
+            logger.error("The select tag: " + s + " contains invalid options.")
+            false
+          } else {
+            true
+          }
+        }
+      } else {
+        logger.error("The select tag: " + s + " is not valid.")
+        false
+      }
+    })
+  }
 
 }
 
