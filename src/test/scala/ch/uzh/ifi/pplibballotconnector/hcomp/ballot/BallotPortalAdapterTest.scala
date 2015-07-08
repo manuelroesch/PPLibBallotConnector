@@ -56,6 +56,13 @@ class BallotPortalAdapterTest {
   }
 
   @Test
+  def testWithInvalidInput: Unit = {
+    val b = new BallotPortalAdapter(new PortalAdapterTest(), new DAOTest(), "http://www.andreas.ifi.uzh.ch:9000/")
+    val ans = b.processQuery(HTMLQuery(<div><h1>test</h1><div><form action="http://www.andreas.ifi.uzh.ch:9000/storeAnswer" method="post"><p><input type="button" name="answer" value="yes"/></p></form></div></div>), new BallotProperties(new Batch(), 1, 123))
+    Assert.assertEquals(ans, None)
+  }
+
+  @Test
   def testWithWrongFormAction: Unit = {
     val b = new BallotPortalAdapter(new PortalAdapterTest(), new DAOTest(), "http://www.andreas.ifi.uzh.ch:9000/")
     val ans = b.processQuery(HTMLQuery(<div><h1>test</h1><form action="http://www.andreas.ifi.uzh.ch:9000/asdasd" method="post"><input type="submit" name="answer" value="yes"/></form></div>), new BallotProperties(new Batch(), 1, 123))

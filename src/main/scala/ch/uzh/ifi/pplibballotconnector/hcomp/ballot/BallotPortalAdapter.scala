@@ -94,6 +94,7 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 
   override def cancelQuery(query: HCompQuery): Unit = decorated.cancelQuery(query)
 
+
   def validateForm(form: NodeSeq) : Boolean = {
     val inputs = form \\ "input"
     val selects = form \\ "select"
