@@ -4,7 +4,7 @@ package ch.uzh.ifi.pplibballotconnector.persistence
  * Created by Mattia on 19.01.2015.
  */
 
-import ch.uzh.ifi.pplibballotconnector.util.LazyLogger
+import ch.uzh.ifi.pdeboer.pplib.util.LazyLogger
 import scalikejdbc._
 import scalikejdbc.config.DBs
 

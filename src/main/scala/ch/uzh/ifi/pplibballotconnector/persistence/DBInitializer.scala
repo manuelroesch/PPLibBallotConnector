@@ -1,12 +1,12 @@
 package ch.uzh.ifi.pplibballotconnector.persistence
 
-import ch.uzh.ifi.pplibballotconnector.util.LazyLogger
+import ch.uzh.ifi.pplibballotconnector.util.LazyLogger1
 import scalikejdbc._
 
 /**
  * Created by mattia on 07.07.15.
  */
-object DBInitializer extends LazyLogger{
+object DBInitializer extends LazyLogger1{
 
   def run() {
     DB readOnly { implicit s =>

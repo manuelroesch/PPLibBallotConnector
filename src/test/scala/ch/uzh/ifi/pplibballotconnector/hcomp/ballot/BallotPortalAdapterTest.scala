@@ -4,7 +4,7 @@ import java.util.UUID
 
 import ch.uzh.ifi.pdeboer.pplib.hcomp._
 import ch.uzh.ifi.pplibballotconnector.dao.DAO
-import ch.uzh.ifi.pplibballotconnector.util.LazyLogger
+import ch.uzh.ifi.pplibballotconnector.util.LazyLogger1
 import org.junit.{Assert, Test}
 
 import scala.collection.mutable
@@ -88,7 +88,7 @@ class PortalAdapterTest() extends HCompPortalAdapter with AnswerRejection{
   override def cancelQuery(query: HCompQuery): Unit = false
 }
 
-class DAOTest extends DAO with LazyLogger{
+class DAOTest extends DAO with LazyLogger1{
 
   val batches = new mutable.HashMap[Long, String]
   val questions = new mutable.HashMap[Long, String]
