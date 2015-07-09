@@ -5,10 +5,10 @@ import java.util.UUID
 import ch.uzh.ifi.pdeboer.pplib.hcomp._
 import ch.uzh.ifi.pplibballotconnector.dao.{BallotDAO, DAO}
 import org.joda.time.DateTime
+import play.api.libs.json.{JsObject, Json}
 
 import scala.collection.mutable
 import scala.util.Random
-import scala.util.parsing.json.JSON
 import scala.xml._
 
 /**
@@ -49,9 +49,11 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
         // Check and complete if action is not set or is set wrong 
         (htmlToDisplayOnBallotPage \\ "form").foreach(f =>
           if (!(f.attribute("action").isDefined && f.attribute("action").get.text.equalsIgnoreCase(baseURL + "storeAnswer"))) {
-            htmlToDisplayOnBallotPage = XML.loadString(htmlToDisplayOnBallotPage.toString().replace("<" + f.label + ">", "<form action=\"" + baseURL + "storeAnswer\" method=\"post\">")) \\ "form"
+            val correctedHtmlToDisplayOnBallotPage = htmlToDisplayOnBallotPage.toString().replace("<" + f.label + ">", "<form action=\"" + baseURL + "storeAnswer\" method=\"post\">")
+            htmlToDisplayOnBallotPage = XML.loadString(correctedHtmlToDisplayOnBallotPage)
           }
         )
+
         if (!(htmlToDisplayOnBallotPage \\ "form").exists(form => ensureFormHasValidInputElements(form))) {
           logger.error("Form is not valid.")
           None
@@ -86,8 +88,12 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
   }
 
   def extractAnswerFromDatabase(questionId: Long, htmlToDisplayOnBallotPage: NodeSeq): Option[HCompAnswer] = {
-    val answerParsed = JSON.parseFull(dao.getAnswer(questionId).get).get.asInstanceOf[Map[String, String]]
-    Some(HTMLQueryAnswer(answerParsed, HTMLQuery(htmlToDisplayOnBallotPage)))
+    val result = Json.parse(dao.getAnswer(questionId).getOrElse("{}")).asInstanceOf[JsObject]
+    var answer = new mutable.HashMap[String, String]
+    result.fieldSet.foreach(a => {
+      answer += (a._1 -> a._2.toString())
+    })
+    Some(HTMLQueryAnswer(answer.toMap, HTMLQuery(htmlToDisplayOnBallotPage)))
   }
 
   override def getDefaultPortalKey: String = decorated.getDefaultPortalKey

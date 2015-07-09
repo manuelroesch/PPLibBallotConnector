@@ -5,6 +5,7 @@ import java.util.UUID
 import ch.uzh.ifi.pdeboer.pplib.hcomp._
 import ch.uzh.ifi.pplibballotconnector.dao.DAO
 import ch.uzh.ifi.pplibballotconnector.util.LazyLogger1
+import org.joda.time.DateTime
 import org.junit.{Assert, Test}
 
 import scala.collection.mutable
@@ -157,7 +158,7 @@ class DAOTest extends DAO with LazyLogger1 {
 		questions.get(questionId)
 	}
 
-	override def createQuestion(html: String, outputCode: Long, batchId: Long, uuid: String = UUID.randomUUID().toString): Long = {
+	override def createQuestion(html: String, outputCode: Long, batchId: Long, uuid: String = UUID.randomUUID().toString, dateTime: DateTime = new DateTime()): Long = {
 		questions += ((questions.size + 1).toLong -> UUID.randomUUID().toString)
 		answers += ((answers.size + 1).toLong -> "{\"answer\":\"yes\"}")
 		logger.debug("Adding new Question with outputCode: " + outputCode)
