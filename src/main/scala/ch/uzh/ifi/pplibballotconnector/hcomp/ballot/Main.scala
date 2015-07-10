@@ -1,8 +1,7 @@
-package ch.uzh.ifi.pplibballotconnector
+package ch.uzh.ifi.pplibballotconnector.hcomp.ballot
 
 import ch.uzh.ifi.pdeboer.pplib.hcomp._
 import ch.uzh.ifi.pdeboer.pplib.util.LazyLogger
-import ch.uzh.ifi.pplibballotconnector.hcomp.ballot.{Batch, BallotProperties, BallotPortalAdapter}
 import ch.uzh.ifi.pplibballotconnector.persistence.DBSettings
 
 import scala.xml.NodeSeq
@@ -50,10 +49,14 @@ object Main extends App with LazyLogger {
   val properties = new BallotProperties(Batch(), 1)
 
   ballotPortalAdapter.processQuery(query, properties) match {
-    case ans : Option[HTMLQueryAnswer] => println("\n\n***** " + ans.get.answers)
-    case None => logger.error("Error while getting the answer")
+    case ans : Option[HTMLQueryAnswer] => {
+      if (ans.isDefined){
+        println("\n\n***** " + ans.get.answers)
+      }else {
+        println("Error while getting the answer")
+      }
+    }
   }
-
 }
 
 class ConsolePortalAdapter extends HCompPortalAdapter with AnswerRejection {

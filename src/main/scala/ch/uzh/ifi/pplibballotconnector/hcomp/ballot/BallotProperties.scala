@@ -10,6 +10,7 @@ import scala.util.Random
 /**
  * Created by mattia on 06.07.15.
  */
+private[ballot]
 class BallotProperties(
                         batch1: Batch,
                         allowedAnswersPerTurker1: Int,
@@ -20,4 +21,5 @@ class BallotProperties(
   val outputCode = outputCode1
 }
 
+private[ballot]
 case class Batch(uuid: UUID = UUID.randomUUID())

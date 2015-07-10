@@ -89,11 +89,8 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 
   def extractAnswerFromDatabase(questionId: Long, htmlToDisplayOnBallotPage: NodeSeq): Option[HCompAnswer] = {
     val result = Json.parse(dao.getAnswer(questionId).getOrElse("{}")).asInstanceOf[JsObject]
-    var answer = new mutable.HashMap[String, String]
-    result.fieldSet.foreach(a => {
-      answer += (a._1 -> a._2.toString())
-    })
-    Some(HTMLQueryAnswer(answer.toMap, HTMLQuery(htmlToDisplayOnBallotPage)))
+    val answer = result.fieldSet.map(f => (f._1 -> f._2.toString())).toMap
+    Some(HTMLQueryAnswer(answer, HTMLQuery(htmlToDisplayOnBallotPage)))
   }
 
   override def getDefaultPortalKey: String = decorated.getDefaultPortalKey
