@@ -15,6 +15,7 @@ import org.apache.http.impl.client.{BasicCookieStore, DefaultHttpClient}
 import org.apache.http.message.BasicNameValuePair
 import org.apache.http.protocol.BasicHttpContext
 import org.apache.http.util.EntityUtils
+import org.junit.Test
 import scala.xml.NodeSeq
 
 /**
@@ -22,7 +23,7 @@ import scala.xml.NodeSeq
  */
 class BallotIntegrationTest {
   
-  //@Test
+  @Test
   def test(): Unit ={
     DBSettings.initialize()
 
