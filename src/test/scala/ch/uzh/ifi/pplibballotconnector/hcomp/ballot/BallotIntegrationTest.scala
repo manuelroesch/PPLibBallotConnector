@@ -9,8 +9,8 @@ import junit.framework.Assert
 import org.apache.http.NameValuePair
 import org.apache.http.client.entity.UrlEncodedFormEntity
 import org.apache.http.client.methods.{HttpGet, HttpPost}
-import org.apache.http.client.protocol.ClientContext
-import org.apache.http.impl.client.{BasicCookieStore, DefaultHttpClient}
+import org.apache.http.client.protocol.{HttpClientContext, ClientContext}
+import org.apache.http.impl.client.{CloseableHttpClient, HttpClientBuilder, BasicCookieStore, DefaultHttpClient}
 import org.apache.http.message.BasicNameValuePair
 import org.apache.http.protocol.BasicHttpContext
 import org.apache.http.util.EntityUtils
@@ -76,11 +76,12 @@ class IntegrationPortalAdapter extends HCompPortalAdapter with AnswerRejection {
     Some(FreetextAnswer(freeTextQuery, simulateClientRequestsOnFrontend(query)))
   }
 
+  val httpClient = HttpClientBuilder.create().build()
+  val httpContext = new BasicHttpContext()
+
   def simulateClientRequestsOnFrontend(query: HCompQuery): String = {
-    val httpClient = new DefaultHttpClient()
     val cookieStore = new BasicCookieStore()
-    val httpContext = new BasicHttpContext()
-    httpContext.setAttribute(ClientContext.COOKIE_STORE, cookieStore)
+    httpContext.setAttribute(HttpClientContext.COOKIE_STORE, cookieStore)
 
     val questionURL = query.question.substring(0, query.question.indexOf("<br>"))
     logger.debug("Question URL: " + questionURL)
@@ -88,10 +89,10 @@ class IntegrationPortalAdapter extends HCompPortalAdapter with AnswerRejection {
     //1. login to initialize the session
     val loginParams = new util.ArrayList[NameValuePair]()
     loginParams.add(new BasicNameValuePair("TurkerID", "integrationTest"))
-    performAndConsumePostRequest(httpClient, httpContext, "http://localhost:9000/login", loginParams)
+    performAndConsumePostRequest("http://localhost:9000/login", loginParams)
 
     //2. get question
-    val questionPage = performAndConsumeGetRequest(httpClient, httpContext, questionURL)
+    val questionPage = performAndConsumeGetRequest(questionURL)
 
     //3. send answer
     val questionId = questionPage.substring(questionPage.indexOf("name=\\\"questionId\\\" value=\\\"") + 28, questionPage.indexOf("\\\">"))
@@ -100,7 +101,7 @@ class IntegrationPortalAdapter extends HCompPortalAdapter with AnswerRejection {
     val answerParams = new util.ArrayList[NameValuePair]()
     answerParams.add(new BasicNameValuePair("questionId", questionId))
     answerParams.add(new BasicNameValuePair("answer", "Yes"))
-    val codePage = performAndConsumePostRequest(httpClient, httpContext, "http://localhost:9000/storeAnswer", answerParams)
+    val codePage = performAndConsumePostRequest("http://localhost:9000/storeAnswer", answerParams)
 
     httpClient.close()
 
@@ -108,7 +109,7 @@ class IntegrationPortalAdapter extends HCompPortalAdapter with AnswerRejection {
     codePage.substring(codePage.indexOf("<h1>") + 4, codePage.indexOf("</h1>"))
   }
 
-  def performAndConsumePostRequest(httpClient: DefaultHttpClient, httpContext: BasicHttpContext, url: String, params: util.ArrayList[NameValuePair]): String = {
+  def performAndConsumePostRequest(url: String, params: util.ArrayList[NameValuePair]): String = {
     val request = new HttpPost(url)
     request.setEntity(new UrlEncodedFormEntity(params))
     val response = httpClient.execute(request, httpContext)
@@ -117,7 +118,7 @@ class IntegrationPortalAdapter extends HCompPortalAdapter with AnswerRejection {
     content
   }
 
-  def performAndConsumeGetRequest(httpClient: DefaultHttpClient, httpContext: BasicHttpContext, url: String): String = {
+  def performAndConsumeGetRequest(url: String): String = {
     val request = new HttpGet(url)
     val response = httpClient.execute(request, httpContext).getEntity
     val content = EntityUtils.toString(response)
