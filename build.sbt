@@ -14,6 +14,8 @@ libraryDependencies += 	"junit" % "junit" % "4.8.1" % "test"
 
 libraryDependencies += "com.typesafe" % "config" % "1.3.0"
 
+libraryDependencies += "org.apache.httpcomponents" %% "httpclient" % "4.5"
+
 libraryDependencies ++= Seq(
   "org.scalikejdbc" %% "scalikejdbc"       % "2.2.7",
   "com.h2database"  %  "h2"                % "1.4.184",
