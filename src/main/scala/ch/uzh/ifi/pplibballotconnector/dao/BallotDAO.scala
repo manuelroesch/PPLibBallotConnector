@@ -10,6 +10,25 @@ import scalikejdbc._
  */
 class BallotDAO extends DAO{
 
+  def countAllAnswers() = {
+    DB readOnly { implicit session =>
+      sql"select count(*) as count from answer".map(rs => rs.int("count")).single().apply()
+    }
+  }
+
+  def countAllBatches() = {
+    DB readOnly { implicit session =>
+      sql"select count(*) as count from batch".map(rs => rs.int("count")).single().apply()
+    }
+  }
+
+  def countAllQuestions() = {
+    DB readOnly { implicit session =>
+      sql"select count(*) as count from question".map(rs => rs.int("count")).single().apply()
+    }
+  }
+
+
   override def createBatch(allowedAnswersPerTurker: Int, uuid: String): Long = {
     DB localTx { implicit session =>
       sql"insert into batch(allowed_answers_per_turker, uuid) values(${allowedAnswersPerTurker}, ${uuid})".updateAndReturnGeneratedKey().apply()

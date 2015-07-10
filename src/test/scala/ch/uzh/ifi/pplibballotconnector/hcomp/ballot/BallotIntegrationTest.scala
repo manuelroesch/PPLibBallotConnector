@@ -1,6 +1,5 @@
 package ch.uzh.ifi.pplibballotconnector.hcomp.ballot
 
-import java.io.{InputStreamReader, BufferedReader}
 import java.util
 
 import ch.uzh.ifi.pdeboer.pplib.hcomp._
@@ -28,6 +27,9 @@ class BallotIntegrationTest {
     DBSettings.initialize()
 
     val dao = new BallotDAO()
+    val countQuestions = dao.countAllQuestions()
+    val countAnswers = dao.countAllAnswers()
+    val countBatches = dao.countAllBatches()
 
     val decoratedPortalAdapter = new IntegrationPortalAdapter()
     val ballotPortalAdapter = new BallotPortalAdapter(decoratedPortalAdapter, dao, "http://localhost:9000/")
@@ -54,6 +56,9 @@ class BallotIntegrationTest {
     ballotPortalAdapter.processQuery(query, properties) match {
       case ans : Option[HTMLQueryAnswer] => {
         Assert.assertEquals(ans.get.answers.get("answer").get, "Yes")
+        Assert.assertTrue(dao.countAllQuestions().get == countQuestions.get+1)
+        Assert.assertTrue(dao.countAllAnswers().get == countAnswers.get+1)
+        Assert.assertTrue(dao.countAllBatches().get == countBatches.get+1)
       }
     }
 
@@ -80,37 +85,44 @@ class IntegrationPortalAdapter extends HCompPortalAdapter with AnswerRejection {
     val questionURL = query.question.substring(0, query.question.indexOf("<br>"))
     logger.debug("Question URL: " + questionURL)
 
-    //1. login
-    val postLogin = new HttpPost("http://localhost:9000/login")
-    val urlParameters = new util.ArrayList[NameValuePair]()
-    urlParameters.add(new BasicNameValuePair("TurkerID", "integrationTest"))
-    postLogin.setEntity(new UrlEncodedFormEntity(urlParameters))
-
-    val loginResponse = httpClient.execute(postLogin, httpContext)
-    EntityUtils.consumeQuietly(loginResponse.getEntity)
+    //1. login to initialize the session
+    val loginParams = new util.ArrayList[NameValuePair]()
+    loginParams.add(new BasicNameValuePair("TurkerID", "integrationTest"))
+    performAndConsumePostRequest(httpClient, httpContext, "http://localhost:9000/login", loginParams)
 
     //2. get question
-    val getQuestion = new HttpGet(questionURL)
-    val questionRequest = httpClient.execute(getQuestion, httpContext).getEntity
-    val questionPage = EntityUtils.toString(questionRequest)
-    EntityUtils.consumeQuietly(questionRequest)
+    val questionPage = performAndConsumeGetRequest(httpClient, httpContext, questionURL)
 
     //3. send answer
     val questionId = questionPage.substring(questionPage.indexOf("name=\\\"questionId\\\" value=\\\"") + 28, questionPage.indexOf("\\\">"))
     logger.debug("Question id: " + questionId)
-    val postAnswer = new HttpPost("http://localhost:9000/storeAnswer")
-    val ansParameters = new util.ArrayList[NameValuePair]()
-    ansParameters.add(new BasicNameValuePair("questionId", questionId))
-    ansParameters.add(new BasicNameValuePair("answer", "Yes"))
-    postAnswer.setEntity(new UrlEncodedFormEntity(ansParameters))
 
-    val answerResponse = httpClient.execute(postAnswer, httpContext)
-    val codePage = EntityUtils.toString(answerResponse.getEntity)
-    EntityUtils.consumeQuietly(answerResponse.getEntity)
+    val answerParams = new util.ArrayList[NameValuePair]()
+    answerParams.add(new BasicNameValuePair("questionId", questionId))
+    answerParams.add(new BasicNameValuePair("answer", "Yes"))
+    val codePage = performAndConsumePostRequest(httpClient, httpContext, "http://localhost:9000/storeAnswer", answerParams)
+
     httpClient.close()
 
     //4. get code
     codePage.substring(codePage.indexOf("<h1>") + 4, codePage.indexOf("</h1>"))
+  }
+
+  def performAndConsumePostRequest(httpClient: DefaultHttpClient, httpContext: BasicHttpContext, url: String, params: util.ArrayList[NameValuePair]): String = {
+    val request = new HttpPost(url)
+    request.setEntity(new UrlEncodedFormEntity(params))
+    val response = httpClient.execute(request, httpContext)
+    val content = EntityUtils.toString(response.getEntity)
+    EntityUtils.consumeQuietly(response.getEntity)
+    content
+  }
+
+  def performAndConsumeGetRequest(httpClient: DefaultHttpClient, httpContext: BasicHttpContext, url: String): String = {
+    val request = new HttpGet(url)
+    val response = httpClient.execute(request, httpContext).getEntity
+    val content = EntityUtils.toString(response)
+    EntityUtils.consumeQuietly(response)
+    content
   }
 
   override def getDefaultPortalKey: String = "consolePortalAdapter"
