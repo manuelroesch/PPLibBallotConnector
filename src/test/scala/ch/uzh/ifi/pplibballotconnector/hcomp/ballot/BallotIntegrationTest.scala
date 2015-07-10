@@ -9,8 +9,8 @@ import junit.framework.Assert
 import org.apache.http.NameValuePair
 import org.apache.http.client.entity.UrlEncodedFormEntity
 import org.apache.http.client.methods.{HttpGet, HttpPost}
-import org.apache.http.client.protocol.{HttpClientContext, ClientContext}
-import org.apache.http.impl.client.{CloseableHttpClient, HttpClientBuilder, BasicCookieStore, DefaultHttpClient}
+import org.apache.http.client.protocol.HttpClientContext
+import org.apache.http.impl.client.{HttpClientBuilder, BasicCookieStore}
 import org.apache.http.message.BasicNameValuePair
 import org.apache.http.protocol.BasicHttpContext
 import org.apache.http.util.EntityUtils
