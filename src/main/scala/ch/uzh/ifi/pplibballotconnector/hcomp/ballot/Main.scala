@@ -5,6 +5,7 @@ import java.io.{File, FileInputStream}
 import ch.uzh.ifi.pdeboer.pplib.hcomp._
 import ch.uzh.ifi.pdeboer.pplib.util.LazyLogger
 import ch.uzh.ifi.pplibballotconnector.persistence.DBSettings
+import com.typesafe.config.ConfigFactory
 import org.apache.commons.codec.binary.Base64
 
 import scala.xml.NodeSeq
@@ -17,7 +18,7 @@ object Main extends App with LazyLogger {
   DBSettings.initialize()
 
   val decoratedPortalAdapter = new ConsolePortalAdapter()
-  val ballotPortalAdapter = new BallotPortalAdapter(decoratedPortalAdapter, baseURL = "http://localhost:9000/")
+  val ballotPortalAdapter = new BallotPortalAdapter(decoratedPortalAdapter, baseURL = ConfigFactory.load().getString("hcomp.ballot.baseURL"))
 
   val SNIPPET_DIR = "snippets/"
 
@@ -44,6 +45,8 @@ object Main extends App with LazyLogger {
     }
 
   })
+
+
 
 
 
