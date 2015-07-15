@@ -100,7 +100,7 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
   //TODO: restructure this
   def ensureFormHasValidInputElements(form: NodeSeq): Boolean = {
     val checkAttributesOfInputElements = new mutable.HashMap[NodeSeq, Map[String, String]]
-    if ((form \\ "input").nonEmpty) {checkAttributesOfInputElements += (form \\ "input" -> Map("type" -> "submit", "name" -> ""))}
+    if ((form \\ "input").nonEmpty) {checkAttributesOfInputElements += (form \\ "input" -> Map("type" -> "submit"))}
     if ((form \\ "textarea").nonEmpty) {checkAttributesOfInputElements += (form \\ "textarea" -> Map("name" -> ""))}
     if ((form \\ "button").nonEmpty) {checkAttributesOfInputElements += (form \\ "button" -> Map("type" -> "submit"))}
     if ((form \\ "select").nonEmpty) {checkAttributesOfInputElements += (form \\ "select" -> Map("name" -> ""))}
