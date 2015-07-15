@@ -9,7 +9,7 @@ libraryDependencies ++= Seq(
   "org.slf4j"                 %  "slf4j-log4j12"                % "1.7.5",
   "mysql"                     %  "mysql-connector-java"         % "5.1.34",
   "org.apache.httpcomponents" %  "httpclient"                   % "4.5",
-  "com.typesafe"              %  "config"                       % "1.3.0",
+  "com.typesafe"              %  "config"                       % "1.2.1",
   "junit"                     %  "junit"                        % "4.8.1" % "test",
   "org.scalikejdbc"           %% "scalikejdbc"                  % "2.2.7",
   "com.h2database"            %  "h2"                           % "1.4.184",
