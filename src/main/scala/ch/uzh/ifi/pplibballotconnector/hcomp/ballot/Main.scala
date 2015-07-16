@@ -20,7 +20,7 @@ object Main extends App with LazyLogger {
   HComp.addPortal(new ConsolePortalAdapter())
   
   val portalBuilder = new BallotPortalBuilder()
-  portalBuilder.setParameter(portalBuilder.DECORATED_PORTAL_KEY, "decoratedPortalKey")
+  portalBuilder.setParameter(portalBuilder.DECORATED_PORTAL_KEY, "consolePortalKey")
   portalBuilder.setParameter(portalBuilder.BASE_URL, ConfigFactory.load().getString("hcomp.ballot.baseURL"))
 
   val ballotPortalAdapter = portalBuilder.build
@@ -164,7 +164,7 @@ class ConsolePortalAdapter extends HCompPortalAdapter with AnswerRejection {
     Some(FreetextAnswer(freeTextQuery, scala.io.StdIn.readLine("\n> ").toString()))
   }
 
-  override def getDefaultPortalKey: String = "decoratedPortalKey"
+  override def getDefaultPortalKey: String = "consolePortalKey"
 
   override def cancelQuery(query: HCompQuery): Unit = ???
 }

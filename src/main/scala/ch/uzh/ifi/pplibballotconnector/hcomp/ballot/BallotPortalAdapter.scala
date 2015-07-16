@@ -7,7 +7,6 @@ import ch.uzh.ifi.pplibballotconnector.dao.{BallotDAO, DAO}
 import org.joda.time.DateTime
 import play.api.libs.json.{JsObject, Json}
 
-import scala.collection.mutable
 import scala.util.Random
 import scala.xml._
 
@@ -97,13 +96,20 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 
   override def cancelQuery(query: HCompQuery): Unit = decorated.cancelQuery(query)
 
-  //TODO: restructure this
   def ensureFormHasValidInputElements(form: NodeSeq): Boolean = {
-    val checkAttributesOfInputElements = new mutable.HashMap[NodeSeq, Map[String, String]]
-    if ((form \\ "input").nonEmpty) {checkAttributesOfInputElements += (form \\ "input" -> Map("type" -> "submit"))}
-    if ((form \\ "textarea").nonEmpty) {checkAttributesOfInputElements += (form \\ "textarea" -> Map("name" -> ""))}
-    if ((form \\ "button").nonEmpty) {checkAttributesOfInputElements += (form \\ "button" -> Map("type" -> "submit"))}
-    if ((form \\ "select").nonEmpty) {checkAttributesOfInputElements += (form \\ "select" -> Map("name" -> ""))}
+    val supportedFields = List[(String, Map[String, String])](
+      "input"     -> Map("type" -> "submit"),
+      "textarea"  -> Map("name" -> ""),
+      "button"    -> Map("type" -> "submit"),
+      "select"    -> Map("name" -> ""))
+
+    var checkAttributesOfInputElements = List.empty[(NodeSeq, Map[String, String])]
+
+    supportedFields.foreach(formField => {
+      if((form \\ formField._1).nonEmpty){
+        checkAttributesOfInputElements ::= ((form \\ formField._1) -> formField._2)
+      }
+    })
 
     if (checkAttributesOfInputElements.isEmpty) {
       logger.error("The form doesn't contain any input, select, textarea or button.")
