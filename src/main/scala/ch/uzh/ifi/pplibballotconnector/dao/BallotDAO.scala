@@ -29,9 +29,9 @@ class BallotDAO extends DAO{
   }
 
 
-  override def createBatch(allowedAnswersPerTurker: Int, uuid: String): Long = {
+  override def createBatch(allowedAnswersPerTurker: Int, uuid: UUID): Long = {
     DB localTx { implicit session =>
-      sql"insert into batch(allowed_answers_per_turker, uuid) values(${allowedAnswersPerTurker}, ${uuid})".updateAndReturnGeneratedKey().apply()
+      sql"insert into batch(allowed_answers_per_turker, uuid) values(${allowedAnswersPerTurker}, ${uuid.toString})".updateAndReturnGeneratedKey().apply()
     }
   }
 
@@ -53,9 +53,9 @@ class BallotDAO extends DAO{
     }
   }
 
-  override def getBatchIdByUUID(uuid: String): Option[Long] = {
+  override def getBatchIdByUUID(uuid: UUID): Option[Long] = {
     DB readOnly { implicit session =>
-      sql"select id from batch where uuid = ${uuid}".map(rs => rs.long("id")).single().apply()
+      sql"select id from batch where uuid = ${uuid.toString}".map(rs => rs.long("id")).single().apply()
     }
   }
 }

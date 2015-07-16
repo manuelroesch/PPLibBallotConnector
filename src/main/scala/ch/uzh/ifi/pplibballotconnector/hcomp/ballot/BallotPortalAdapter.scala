@@ -27,13 +27,12 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
       case _ => XML.loadString(query.question)
     }
 
-    val batchIdFromDB = properties match {
+    val batchIdFromDB: Long = properties match {
       case p: BallotProperties => {
-        dao.getBatchIdByUUID(p.batch.uuid.toString).getOrElse {
-          dao.createBatch(p.allowedAnswersPerTurker, UUID.randomUUID().toString)
-        }
+        dao.getBatchIdByUUID(p.batch.uuid).getOrElse(
+          dao.createBatch(p.allowedAnswersPerTurker, p.batch.uuid))
       }
-      case _ => dao.createBatch(0, UUID.randomUUID().toString)
+      case _ => dao.createBatch(0, UUID.randomUUID())
     }
 
     val expectedCodeFromDecoratedPortal = properties match {

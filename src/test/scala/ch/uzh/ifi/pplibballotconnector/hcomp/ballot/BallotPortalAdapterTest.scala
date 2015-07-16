@@ -134,9 +134,9 @@ class DAOTest extends DAO with LazyLogger1 {
 	val questions = new mutable.HashMap[Long, String]
 	val answers = new mutable.HashMap[Long, String]
 
-	override def createBatch(allowedAnswerPerTurker: Int, uuid: String): Long = {
+	override def createBatch(allowedAnswerPerTurker: Int, uuid: UUID): Long = {
 		logger.debug("Adding new Batch: " + uuid)
-		batches += ((batches.size + 1).toLong -> uuid)
+		batches += ((batches.size + 1).toLong -> uuid.toString)
 		batches.size.toLong
 	}
 
@@ -144,7 +144,7 @@ class DAOTest extends DAO with LazyLogger1 {
 		answers.get(questionId)
 	}
 
-	override def getBatchIdByUUID(uuid: String): Option[Long] = {
+	override def getBatchIdByUUID(uuid: UUID): Option[Long] = {
 		batches.foreach(b => {
 			if (b._2.equals(uuid)) {
 				logger.debug("Found batch by UUID: " + b._1)

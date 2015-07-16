@@ -1,6 +1,7 @@
 package ch.uzh.ifi.pplibballotconnector.hcomp.ballot
 
 import java.io.{File, FileInputStream, FilenameFilter}
+import java.util.UUID
 
 import ch.uzh.ifi.pdeboer.pplib.hcomp._
 import ch.uzh.ifi.pdeboer.pplib.util.LazyLogger
@@ -27,6 +28,8 @@ object Main extends App with LazyLogger {
 
   val SNIPPET_DIR = "snippets/"
 
+  val ANSWERS_PER_QUERY = 1
+
   new File(SNIPPET_DIR).listFiles(new FilenameFilter {
     override def accept(dir: File, name: String): Boolean = name.endsWith(".png")
   }).foreach(snippet => {
@@ -34,21 +37,25 @@ object Main extends App with LazyLogger {
     val base64Image = getBase64String(snippet)
 
     val ballotHtmlPage : NodeSeq = createHtmlPage(base64Image)
-
     val query = HTMLQuery(ballotHtmlPage)
-    val properties = new BallotProperties(Batch(), 1)
+    val properties = new BallotProperties(Batch(UUID.randomUUID()), 1)
 
-    ballotPortalAdapter.processQuery(query, properties) match {
-      case ans : Option[HTMLQueryAnswer] => {
-        if (ans.isDefined){
-          println("\n\n***** " + ans.get.answers)
-        }else {
-          println("Error while getting the answer")
+    var answers = List.empty[HTMLQueryAnswer]
+    do {
+      ballotPortalAdapter.processQuery(query, properties) match {
+        case ans: Option[HTMLQueryAnswer] => {
+          if (ans.isDefined) {
+            answers ::= ans.get
+          } else {
+            println("Error while getting the answer")
+          }
         }
+        case _ => println("Unknown error!")
       }
-      case _ => println("Unknown error!")
     }
+    while(answers.size < ANSWERS_PER_QUERY)
 
+    println(answers.foreach(a => "ANSWER: "+a.answers))
   })
 
   def getBase64String(image: File) = {
