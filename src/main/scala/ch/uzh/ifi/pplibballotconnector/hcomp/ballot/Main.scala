@@ -1,6 +1,6 @@
 package ch.uzh.ifi.pplibballotconnector.hcomp.ballot
 
-import java.io.{File, FileInputStream}
+import java.io.{File, FileInputStream, FilenameFilter}
 
 import ch.uzh.ifi.pdeboer.pplib.hcomp._
 import ch.uzh.ifi.pdeboer.pplib.util.LazyLogger
@@ -17,16 +17,21 @@ object Main extends App with LazyLogger {
 
   DBSettings.initialize()
 
-  val decoratedPortalAdapter = new ConsolePortalAdapter()
-  val ballotPortalAdapter = new BallotPortalAdapter(decoratedPortalAdapter, baseURL = ConfigFactory.load().getString("hcomp.ballot.baseURL"))
+  HComp.addPortal(new ConsolePortalAdapter())
+  
+  val portalBuilder = new BallotPortalBuilder()
+  portalBuilder.setParameter(portalBuilder.DECORATED_PORTAL_KEY, "decoratedPortalKey")
+  portalBuilder.setParameter(portalBuilder.BASE_URL, ConfigFactory.load().getString("hcomp.ballot.baseURL"))
+
+  val ballotPortalAdapter = portalBuilder.build
 
   val SNIPPET_DIR = "snippets/"
 
-  new File(SNIPPET_DIR).listFiles().foreach(snippet => {
-    val imageInFile : FileInputStream = new FileInputStream(snippet)
-    val imageData = new Array[Byte](snippet.length().asInstanceOf[Int])
-    imageInFile.read(imageData)
-    val base64Image = "data:image/png;base64,"+Base64.encodeBase64String(imageData)
+  new File(SNIPPET_DIR).listFiles(new FilenameFilter {
+    override def accept(dir: File, name: String): Boolean = name.endsWith(".png")
+  }).foreach(snippet => {
+
+    val base64Image = getBase64String(snippet)
 
     val ballotHtmlPage : NodeSeq = createHtmlPage(base64Image)
 
@@ -46,12 +51,14 @@ object Main extends App with LazyLogger {
 
   })
 
+  def getBase64String(image: File) = {
+    val imageInFile : FileInputStream = new FileInputStream(image)
+    val imageData = new Array[Byte](image.length().asInstanceOf[Int])
+    imageInFile.read(imageData)
+    "data:image/png;base64,"+Base64.encodeBase64String(imageData)
+  }
 
-
-
-
-  def createHtmlPage(image: String) : NodeSeq = {
-    val page =
+  def createHtmlPage(imageBase64Format: String) : NodeSeq = {
       <div ng-controller="QuestionCtrl">
         <p>
           Thank you for participating in our survey.<br />
@@ -64,7 +71,7 @@ object Main extends App with LazyLogger {
           Please have a look at the text-snipplet below. You'll find a <span style="background-color:#FFFF00;">statistical method marked in yellow</span> and a <span style="background-color:#00FF00;">prerequisite marked in green.</span>
         </p>
         <div>
-          <img src={image} style="border:1px solid black;" width="90%" height="90%"></img>
+          <img src={imageBase64Format} style="border:1px solid black;" width="90%" height="90%"></img>
         </div>
 
         <br />
@@ -140,7 +147,6 @@ object Main extends App with LazyLogger {
         <br />
         <br />
       </div>
-    page
   }
 
 }
@@ -158,7 +164,7 @@ class ConsolePortalAdapter extends HCompPortalAdapter with AnswerRejection {
     Some(FreetextAnswer(freeTextQuery, scala.io.StdIn.readLine("\n> ").toString()))
   }
 
-  override def getDefaultPortalKey: String = "consolePortalAdapter"
+  override def getDefaultPortalKey: String = "decoratedPortalKey"
 
   override def cancelQuery(query: HCompQuery): Unit = ???
 }
