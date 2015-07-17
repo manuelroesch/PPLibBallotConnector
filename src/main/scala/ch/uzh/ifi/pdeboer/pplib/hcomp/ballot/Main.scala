@@ -144,18 +144,21 @@ object Main extends App with LazyLogger {
           <p>
             Please select the number below that best represents how certain you feel about the answer you have provided before.
           </p>
-          <div class="form-group">
-            <div style="width:100%">
-              <span style="float:left">
-                <b>Not certain at all</b>
-              </span>
 
-              <span style="float:right;">
-                <b>Absolutely certain</b>
-              </span>
+          <div class="form-group" style="width:100%;">
+            <label class="col-sm-6 control-label">Not certain at all</label>
+            <label class="col-sm-6 control-label" style="text-align: right">Absolutely certain</label>
+          </div>
+
+
+          <div class="form-group" style="width:100%;">
+            <div class="col-sm-12">
+              <label class="radio-inline" style="margin-right: 20%;"><input type="radio" name="accuracy" value="1" required="required"/>1</label>
+              <label class="radio-inline" style="margin-right: 20%;"><input type="radio" name="accuracy" value="2" />2</label>
+              <label class="radio-inline" style="margin-right: 20%;"><input type="radio" name="accuracy" value="3" />3</label>
+              <label class="radio-inline" style="margin-right: 20%;"><input type="radio" name="accuracy" value="4" />4</label>
+              <label class="radio-inline"><input type="radio" name="accuracy" value="5" />5</label>
             </div>
-
-            <input type="range" min="0" max="5" value="0" id="slider" name="isRelatedAccuracy"/>
           </div>
 
           <hr style="width:100%" />
