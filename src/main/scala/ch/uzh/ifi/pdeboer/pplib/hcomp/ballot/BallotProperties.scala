@@ -27,4 +27,4 @@ private[ballot]
 case class Batch(uuid: UUID = UUID.randomUUID())
 
 private[ballot]
-case class Asset(binary: Array[Byte], contentType: String, uuid: UUID = UUID.randomUUID())
+case class Asset(binary: Array[Byte], contentType: String)
