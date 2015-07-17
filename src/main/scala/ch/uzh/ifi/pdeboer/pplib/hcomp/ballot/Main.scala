@@ -1,12 +1,11 @@
-package ch.uzh.ifi.pplibballotconnector.hcomp.ballot
+package ch.uzh.ifi.pdeboer.pplib.hcomp.ballot
 
 import java.io.{File, FileInputStream, FilenameFilter}
 import java.util.UUID
 
 import ch.uzh.ifi.pdeboer.pplib.hcomp._
+import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.persistence.DBSettings
 import ch.uzh.ifi.pdeboer.pplib.util.LazyLogger
-import ch.uzh.ifi.pplibballotconnector.persistence.DBSettings
-import com.typesafe.config.ConfigFactory
 import org.apache.commons.codec.binary.Base64
 
 import scala.xml.NodeSeq
@@ -18,13 +17,7 @@ object Main extends App with LazyLogger {
 
   DBSettings.initialize()
 
-  HComp.addPortal(new ConsolePortalAdapter())
-  
-  val portalBuilder = new BallotPortalBuilder()
-  portalBuilder.setParameter(portalBuilder.DECORATED_PORTAL_KEY, "consolePortalKey")
-  portalBuilder.setParameter(portalBuilder.BASE_URL, ConfigFactory.load().getString("hcomp.ballot.baseURL"))
-
-  val ballotPortalAdapter = portalBuilder.build
+  val ballotPortalAdapter = HComp.apply(BallotPortalAdapter.PORTAL_KEY)
 
   val SNIPPET_DIR = "snippets/"
 
@@ -46,6 +39,7 @@ object Main extends App with LazyLogger {
         case ans: Option[HTMLQueryAnswer] => {
           if (ans.isDefined) {
             answers ::= ans.get
+            println("Answer: " + ans.get.answers.mkString(" "))
           } else {
             println("Error while getting the answer")
           }
@@ -158,6 +152,7 @@ object Main extends App with LazyLogger {
 
 }
 
+@HCompPortal(builder = classOf[ConsolePortalBuilder], autoInit = true)
 class ConsolePortalAdapter extends HCompPortalAdapter with AnswerRejection {
   override def processQuery(query: HCompQuery, properties: HCompQueryProperties): Option[HCompAnswer] = {
 
@@ -171,7 +166,21 @@ class ConsolePortalAdapter extends HCompPortalAdapter with AnswerRejection {
     Some(FreetextAnswer(freeTextQuery, scala.io.StdIn.readLine("\n> ").toString()))
   }
 
-  override def getDefaultPortalKey: String = "consolePortalKey"
+  override def getDefaultPortalKey: String = ConsolePortalAdapter.PORTAL_KEY
 
   override def cancelQuery(query: HCompQuery): Unit = ???
+}
+object ConsolePortalAdapter {
+  val CONFIG_ACCESS_ID_KEY = "hcomp.ballot.decoratedPortalKey"
+  val CONFIG_BASE_URL = "hcomp.ballot.baseURL"
+  val PORTAL_KEY = "ConsolePortalKey"
+}
+
+class ConsolePortalBuilder extends HCompPortalBuilder {
+
+  override def build: HCompPortalAdapter = new ConsolePortalAdapter()
+
+  override def expectedParameters: List[String] = List()
+
+  override def parameterToConfigPath: Map[String, String] = Map()
 }

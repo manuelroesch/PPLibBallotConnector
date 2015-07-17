@@ -1,4 +1,4 @@
-package ch.uzh.ifi.pplibballotconnector.util
+package ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.util
 
 import com.typesafe.scalalogging.Logger
 import org.slf4j.LoggerFactory

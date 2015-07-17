@@ -1,4 +1,4 @@
-package ch.uzh.ifi.pplibballotconnector.persistence
+package ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.persistence
 
 /**
  * Created by Mattia on 19.01.2015.

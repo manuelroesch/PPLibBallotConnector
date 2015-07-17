@@ -1,10 +1,10 @@
-package ch.uzh.ifi.pplibballotconnector.hcomp.ballot
+package ch.uzh.ifi.pdeboer.pplib.hcomp.ballot
 
 import java.util.UUID
 
 import ch.uzh.ifi.pdeboer.pplib.hcomp._
-import ch.uzh.ifi.pplibballotconnector.dao.DAO
-import ch.uzh.ifi.pplibballotconnector.util.LazyLogger1
+import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.dao.DAO
+import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.util.LazyLogger1
 import org.joda.time.DateTime
 import org.junit.{Assert, Test}
 

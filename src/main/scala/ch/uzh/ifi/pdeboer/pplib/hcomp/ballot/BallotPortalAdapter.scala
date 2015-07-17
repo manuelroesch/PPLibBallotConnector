@@ -1,9 +1,9 @@
-package ch.uzh.ifi.pplibballotconnector.hcomp.ballot
+package ch.uzh.ifi.pdeboer.pplib.hcomp.ballot
 
 import java.util.UUID
 
 import ch.uzh.ifi.pdeboer.pplib.hcomp._
-import ch.uzh.ifi.pplibballotconnector.dao.{BallotDAO, DAO}
+import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.dao.{BallotDAO, DAO}
 import org.joda.time.DateTime
 import play.api.libs.json.{JsObject, Json}
 
@@ -60,7 +60,7 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
           val questionId = dao.createQuestion(htmlToDisplayOnBallotPage.toString(), expectedCodeFromDecoratedPortal, batchIdFromDB, questionUUID)
           val link = baseURL + "showQuestion/" + questionUUID
 
-          val ans = decorated.sendQueryAndAwaitResult(FreetextQuery(link + "<br> click the link and enter here the code when you are finish:<br> <input type=\"text\">"), properties)
+          val ans = decorated.sendQueryAndAwaitResult(FreetextQuery("Please, open the link: "+ link + " and follow the instructions to answer the question.\n Once you are done paste the confirmation value here:"), properties)
             .get.asInstanceOf[FreetextAnswer]
 
           if (ans.answer.equals(expectedCodeFromDecoratedPortal + "")) {
@@ -91,7 +91,7 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
     Some(HTMLQueryAnswer(answer, HTMLQuery(htmlToDisplayOnBallotPage)))
   }
 
-  override def getDefaultPortalKey: String = decorated.getDefaultPortalKey
+  override def getDefaultPortalKey: String = BallotPortalAdapter.PORTAL_KEY
 
   override def cancelQuery(query: HCompQuery): Unit = decorated.cancelQuery(query)
 

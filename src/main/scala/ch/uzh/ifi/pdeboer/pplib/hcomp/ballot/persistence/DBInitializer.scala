@@ -1,6 +1,6 @@
-package ch.uzh.ifi.pplibballotconnector.persistence
+package ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.persistence
 
-import ch.uzh.ifi.pplibballotconnector.util.LazyLogger1
+import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.util.LazyLogger1
 import scalikejdbc._
 
 /**

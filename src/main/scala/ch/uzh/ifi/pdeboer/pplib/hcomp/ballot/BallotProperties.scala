@@ -1,4 +1,4 @@
-package ch.uzh.ifi.pplibballotconnector.hcomp.ballot
+package ch.uzh.ifi.pdeboer.pplib.hcomp.ballot
 
 import java.util.UUID
 

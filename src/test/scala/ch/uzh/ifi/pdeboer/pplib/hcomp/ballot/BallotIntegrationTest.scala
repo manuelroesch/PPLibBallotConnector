@@ -1,20 +1,20 @@
-package ch.uzh.ifi.pplibballotconnector.hcomp.ballot
+package ch.uzh.ifi.pdeboer.pplib.hcomp.ballot
 
-import java.util
 
 import ch.uzh.ifi.pdeboer.pplib.hcomp._
-import ch.uzh.ifi.pplibballotconnector.dao.BallotDAO
-import ch.uzh.ifi.pplibballotconnector.persistence.DBSettings
+import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.dao.BallotDAO
+import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.persistence.DBSettings
 import junit.framework.Assert
 import org.apache.http.NameValuePair
 import org.apache.http.client.entity.UrlEncodedFormEntity
 import org.apache.http.client.methods.{HttpGet, HttpPost}
 import org.apache.http.client.protocol.HttpClientContext
-import org.apache.http.impl.client.{HttpClientBuilder, BasicCookieStore}
+import org.apache.http.impl.client.{BasicCookieStore, HttpClientBuilder}
 import org.apache.http.message.BasicNameValuePair
 import org.apache.http.protocol.BasicHttpContext
 import org.apache.http.util.EntityUtils
 import org.junit.Test
+
 import scala.xml.NodeSeq
 
 /**
@@ -87,7 +87,7 @@ class IntegrationPortalAdapter extends HCompPortalAdapter with AnswerRejection {
     logger.debug("Question URL: " + questionURL)
 
     //1. login to initialize the session
-    val loginParams = new util.ArrayList[NameValuePair]()
+    val loginParams = new java.util.ArrayList[NameValuePair]()
     loginParams.add(new BasicNameValuePair("TurkerID", "integrationTest"))
     performAndConsumePostRequest("http://localhost:9000/login", loginParams)
 
@@ -98,7 +98,7 @@ class IntegrationPortalAdapter extends HCompPortalAdapter with AnswerRejection {
     val questionId = questionPage.substring(questionPage.indexOf("name=\\\"questionId\\\" value=\\\"") + 28, questionPage.indexOf("\\\">"))
     logger.debug("Question id: " + questionId)
 
-    val answerParams = new util.ArrayList[NameValuePair]()
+    val answerParams = new java.util.ArrayList[NameValuePair]()
     answerParams.add(new BasicNameValuePair("questionId", questionId))
     answerParams.add(new BasicNameValuePair("answer", "Yes"))
     val codePage = performAndConsumePostRequest("http://localhost:9000/storeAnswer", answerParams)
@@ -109,7 +109,7 @@ class IntegrationPortalAdapter extends HCompPortalAdapter with AnswerRejection {
     codePage.substring(codePage.indexOf("<h1>") + 4, codePage.indexOf("</h1>"))
   }
 
-  def performAndConsumePostRequest(url: String, params: util.ArrayList[NameValuePair]): String = {
+  def performAndConsumePostRequest(url: String, params: java.util.ArrayList[NameValuePair]): String = {
     val request = new HttpPost(url)
     request.setEntity(new UrlEncodedFormEntity(params))
     val response = httpClient.execute(request, httpContext)
