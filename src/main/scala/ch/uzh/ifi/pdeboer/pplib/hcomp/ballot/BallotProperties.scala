@@ -13,13 +13,18 @@ import scala.util.Random
 private[ballot]
 class BallotProperties(
                         batch1: Batch,
+                        asset1: List[Asset],
                         allowedAnswersPerTurker1: Int,
                         outputCode1: Long = Math.abs(new Random(new DateTime().getMillis).nextLong())) extends HCompQueryProperties {
 
   val batch = batch1
+  val assets = asset1
   val allowedAnswersPerTurker = allowedAnswersPerTurker1
   val outputCode = outputCode1
 }
 
 private[ballot]
 case class Batch(uuid: UUID = UUID.randomUUID())
+
+private[ballot]
+case class Asset(binary: Array[Byte], contentType: String, uuid: UUID = UUID.randomUUID())

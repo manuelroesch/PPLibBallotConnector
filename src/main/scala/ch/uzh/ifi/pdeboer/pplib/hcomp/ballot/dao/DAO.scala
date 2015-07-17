@@ -9,9 +9,13 @@ import org.joda.time.DateTime
  */
 trait DAO {
 
+  def getAssetIdsByQuestionId(questionId: Long) : List[Long]
+
+  def createAsset(binary: Array[Byte], contentType: String, questionId: Long): Long
+
   def createBatch(allowedAnswerPerTurker: Int, uuid: UUID): Long
 
-  def createQuestion(html: String, outputCode: Long, batchId: Long, uuid: String = UUID.randomUUID().toString, dateTime: DateTime = new DateTime()): Long
+  def createQuestion(html: String, outputCode: Long, batchId: Long, uuid: UUID = UUID.randomUUID(), dateTime: DateTime = new DateTime()): Long
 
   def getAnswer(questionId: Long): Option[String]
 

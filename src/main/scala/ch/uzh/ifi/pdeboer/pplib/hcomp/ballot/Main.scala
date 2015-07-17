@@ -1,13 +1,15 @@
 package ch.uzh.ifi.pdeboer.pplib.hcomp.ballot
 
-import java.io.{File, FileInputStream, FilenameFilter}
+import java.io._
 import java.util.UUID
+import javax.activation.MimetypesFileTypeMap
 
 import ch.uzh.ifi.pdeboer.pplib.hcomp._
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.persistence.DBSettings
 import ch.uzh.ifi.pdeboer.pplib.util.LazyLogger
 import org.apache.commons.codec.binary.Base64
 
+import scala.io.Source
 import scala.xml.NodeSeq
 
 /**
@@ -17,9 +19,10 @@ object Main extends App with LazyLogger {
 
   DBSettings.initialize()
 
-  val ballotPortalAdapter = HComp.apply(BallotPortalAdapter.PORTAL_KEY)
+  val ballotPortalAdapter = HComp(BallotPortalAdapter.PORTAL_KEY)
 
-  val SNIPPET_DIR = "snippets/"
+  val SNIPPET_DIR = "../snippets/"
+  val OUTPUT_DIR = "../output/"
 
   val ANSWERS_PER_QUERY = 1
 
@@ -29,9 +32,20 @@ object Main extends App with LazyLogger {
 
     val base64Image = getBase64String(snippet)
 
+
     val ballotHtmlPage : NodeSeq = createHtmlPage(base64Image)
     val query = HTMLQuery(ballotHtmlPage)
-    val properties = new BallotProperties(Batch(UUID.randomUUID()), 1)
+
+    val pdfName = snippet.getName.substring(0, snippet.getName.lastIndexOf("-"))
+    val is: InputStream = new FileInputStream(OUTPUT_DIR+pdfName)
+
+    val source = Source.fromInputStream(is)
+    val binary = Stream.continually(is.read).takeWhile(-1 !=).map(_.toByte).toArray
+    source.close()
+
+    val contentType = new MimetypesFileTypeMap().getContentType(new File(OUTPUT_DIR+pdfName))
+
+    val properties = new BallotProperties(Batch(UUID.randomUUID()), List(Asset(binary, contentType)), 1)
 
     var answers = List.empty[HTMLQueryAnswer]
     do {
@@ -39,7 +53,7 @@ object Main extends App with LazyLogger {
         case ans: Option[HTMLQueryAnswer] => {
           if (ans.isDefined) {
             answers ::= ans.get
-            println("Answer: " + ans.get.answers.mkString(" "))
+            println("Answer: " + ans.get.answers.mkString("\n- "))
           } else {
             println("Error while getting the answer")
           }
@@ -49,7 +63,6 @@ object Main extends App with LazyLogger {
     }
     while(answers.size < ANSWERS_PER_QUERY)
 
-    println(answers.foreach(a => "ANSWER: "+a.answers))
   })
 
   def getBase64String(image: File) = {
@@ -75,6 +88,10 @@ object Main extends App with LazyLogger {
           <img src={imageBase64Format} style="border:1px solid black;" width="90%" height="90%"></img>
         </div>
 
+        <div id="assets">
+          If you would like to read more context in order to give better and more accurate answers, you can browse the PDF file by clicking
+        </div>
+
         <br />
         <hr style="width:100%" />
         <div>
@@ -87,7 +104,7 @@ object Main extends App with LazyLogger {
           </ul>
         </div>
 
-        <form>
+        <form onsubmit="return document.getElementById('descriptionIsRelated').value.length > 5">
           <h3>
             <label class="radio-inline">
               <input type="radio" name="isRelated" ng-model="isRelated" id="yes" value="Yes" required="required" /> Yes
@@ -153,7 +170,7 @@ object Main extends App with LazyLogger {
 }
 
 @HCompPortal(builder = classOf[ConsolePortalBuilder], autoInit = true)
-class ConsolePortalAdapter extends HCompPortalAdapter with AnswerRejection {
+class ConsolePortalAdapter(param: String = "") extends HCompPortalAdapter with AnswerRejection {
   override def processQuery(query: HCompQuery, properties: HCompQueryProperties): Option[HCompAnswer] = {
 
     val freeTextQuery = query match {
@@ -169,18 +186,29 @@ class ConsolePortalAdapter extends HCompPortalAdapter with AnswerRejection {
   override def getDefaultPortalKey: String = ConsolePortalAdapter.PORTAL_KEY
 
   override def cancelQuery(query: HCompQuery): Unit = ???
+
+  override def rejectAnswer(ans: HCompAnswer, message: String): Boolean = {
+    println(s"rejecting answer $ans with message $message")
+    super.rejectAnswer(ans, message)
+  }
+
+  override def approveAndBonusAnswer(ans: HCompAnswer, message: String, bonusCents: Int): Boolean = {
+    println(s"accepting answer $ans with message $message and bonus $bonusCents")
+    super.approveAndBonusAnswer(ans, message, bonusCents)
+  }
 }
+
 object ConsolePortalAdapter {
-  val CONFIG_ACCESS_ID_KEY = "hcomp.ballot.decoratedPortalKey"
-  val CONFIG_BASE_URL = "hcomp.ballot.baseURL"
-  val PORTAL_KEY = "ConsolePortalKey"
+  val PORTAL_KEY = "consolePortal"
+  val CONFIG_PARAM = "hcomp.consolePortal.param"
 }
 
 class ConsolePortalBuilder extends HCompPortalBuilder {
+  val PARAM_KEY = "param"
 
-  override def build: HCompPortalAdapter = new ConsolePortalAdapter()
+  override val parameterToConfigPath = Map(PARAM_KEY -> ConsolePortalAdapter.CONFIG_PARAM)
 
-  override def expectedParameters: List[String] = List()
+  override def build: HCompPortalAdapter = new ConsolePortalAdapter(params(PARAM_KEY))
 
-  override def parameterToConfigPath: Map[String, String] = Map()
+  override def expectedParameters: List[String] = List(PARAM_KEY)
 }

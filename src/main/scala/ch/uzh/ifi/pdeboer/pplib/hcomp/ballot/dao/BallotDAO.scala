@@ -41,9 +41,9 @@ class BallotDAO extends DAO{
     }
   }
 
-  override def createQuestion(html: String, outputCode: Long, batchId: Long, uuid: String = UUID.randomUUID().toString, dateTime: DateTime = new DateTime()): Long = {
+  override def createQuestion(html: String, outputCode: Long, batchId: Long, uuid: UUID = UUID.randomUUID(), dateTime: DateTime = new DateTime()): Long = {
     DB localTx { implicit session =>
-      sql"insert into question(html, output_code, batch_id, create_time, uuid) values(${html}, ${outputCode}, ${batchId}, ${dateTime}, ${uuid})".updateAndReturnGeneratedKey().apply()
+      sql"insert into question(batch_id, html, output_code, create_time, uuid) values(${batchId}, ${html}, ${outputCode}, ${dateTime}, ${uuid.toString})".updateAndReturnGeneratedKey().apply()
     }
   }
 
@@ -56,6 +56,18 @@ class BallotDAO extends DAO{
   override def getBatchIdByUUID(uuid: UUID): Option[Long] = {
     DB readOnly { implicit session =>
       sql"select id from batch where uuid = ${uuid.toString}".map(rs => rs.long("id")).single().apply()
+    }
+  }
+
+  override def createAsset(binary: Array[Byte], contentType: String, questionId: Long): Long = {
+    DB localTx { implicit session =>
+      sql"insert into assets(byte_array, content_type, question_id) values(${binary}, ${contentType}, ${questionId})".updateAndReturnGeneratedKey().apply()
+    }
+  }
+
+  override def getAssetIdsByQuestionId(questionId: Long): List[Long] = {
+    DB readOnly { implicit session =>
+      sql"select * from assets where question_id = ${questionId}".map(rs => rs.long("id")).list().apply()
     }
   }
 }

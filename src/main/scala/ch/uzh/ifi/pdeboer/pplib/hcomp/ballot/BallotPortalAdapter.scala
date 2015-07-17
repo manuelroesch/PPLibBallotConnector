@@ -4,10 +4,8 @@ import java.util.UUID
 
 import ch.uzh.ifi.pdeboer.pplib.hcomp._
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.dao.{BallotDAO, DAO}
-import org.joda.time.DateTime
 import play.api.libs.json.{JsObject, Json}
 
-import scala.util.Random
 import scala.xml._
 
 /**
@@ -22,42 +20,50 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 
   override def processQuery(query: HCompQuery, properties: HCompQueryProperties): Option[HCompAnswer] = {
 
+    val actualProperties: BallotProperties = properties match {
+      case p: BallotProperties => p
+      case _ => {
+        val uuid = UUID.randomUUID()
+        val batch = dao.createBatch(0, uuid)
+        new BallotProperties(Batch(uuid), List(Asset(Array.empty[Byte], "application/pdf")), 0)
+      }
+    }
+
     var htmlToDisplayOnBallotPage: NodeSeq = query match {
       case q: HTMLQuery => q.html
       case _ => XML.loadString(query.question)
     }
 
-    val batchIdFromDB: Long = properties match {
-      case p: BallotProperties => {
-        dao.getBatchIdByUUID(p.batch.uuid).getOrElse(
-          dao.createBatch(p.allowedAnswersPerTurker, p.batch.uuid))
-      }
-      case _ => dao.createBatch(0, UUID.randomUUID())
-    }
+    val batchIdFromDB: Long =
+        dao.getBatchIdByUUID(actualProperties.batch.uuid).getOrElse(
+          dao.createBatch(actualProperties.allowedAnswersPerTurker, actualProperties.batch.uuid))
 
-    val expectedCodeFromDecoratedPortal = properties match {
-      case p: BallotProperties => {
-        p.outputCode
-      }
-      case _ => Math.abs(new Random(new DateTime().getMillis).nextLong())
-    }
+
+    val expectedCodeFromDecoratedPortal = actualProperties.outputCode
 
     val answer: Option[HCompAnswer] = {
       if ((htmlToDisplayOnBallotPage \\ "form").nonEmpty) {
-        // Check and complete if action is not set or is set wrong 
-        (htmlToDisplayOnBallotPage \\ "form").foreach(f =>
-          if (!(f.attribute("action").isDefined && f.attribute("action").get.text.equalsIgnoreCase(baseURL + "storeAnswer"))) {
-            val correctedHtmlToDisplayOnBallotPage = htmlToDisplayOnBallotPage.toString().replace("<" + f.label + ">", "<form action=\"" + baseURL + "storeAnswer\" method=\"post\">")
+
+        val formWithoutActionAndMethod : Boolean = (htmlToDisplayOnBallotPage \\ "form").forall(f =>
+          if (f.attribute("action").isEmpty && f.attribute("method").isEmpty) {
+            val correctedHtmlToDisplayOnBallotPage = htmlToDisplayOnBallotPage.toString().replaceAll("\\<" + f.label + "(.*)\\>", "<form action=\"" + baseURL + "storeAnswer\" method=\"post\" $1>")
             htmlToDisplayOnBallotPage = XML.loadString(correctedHtmlToDisplayOnBallotPage)
+            true
+          }else {
+            logger.error("Form contains an action and/or method attribute. Please remove them.")
+            false
           }
         )
 
-        if (!(htmlToDisplayOnBallotPage \\ "form").exists(form => ensureFormHasValidInputElements(form))) {
-          logger.error("Form is not valid.")
+        if ( !formWithoutActionAndMethod || !(htmlToDisplayOnBallotPage \\ "form").exists(form => ensureFormHasValidInputElements(form))) {
+          logger.error("Form's content is not valid.")
           None
         } else {
-          val questionUUID = UUID.randomUUID().toString
+          val questionUUID = UUID.randomUUID()
           val questionId = dao.createQuestion(htmlToDisplayOnBallotPage.toString(), expectedCodeFromDecoratedPortal, batchIdFromDB, questionUUID)
+
+          actualProperties.assets.foreach(asset => dao.createAsset(asset.binary, asset.contentType, questionId))
+
           val link = baseURL + "showQuestion/" + questionUUID
 
           val ans = decorated.sendQueryAndAwaitResult(FreetextQuery("Please, open the link: "+ link + " and follow the instructions to answer the question.\n Once you are done paste the confirmation value here:"), properties)

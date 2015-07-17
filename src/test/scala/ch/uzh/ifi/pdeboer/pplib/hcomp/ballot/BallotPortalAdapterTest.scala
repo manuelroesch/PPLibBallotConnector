@@ -23,7 +23,7 @@ class BallotPortalAdapterTest {
 				<input type="submit" name="answer" value="yes"/>
 			</form>
 		</div>)
-		val prop = new BallotProperties(new Batch(), 1, 123)
+		val prop = new BallotProperties(Batch(), List(Asset(Array.empty[Byte], "application/pdf")), 1, 123)
 
 		val ans = b.processQuery(query, prop)
 
@@ -52,7 +52,7 @@ class BallotPortalAdapterTest {
 	@Test
 	def testWithoutForm: Unit = {
 		val b = new BallotPortalAdapter(new PortalAdapterTest(), new DAOTest(), "http://www.andreas.ifi.uzh.ch:9000/")
-		val ans = b.processQuery(HTMLQuery(<h1>test</h1>), new BallotProperties(new Batch(), 1, 123))
+		val ans = b.processQuery(HTMLQuery(<h1>test</h1>), new BallotProperties(Batch(), List(Asset(Array.empty[Byte], "application/pdf")), 1, 123))
 
 		Assert.assertEquals(ans, None)
 	}
@@ -68,7 +68,7 @@ class BallotPortalAdapterTest {
 					</p>
 				</form>
 			</div>
-		</div>), new BallotProperties(new Batch(), 1, 123))
+		</div>), new BallotProperties(Batch(), List(Asset(Array.empty[Byte], "application/pdf")), 1, 123))
 		Assert.assertEquals(ans.asInstanceOf[Option[HTMLQueryAnswer]].get.answers.get("answer").get, "yes")
 	}
 
@@ -83,7 +83,7 @@ class BallotPortalAdapterTest {
 					</p>
 				</form>
 			</div>
-		</div>), new BallotProperties(new Batch(), 1, 123))
+		</div>), new BallotProperties(Batch(), List(Asset(Array.empty[Byte], "application/pdf")), 1, 123))
 		Assert.assertEquals(ans, None)
 	}
 
@@ -94,7 +94,7 @@ class BallotPortalAdapterTest {
 			<h1>test</h1> <form action="http://www.andreas.ifi.uzh.ch:9000/asdasd" method="post">
 				<input type="submit" name="answer" value="yes"/>
 			</form>
-		</div>), new BallotProperties(new Batch(), 1, 123))
+		</div>), new BallotProperties(Batch(), List(Asset(Array.empty[Byte], "application/pdf")), 123))
 		Assert.assertEquals(ans.asInstanceOf[Option[HTMLQueryAnswer]].get.answers.get("answer").get, "yes")
 	}
 
@@ -103,7 +103,7 @@ class BallotPortalAdapterTest {
 		val b = new BallotPortalAdapter(new PortalAdapterTest(), new DAOTest(), "http://www.andreas.ifi.uzh.ch:9000/")
 		val ans = b.processQuery(HTMLQuery(<div>
 			<h1>test</h1> <form action="http://www.andreas.ifi.uzh.ch:9000/storeAnswer" method="post"></form>
-		</div>), new BallotProperties(new Batch(), 1, 123))
+		</div>), new BallotProperties(Batch(), List(Asset(Array.empty[Byte], "application/pdf")), 123))
 		Assert.assertEquals(ans, None)
 	}
 
@@ -112,7 +112,7 @@ class BallotPortalAdapterTest {
     val b = new BallotPortalAdapter(new PortalAdapterTest(), new DAOTest(), "http://www.andreas.ifi.uzh.ch:9000/")
     val ans = b.processQuery(HTMLQuery(<div>
       <h1>test</h1> <form><input type="submit" value="yes" name="answer" /></form>
-    </div>), new BallotProperties(new Batch(), 1, 123))
+    </div>), new BallotProperties(Batch(), List(Asset(Array.empty[Byte], "application/pdf")), 123))
     Assert.assertEquals(ans.asInstanceOf[Option[HTMLQueryAnswer]].get.answers.get("answer").get, "yes")
   }
 
@@ -130,6 +130,7 @@ class PortalAdapterTest() extends HCompPortalAdapter with AnswerRejection {
 
 class DAOTest extends DAO with LazyLogger1 {
 
+  val assets = new mutable.HashMap[Long, Long]
 	val batches = new mutable.HashMap[Long, String]
 	val questions = new mutable.HashMap[Long, String]
 	val answers = new mutable.HashMap[Long, String]
@@ -158,10 +159,27 @@ class DAOTest extends DAO with LazyLogger1 {
 		questions.get(questionId)
 	}
 
-	override def createQuestion(html: String, outputCode: Long, batchId: Long, uuid: String = UUID.randomUUID().toString, dateTime: DateTime = new DateTime()): Long = {
+	override def createQuestion(html: String, outputCode: Long, batchId: Long, uuid: UUID = UUID.randomUUID(), dateTime: DateTime = new DateTime()): Long = {
 		questions += ((questions.size + 1).toLong -> UUID.randomUUID().toString)
 		answers += ((answers.size + 1).toLong -> "{\"answer\":\"yes\"}")
 		logger.debug("Adding new Question with outputCode: " + outputCode)
 		questions.size.toLong
 	}
+
+  override def getAssetIdsByQuestionId(questionId: Long): List[Long] = {
+    var res = List.empty[Long]
+    assets.foreach(b => {
+      if (b._2  == questionId) {
+        logger.debug("Found assetId : " + b._1)
+        res ::= b._1
+      }
+    })
+    res
+  }
+
+  override def createAsset(binary: Array[Byte], contentType: String, questionId: Long): Long = {
+    assets += ((assets.size + 1).toLong -> questionId)
+    assets.size.toLong
+  }
+
 }

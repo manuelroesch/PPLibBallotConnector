@@ -44,8 +44,21 @@ object DBInitializer extends LazyLogger1{
       catch {
         case e: java.sql.SQLException =>
           DB autoCommit { implicit s =>
-            sql"CREATE TABLE question (id BIGINT NOT NULL AUTO_INCREMENT, html TEXT NOT NULL, output_code BIGINT NOT NULL, batch_id BIGINT NOT NULL, create_time datetime NOT NULL, uuid VARCHAR(255) NOT NULL, PRIMARY KEY(id), FOREIGN KEY(batch_id) REFERENCES batch(id));".execute().apply()
+            sql"CREATE TABLE question (id BIGINT NOT NULL AUTO_INCREMENT, batch_id BIGINT NOT NULL, html TEXT NOT NULL, output_code BIGINT NOT NULL, create_time datetime NOT NULL, uuid VARCHAR(255) NOT NULL, PRIMARY KEY(id), FOREIGN KEY(batch_id) REFERENCES batch(id));".execute().apply()
             logger.debug("Table question created")
+          }
+      }
+
+      //assets TABLE
+      try {
+        sql"select 1 from assets limit 1".map(_.long(1)).single.apply()
+        logger.debug("Table assets already initializated")
+      }
+      catch {
+        case e: java.sql.SQLException =>
+          DB autoCommit { implicit s =>
+            sql"CREATE TABLE assets (id BIGINT NOT NULL AUTO_INCREMENT, byte_array LONGVARBINARY NOT NULL, content_type VARCHAR(255) NOT NULL, question_id BIGINT NOT NULL, PRIMARY KEY(id), FOREIGN KEY(question_id) REFERENCES question(id));".execute().apply()
+            logger.debug("Table assets created")
           }
       }
 
