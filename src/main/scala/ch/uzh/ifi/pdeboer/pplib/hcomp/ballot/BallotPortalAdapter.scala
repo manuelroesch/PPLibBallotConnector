@@ -41,19 +41,23 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 
     val expectedCodeFromDecoratedPortal = actualProperties.outputCode
 
+    def checkAndFixFormFields: Boolean = {
+      (htmlToDisplayOnBallotPage \\ "form").forall(f =>
+        if (f.attribute("action").isEmpty && f.attribute("method").isEmpty) {
+          val correctedHtmlToDisplayOnBallotPage = htmlToDisplayOnBallotPage.toString().replaceAll("\\<" + f.label + "(.*)\\>", "<form action=\"" + baseURL + "storeAnswer\" method=\"post\" $1>")
+          htmlToDisplayOnBallotPage = XML.loadString(correctedHtmlToDisplayOnBallotPage)
+          true
+        } else {
+          logger.error("Form contains an action and/or method attribute. Please remove them.")
+          false
+        }
+      )
+    }
+
     val answer: Option[HCompAnswer] = {
       if ((htmlToDisplayOnBallotPage \\ "form").nonEmpty) {
 
-        val formWithoutActionAndMethod : Boolean = (htmlToDisplayOnBallotPage \\ "form").forall(f =>
-          if (f.attribute("action").isEmpty && f.attribute("method").isEmpty) {
-            val correctedHtmlToDisplayOnBallotPage = htmlToDisplayOnBallotPage.toString().replaceAll("\\<" + f.label + "(.*)\\>", "<form action=\"" + baseURL + "storeAnswer\" method=\"post\" $1>")
-            htmlToDisplayOnBallotPage = XML.loadString(correctedHtmlToDisplayOnBallotPage)
-            true
-          }else {
-            logger.error("Form contains an action and/or method attribute. Please remove them.")
-            false
-          }
-        )
+        val formWithoutActionAndMethod : Boolean = checkAndFixFormFields
 
         if ( !formWithoutActionAndMethod || !(htmlToDisplayOnBallotPage \\ "form").exists(form => ensureFormHasValidInputElements(form))) {
           logger.error("Form's content is not valid.")

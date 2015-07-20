@@ -32,20 +32,24 @@ object Main extends App with LazyLogger {
 
     val base64Image = getBase64String(snippet)
 
+    val snippetInputStream: InputStream = new FileInputStream(snippet)
+    val snippetSource = Source.fromInputStream(snippetInputStream)
+    val snippetBinary = Stream.continually(snippetInputStream.read).takeWhile(-1 !=).map(_.toByte).toArray
+    snippetSource.close()
 
     val ballotHtmlPage : NodeSeq = createHtmlPage(base64Image)
     val query = HTMLQuery(ballotHtmlPage)
 
     val pdfName = snippet.getName.substring(0, snippet.getName.lastIndexOf("-"))
-    val is: InputStream = new FileInputStream(OUTPUT_DIR+pdfName)
+    val pdfInputStream: InputStream = new FileInputStream(OUTPUT_DIR+pdfName)
 
-    val source = Source.fromInputStream(is)
-    val binary = Stream.continually(is.read).takeWhile(-1 !=).map(_.toByte).toArray
-    source.close()
+    val pdfSource = Source.fromInputStream(pdfInputStream)
+    val pdfBinary = Stream.continually(pdfInputStream.read).takeWhile(-1 !=).map(_.toByte).toArray
+    pdfSource.close()
 
     val contentType = new MimetypesFileTypeMap().getContentType(new File(OUTPUT_DIR+pdfName))
 
-    val properties = new BallotProperties(Batch(UUID.randomUUID()), List(Asset(binary, contentType)), 1)
+    val properties = new BallotProperties(Batch(UUID.randomUUID()), List(Asset(pdfBinary, contentType)), 1)
 
     var answers = List.empty[HTMLQueryAnswer]
     do {
