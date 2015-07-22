@@ -1,19 +1,19 @@
 package ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.persistence
 
-import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.util.LazyLogger1
+import ch.uzh.ifi.pdeboer.pplib.util.LazyLogger
 import scalikejdbc._
 
 /**
  * Created by mattia on 07.07.15.
  */
-object DBInitializer extends LazyLogger1{
+object DBInitializer extends LazyLogger {
 
   def run() {
     DB readOnly { implicit s =>
       //user TABLE
       try {
         sql"select 1 from user limit 1".map(_.long(1)).single.apply()
-        logger.debug("Table user already initializated")
+        logger.debug("Table user already initialized")
       }
       catch {
         case e: java.sql.SQLException =>
@@ -26,7 +26,7 @@ object DBInitializer extends LazyLogger1{
       //batch TABLE
       try {
         sql"select 1 from batch limit 1".map(_.long(1)).single.apply()
-        logger.debug("Table batch already initializated")
+        logger.debug("Table batch already initialized")
       }
       catch {
         case e: java.sql.SQLException =>
@@ -39,7 +39,7 @@ object DBInitializer extends LazyLogger1{
       //Question TABLE
       try {
         sql"select 1 from question limit 1".map(_.long(1)).single.apply()
-        logger.debug("Table question already initializated")
+        logger.debug("Table question already initialized")
       }
       catch {
         case e: java.sql.SQLException =>
@@ -52,7 +52,7 @@ object DBInitializer extends LazyLogger1{
       //assets TABLE
       try {
         sql"select 1 from assets limit 1".map(_.long(1)).single.apply()
-        logger.debug("Table assets already initializated")
+        logger.debug("Table assets already initialized")
       }
       catch {
         case e: java.sql.SQLException =>
@@ -65,7 +65,7 @@ object DBInitializer extends LazyLogger1{
       //answer TABLE
       try {
         sql"select 1 from answer limit 1".map(_.long(1)).single.apply()
-        logger.debug("Table answer already initializated")
+        logger.debug("Table answer already initialized")
       }
       catch {
         case e: java.sql.SQLException =>
