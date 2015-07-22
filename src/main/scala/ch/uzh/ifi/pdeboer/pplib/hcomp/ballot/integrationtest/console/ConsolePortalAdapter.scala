@@ -7,7 +7,7 @@ import ch.uzh.ifi.pdeboer.pplib.hcomp._
  */
 object ConsolePortalAdapter {
 	val PORTAL_KEY = "consolePortal"
-	val CONFIG_PARAM = "hcomp.consolePortal.param"
+	val CONFIG_PARAM = "param"
 }
 
 @HCompPortal(builder = classOf[ConsolePortalBuilder], autoInit = true)
@@ -49,4 +49,6 @@ class ConsolePortalBuilder extends HCompPortalBuilder {
 	override def build: HCompPortalAdapter = new ConsolePortalAdapter(params(PARAM_KEY))
 
 	override def expectedParameters: List[String] = List(PARAM_KEY)
+
+	override def key: String = ConsolePortalAdapter.PORTAL_KEY
 }

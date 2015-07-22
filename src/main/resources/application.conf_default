@@ -25,7 +25,7 @@ play.modules.disabled += "play.api.db.DBModule"
 
 hcomp.consolePortal.param = ""
 hcomp.ballot.decoratedPortalKey = "consolePortal"
-
+hcomp.ballot.order = "5"
 #hcomp.ballot.baseURL = "http://taliesin.ifi.uzh.ch:8081/ballot/"
 hcomp.ballot.baseURL = "http://localhost:8081/ballot/"
 

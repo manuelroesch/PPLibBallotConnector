@@ -140,8 +140,8 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 }
 
 object BallotPortalAdapter {
-  val CONFIG_ACCESS_ID_KEY = "hcomp.ballot.decoratedPortalKey"
-  val CONFIG_BASE_URL = "hcomp.ballot.baseURL"
+  val CONFIG_ACCESS_ID_KEY = "decoratedPortalKey"
+  val CONFIG_BASE_URL = "baseURL"
   val PORTAL_KEY = "ballot"
 }
 
@@ -161,4 +161,6 @@ class BallotPortalBuilder extends HCompPortalBuilder {
     DECORATED_PORTAL_KEY -> BallotPortalAdapter.CONFIG_ACCESS_ID_KEY,
     BASE_URL -> BallotPortalAdapter.CONFIG_BASE_URL
   )
+
+  override def key: String = BallotPortalAdapter.PORTAL_KEY
 }
