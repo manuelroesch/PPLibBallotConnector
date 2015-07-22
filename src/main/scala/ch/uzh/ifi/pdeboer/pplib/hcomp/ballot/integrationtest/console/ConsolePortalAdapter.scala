@@ -43,8 +43,10 @@ class ConsolePortalAdapter(param: String = "") extends HCompPortalAdapter with A
  * Created by pdeboer on 22/07/15.
  */
 class ConsolePortalBuilder extends HCompPortalBuilder {
-	override val parameterToConfigPath = Map(PARAM_KEY -> ConsolePortalAdapter.CONFIG_PARAM)
 	val PARAM_KEY = "param"
+
+
+	override val parameterToConfigPath = Map(PARAM_KEY -> ConsolePortalAdapter.CONFIG_PARAM)
 
 	override def build: HCompPortalAdapter = new ConsolePortalAdapter(params(PARAM_KEY))
 
