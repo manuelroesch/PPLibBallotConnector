@@ -27,8 +27,16 @@ transitiveClassifiers in Global := Seq(Artifact.SourceClassifier)
 
 assemblyMergeStrategy in assembly := {
   case "log4j.properties" => MergeStrategy.concat
+  case "application.conf" => MergeStrategy.concat
+  case "application.conf_default" => MergeStrategy.discard
   case x =>
     val oldStrategy = (assemblyMergeStrategy in assembly).value
     oldStrategy(x)
 }
 
+mainClass in assembly := Some("ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.integrationtest.console.ConsoleIntegrationTest")
+
+// To Skip Tests:
+//test in assembly := {}
+
+assemblyOption in assembly := (assemblyOption in assembly).value.copy(includeScala = true)
