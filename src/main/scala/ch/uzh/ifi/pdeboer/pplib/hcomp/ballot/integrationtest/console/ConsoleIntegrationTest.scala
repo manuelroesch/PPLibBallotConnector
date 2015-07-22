@@ -22,8 +22,8 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 
 	val ballotPortalAdapter = HComp(BallotPortalAdapter.PORTAL_KEY)
 
-	val SNIPPET_DIR = "../snippets/"
-	val OUTPUT_DIR = "../output/"
+	val SNIPPET_DIR = "snippets/"
+	val OUTPUT_DIR = "output/"
 
 	val ANSWERS_PER_QUERY = 1
 
@@ -42,7 +42,7 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 		val query = HTMLQuery(ballotHtmlPage)
 
 		val pdfName = snippet.getName.substring(0, snippet.getName.lastIndexOf("-"))
-		val pdfInputStream: InputStream = new FileInputStream(OUTPUT_DIR + pdfName)
+		val pdfInputStream: InputStream = new FileInputStream(SNIPPET_DIR + pdfName)
 
 		val pdfSource = Source.fromInputStream(pdfInputStream)
 		val pdfBinary = Stream.continually(pdfInputStream.read).takeWhile(-1 !=).map(_.toByte).toArray
@@ -127,7 +127,22 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 				</ul>
 			</div>
 
-			<form onsubmit="return document.getElementById('descriptionIsRelated').value.length > 5">
+			<script type="text/javascript">
+				{scala.xml.PCData(
+				"""
+					  function checkFeedbackForm()  {
+						var value = document.getElementById('descriptionIsRelated').value;
+						if(value.length == 0 || value == 'Your text here') {
+							alert('Please provide feedback!');
+							return false;
+						} else {
+							return true;
+						}
+					}
+				""")}
+			</script>
+
+			<form onsubmit="return checkFeedbackForm()">
 				<h3>
 					<label class="radio-inline">
 						<input type="radio" name="isRelated" ng-model="isRelated" id="yes" value="Yes" required="required"/>
@@ -168,7 +183,7 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 					<label for="descriptionIsRelated">
 						Please briefly describe why you selected Yes/No in the previous questions. Please also let us know if you felt uncertain with the answer you've provided. This is also your opportunity to tell us what you thought about this HIT.
 					</label>
-					<textarea class="form-control" name="descriptionIsRelated" id="descriptionIsRelated" rows="5" required="required"></textarea>
+					<textarea class="form-control" name="descriptionIsRelated" id="descriptionIsRelated" rows="5" required="required">Your text here</textarea>
 				</div>
 
 				<hr style="width:100%"/>

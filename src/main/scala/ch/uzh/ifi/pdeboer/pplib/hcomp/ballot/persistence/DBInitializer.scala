@@ -44,7 +44,7 @@ object DBInitializer extends LazyLogger {
       catch {
         case e: java.sql.SQLException =>
           DB autoCommit { implicit s =>
-            sql"CREATE TABLE question (id BIGINT NOT NULL AUTO_INCREMENT, batch_id BIGINT NOT NULL, html TEXT NOT NULL, output_code BIGINT NOT NULL, create_time datetime NOT NULL, uuid VARCHAR(255) NOT NULL, PRIMARY KEY(id), FOREIGN KEY(batch_id) REFERENCES batch(id));".execute().apply()
+            sql"CREATE TABLE question (id BIGINT NOT NULL AUTO_INCREMENT, batch_id BIGINT NOT NULL, html LONGTEXT NOT NULL, output_code BIGINT NOT NULL, create_time DATETIME NOT NULL, uuid VARCHAR(255) NOT NULL, PRIMARY KEY(id), FOREIGN KEY(batch_id) REFERENCES batch(id));".execute().apply()
             logger.debug("Table question created")
           }
       }
@@ -57,7 +57,7 @@ object DBInitializer extends LazyLogger {
       catch {
         case e: java.sql.SQLException =>
           DB autoCommit { implicit s =>
-            sql"CREATE TABLE assets (id BIGINT NOT NULL AUTO_INCREMENT, byte_array LONGVARBINARY NOT NULL, content_type VARCHAR(255) NOT NULL, question_id BIGINT NOT NULL, PRIMARY KEY(id), FOREIGN KEY(question_id) REFERENCES question(id));".execute().apply()
+            sql"CREATE TABLE assets (id BIGINT NOT NULL AUTO_INCREMENT, byte_array LONGBLOB NOT NULL, content_type VARCHAR(255) NOT NULL, question_id BIGINT NOT NULL, PRIMARY KEY(id), FOREIGN KEY(question_id) REFERENCES question(id));".execute().apply()
             logger.debug("Table assets created")
           }
       }

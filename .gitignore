@@ -16,3 +16,5 @@ dist
 /.settings
 
 src/main/resources/application.conf
+snippets
+output
