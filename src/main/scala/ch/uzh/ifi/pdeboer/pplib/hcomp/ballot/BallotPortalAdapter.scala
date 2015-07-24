@@ -44,7 +44,7 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 		def checkAndFixFormFields: Boolean = {
 			(htmlToDisplayOnBallotPage \\ "form").forall(f =>
 				if (f.attribute("action").isEmpty && f.attribute("method").isEmpty) {
-					val correctedHtmlToDisplayOnBallotPage = htmlToDisplayOnBallotPage.toString().replaceAll("\\<" + f.label + "(.*)\\>", "<form action=\"" + baseURL + "storeAnswer\" method=\"post\" $1>")
+					val correctedHtmlToDisplayOnBallotPage = htmlToDisplayOnBallotPage.toString().replaceAll("\\<" + f.label + "(.*)\\>", "<form action=\"" + baseURL + "storeAnswer\" method=\"get\" $1>")
 					htmlToDisplayOnBallotPage = XML.loadString(correctedHtmlToDisplayOnBallotPage)
 					true
 				} else {
