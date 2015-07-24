@@ -7,7 +7,7 @@ import ch.uzh.ifi.pdeboer.pplib.hcomp._
  */
 object ConsolePortalAdapter {
 	val PORTAL_KEY = "consolePortal"
-	val CONFIG_PARAM = "param"
+	val CONFIG_PARAM = "active"
 }
 
 @HCompPortal(builder = classOf[ConsolePortalBuilder], autoInit = true)
@@ -39,12 +39,8 @@ class ConsolePortalAdapter(param: String = "") extends HCompPortalAdapter with A
 	}
 }
 
-/**
- * Created by pdeboer on 22/07/15.
- */
 class ConsolePortalBuilder extends HCompPortalBuilder {
-	val PARAM_KEY = "param"
-
+	val PARAM_KEY = "active"
 
 	override val parameterToConfigPath = Map(PARAM_KEY -> ConsolePortalAdapter.CONFIG_PARAM)
 

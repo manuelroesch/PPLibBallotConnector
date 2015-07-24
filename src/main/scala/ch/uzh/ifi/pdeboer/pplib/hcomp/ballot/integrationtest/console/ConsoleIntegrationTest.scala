@@ -50,7 +50,7 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 
 		val contentType = new MimetypesFileTypeMap().getContentType(new File(OUTPUT_DIR + pdfName))
 
-		val properties = new BallotProperties(Batch(UUID.randomUUID()), List(Asset(pdfBinary, contentType)), 1)
+		val properties = new BallotProperties(Batch(UUID.randomUUID()), List(Asset(pdfBinary, contentType)), 1, paymentCents = 50)
 
 		var answers = List.empty[HTMLQueryAnswer]
 		do {

@@ -15,7 +15,8 @@ class BallotProperties(
                         batch1: Batch,
                         asset1: List[Asset],
                         allowedAnswersPerTurker1: Int,
-                        outputCode1: Long = Math.abs(new Random(new DateTime().getMillis).nextLong())) extends HCompQueryProperties {
+                        outputCode1: Long = Math.abs(new Random(new DateTime().getMillis).nextLong()),
+                        paymentCents: Int = 0) extends HCompQueryProperties(paymentCents) {
 
   val batch = batch1
   val assets = asset1
