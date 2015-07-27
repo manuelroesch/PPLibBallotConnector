@@ -5,7 +5,6 @@ version := "1.0"
 scalaVersion := "2.11.7"
 
 libraryDependencies ++= Seq(
-  "pdeboer" %% "pplib" % "0.1-SNAPSHOT",
   "org.slf4j"                 %  "slf4j-log4j12"                % "1.7.5",
   "mysql"                     %  "mysql-connector-java"         % "5.1.34",
   "org.apache.httpcomponents" %  "httpclient"                   % "4.5",
@@ -16,6 +15,8 @@ libraryDependencies ++= Seq(
   "org.scalikejdbc"           %% "scalikejdbc-config"           % "2.2.7",
   "org.scalikejdbc"           %% "scalikejdbc-play-initializer" % "2.4.0"
 )
+
+libraryDependencies += "pdeboer" %% "pplib" % "0.1-SNAPSHOT"
 
 resolvers += Resolver.file("Local repo", file(System.getProperty("user.home") + "/.ivy2/local"))(Resolver.ivyStylePatterns)
 

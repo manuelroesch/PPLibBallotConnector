@@ -7,12 +7,12 @@ import javax.activation.MimetypesFileTypeMap
 import ch.uzh.ifi.pdeboer.pplib.hcomp._
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.persistence.DBSettings
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.{Asset, BallotPortalAdapter, BallotProperties, Batch}
+import ch.uzh.ifi.pdeboer.pplib.util.CollectionUtils._
 import ch.uzh.ifi.pdeboer.pplib.util.LazyLogger
 import org.apache.commons.codec.binary.Base64
 
 import scala.io.Source
 import scala.xml.NodeSeq
-
 /**
  * Created by mattia on 07.07.15.
  */
@@ -29,7 +29,7 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 
 	new File(SNIPPET_DIR).listFiles(new FilenameFilter {
 		override def accept(dir: File, name: String): Boolean = name.endsWith(".png")
-	}).foreach(snippet => {
+	}).toList.mpar.foreach(snippet => {
 
 		val base64Image = getBase64String(snippet)
 
@@ -41,7 +41,7 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 		val ballotHtmlPage: NodeSeq = createHtmlPage(base64Image)
 		val query = HTMLQuery(ballotHtmlPage)
 
-		val pdfName = snippet.getName.substring(0, snippet.getName.lastIndexOf("-"))
+		val pdfName = snippet.getName.substring(2, snippet.getName.lastIndexOf("-"))
 		val pdfInputStream: InputStream = new FileInputStream(SNIPPET_DIR + pdfName)
 
 		val pdfSource = Source.fromInputStream(pdfInputStream)
