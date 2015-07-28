@@ -25,7 +25,7 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 	val SNIPPET_DIR = "snippets/"
 	val OUTPUT_DIR = "output/"
 
-	val ANSWERS_PER_QUERY = 1
+	val ANSWERS_PER_QUERY = 10
 
 	new File(SNIPPET_DIR).listFiles(new FilenameFilter {
 		override def accept(dir: File, name: String): Boolean = name.endsWith(".png")
