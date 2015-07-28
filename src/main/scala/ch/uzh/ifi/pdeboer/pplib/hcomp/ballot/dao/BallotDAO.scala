@@ -59,9 +59,10 @@ class BallotDAO extends DAO{
     }
   }
 
-  override def createAsset(binary: Array[Byte], contentType: String, questionId: Long): Long = {
+  override def createAsset(binary: Array[Byte], contentType: String, questionId: Long, filename: String): Long = {
     DB localTx { implicit session =>
-      sql"insert into assets(byte_array, content_type, question_id) values(${binary}, ${contentType}, ${questionId})".updateAndReturnGeneratedKey().apply()
+      sql"insert into assets(byte_array, content_type, question_id, filename) values(${binary}, ${contentType}, ${questionId}, ${filename})"
+        .updateAndReturnGeneratedKey().apply()
     }
   }
 

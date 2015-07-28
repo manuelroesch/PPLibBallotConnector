@@ -22,8 +22,8 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 
 	val ballotPortalAdapter = HComp(BallotPortalAdapter.PORTAL_KEY)
 
-	val SNIPPET_DIR = "snippets/"
-	val OUTPUT_DIR = "output/"
+	val SNIPPET_DIR = "../snippets/"
+	val OUTPUT_DIR = "../output/"
 
 	val ANSWERS_PER_QUERY = 10
 
@@ -41,8 +41,8 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 		val ballotHtmlPage: NodeSeq = createHtmlPage(base64Image)
 		val query = HTMLQuery(ballotHtmlPage)
 
-		val pdfName = snippet.getName.substring(2, snippet.getName.lastIndexOf("-"))
-		val pdfInputStream: InputStream = new FileInputStream(SNIPPET_DIR + pdfName)
+		val pdfName = snippet.getName.substring(snippet.getName.indexOf("_")+1, snippet.getName.lastIndexOf("-"))
+		val pdfInputStream: InputStream = new FileInputStream(SNIPPET_DIR + snippet.getName)
 
 		val pdfSource = Source.fromInputStream(pdfInputStream)
 		val pdfBinary = Stream.continually(pdfInputStream.read).takeWhile(-1 !=).map(_.toByte).toArray
@@ -50,7 +50,8 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 
 		val contentType = new MimetypesFileTypeMap().getContentType(new File(OUTPUT_DIR + pdfName))
 
-		val properties = new BallotProperties(Batch(UUID.randomUUID()), List(Asset(pdfBinary, contentType)), 1, paymentCents = 50)
+		val properties = new BallotProperties(Batch(UUID.randomUUID()),
+      List(Asset(pdfBinary, contentType, pdfName+"_"+snippet.getName.substring(0,snippet.getName.indexOf("_")))), 1, paymentCents = 50)
 
 		var answers = List.empty[HTMLQueryAnswer]
 		do {

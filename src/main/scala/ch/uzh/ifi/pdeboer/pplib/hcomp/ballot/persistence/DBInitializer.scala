@@ -57,7 +57,7 @@ object DBInitializer extends LazyLogger {
       catch {
         case e: java.sql.SQLException =>
           DB autoCommit { implicit s =>
-            sql"CREATE TABLE assets (id BIGINT NOT NULL AUTO_INCREMENT, byte_array LONGBLOB NOT NULL, content_type VARCHAR(255) NOT NULL, question_id BIGINT NOT NULL, PRIMARY KEY(id), FOREIGN KEY(question_id) REFERENCES question(id));".execute().apply()
+            sql"CREATE TABLE assets (id BIGINT NOT NULL AUTO_INCREMENT, byte_array LONGBLOB NOT NULL, content_type VARCHAR(255) NOT NULL, question_id BIGINT NOT NULL, filename VARCHAR(300) NOT NULL, PRIMARY KEY(id), FOREIGN KEY(question_id) REFERENCES question(id));".execute().apply()
             logger.debug("Table assets created")
           }
       }

@@ -23,7 +23,7 @@ class BallotPortalAdapterTest {
 				<input type="submit" name="answer" value="yes"/>
 			</form>
 		</div>)
-		val prop = new BallotProperties(Batch(), List(Asset(Array.empty[Byte], "application/pdf")), 1, 123)
+		val prop = new BallotProperties(Batch(), List(Asset(Array.empty[Byte], "application/pdf", "empty filename")), 1, 123)
 
 		val ans = b.processQuery(query, prop)
 
@@ -52,7 +52,7 @@ class BallotPortalAdapterTest {
 	@Test
 	def testWithoutForm: Unit = {
 		val b = new BallotPortalAdapter(new PortalAdapterTest(), new DAOTest(), "http://www.andreas.ifi.uzh.ch:9000/")
-		val ans = b.processQuery(HTMLQuery(<h1>test</h1>), new BallotProperties(Batch(), List(Asset(Array.empty[Byte], "application/pdf")), 1, 123))
+		val ans = b.processQuery(HTMLQuery(<h1>test</h1>), new BallotProperties(Batch(), List(Asset(Array.empty[Byte], "application/pdf", "empty filename")), 1, 123))
 
 		Assert.assertEquals(ans, None)
 	}
@@ -68,7 +68,7 @@ class BallotPortalAdapterTest {
 					</p>
 				</form>
 			</div>
-		</div>), new BallotProperties(Batch(), List(Asset(Array.empty[Byte], "application/pdf")), 1, 123))
+		</div>), new BallotProperties(Batch(), List(Asset(Array.empty[Byte], "application/pdf", "empty filename")), 1, 123))
 		Assert.assertEquals(ans.asInstanceOf[Option[HTMLQueryAnswer]].get.answers.get("answer").get, "yes")
 	}
 
@@ -83,7 +83,7 @@ class BallotPortalAdapterTest {
 					</p>
 				</form>
 			</div>
-		</div>), new BallotProperties(Batch(), List(Asset(Array.empty[Byte], "application/pdf")), 1, 123))
+		</div>), new BallotProperties(Batch(), List(Asset(Array.empty[Byte], "application/pdf", "empty filename")), 1, 123))
 		Assert.assertEquals(ans, None)
 	}
 
@@ -94,7 +94,7 @@ class BallotPortalAdapterTest {
 			<h1>test</h1> <form action="http://www.andreas.ifi.uzh.ch:9000/asdasd" method="post">
 				<input type="submit" name="answer" value="yes"/>
 			</form>
-		</div>), new BallotProperties(Batch(), List(Asset(Array.empty[Byte], "application/pdf")), 123))
+		</div>), new BallotProperties(Batch(), List(Asset(Array.empty[Byte], "application/pdf", "empty filename")), 123))
 		Assert.assertEquals(ans.asInstanceOf[Option[HTMLQueryAnswer]].get.answers.get("answer").get, "yes")
 	}
 
@@ -103,7 +103,7 @@ class BallotPortalAdapterTest {
 		val b = new BallotPortalAdapter(new PortalAdapterTest(), new DAOTest(), "http://www.andreas.ifi.uzh.ch:9000/")
 		val ans = b.processQuery(HTMLQuery(<div>
 			<h1>test</h1> <form action="http://www.andreas.ifi.uzh.ch:9000/storeAnswer" method="post"></form>
-		</div>), new BallotProperties(Batch(), List(Asset(Array.empty[Byte], "application/pdf")), 123))
+		</div>), new BallotProperties(Batch(), List(Asset(Array.empty[Byte], "application/pdf", "empty filename")), 123))
 		Assert.assertEquals(ans, None)
 	}
 
@@ -112,7 +112,7 @@ class BallotPortalAdapterTest {
     val b = new BallotPortalAdapter(new PortalAdapterTest(), new DAOTest(), "http://www.andreas.ifi.uzh.ch:9000/")
     val ans = b.processQuery(HTMLQuery(<div>
       <h1>test</h1> <form><input type="submit" value="yes" name="answer" /></form>
-    </div>), new BallotProperties(Batch(), List(Asset(Array.empty[Byte], "application/pdf")), 123))
+    </div>), new BallotProperties(Batch(), List(Asset(Array.empty[Byte], "application/pdf", "empty filename")), 123))
     Assert.assertEquals(ans.asInstanceOf[Option[HTMLQueryAnswer]].get.answers.get("answer").get, "yes")
   }
 
@@ -177,7 +177,7 @@ class DAOTest extends DAO with LazyLogger {
     res
   }
 
-  override def createAsset(binary: Array[Byte], contentType: String, questionId: Long): Long = {
+  override def createAsset(binary: Array[Byte], contentType: String, questionId: Long, filename: String): Long = {
     assets += ((assets.size + 1).toLong -> questionId)
     assets.size.toLong
   }

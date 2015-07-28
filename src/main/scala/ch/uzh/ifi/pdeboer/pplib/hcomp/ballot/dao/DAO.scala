@@ -11,7 +11,7 @@ trait DAO {
 
   def getAssetIdsByQuestionId(questionId: Long) : List[Long]
 
-  def createAsset(binary: Array[Byte], contentType: String, questionId: Long): Long
+  def createAsset(binary: Array[Byte], contentType: String, questionId: Long, filename: String): Long
 
   def createBatch(allowedAnswerPerTurker: Int, uuid: UUID): Long
 
