@@ -54,16 +54,21 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 
 		var answers = List.empty[HTMLQueryAnswer]
 		do {
-			ballotPortalAdapter.processQuery(query, properties) match {
-				case ans: Option[HTMLQueryAnswer] => {
-					if (ans.isDefined) {
-						answers ::= ans.get
-						println("Answer: " + ans.get.answers.mkString("\n- "))
-					} else {
-						println("Error while getting the answer")
+			try {
+				ballotPortalAdapter.processQuery(query, properties) match {
+					case ans: Option[HTMLQueryAnswer] => {
+						if (ans.isDefined) {
+							answers ::= ans.get
+							logger.info("Answer: " + ans.get.answers.mkString("\n- "))
+						} else {
+							logger.info("Error while getting the answer")
+						}
 					}
+					case _ => logger.info("Unknown error!")
 				}
-				case _ => println("Unknown error!")
+			}
+			catch {
+				case e: Throwable => logger.error("There was a problem with the query engine", e)
 			}
 		}
 		while (answers.size < ANSWERS_PER_QUERY)
