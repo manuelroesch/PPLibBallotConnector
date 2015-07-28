@@ -141,8 +141,8 @@ class DAOTest extends DAO with LazyLogger {
 		batches.size.toLong
 	}
 
-	override def getAnswer(questionId: Long): Option[String] = {
-		answers.get(questionId)
+	override def getAnswer(questionId: Long): List[String] = {
+		answers.get(questionId).toList
 	}
 
 	override def getBatchIdByUUID(uuid: UUID): Option[Long] = {
