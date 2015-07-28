@@ -84,6 +84,7 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 						extractAnswerFromDatabase(questionId, htmlToDisplayOnBallotPage)
 					} else {
 						decorated.rejectAnswer(ans, "Invalid code")
+						logger.info(s"rejecting answer $ans of worker ${ans.responsibleWorkers.mkString(",")} to question $questionId")
 						if (numRetriesProcessQuery > 0) {
 							numRetriesProcessQuery -= 1
 							processQuery(query, properties)
