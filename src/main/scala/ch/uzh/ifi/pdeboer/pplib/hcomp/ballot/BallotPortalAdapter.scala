@@ -79,9 +79,9 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 							   <a href=\"$link\">$link</a>""".stripMargin, "", "Are these two words in the text related?"), properties)
 						.get.asInstanceOf[FreetextAnswer]
 
-					if (ans.answer.equals(expectedCodeFromDecoratedPortal + "")) {
+					if (ans.answer.trim.equals(expectedCodeFromDecoratedPortal + "")) {
 						decorated.approveAndBonusAnswer(ans)
-						extractAnswerFromDatabase(questionId, htmlToDisplayOnBallotPage)
+						extractSingleAnswerFromDatabase(questionId, htmlToDisplayOnBallotPage)
 					} else {
 						decorated.rejectAnswer(ans, "Invalid code")
 						logger.info(s"rejecting answer $ans of worker ${ans.responsibleWorkers.mkString(",")} to question $questionId")
@@ -102,8 +102,8 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 		answer
 	}
 
-	def extractAnswerFromDatabase(questionId: Long, htmlToDisplayOnBallotPage: NodeSeq): Option[HCompAnswer] = {
-		val result = Json.parse(dao.getAnswer(questionId).getOrElse("{}")).asInstanceOf[JsObject]
+	def extractSingleAnswerFromDatabase(questionId: Long, htmlToDisplayOnBallotPage: NodeSeq): Option[HCompAnswer] = {
+		val result = Json.parse(dao.getAnswer(questionId).headOption.getOrElse("{}")).asInstanceOf[JsObject]
 		val answer = result.fieldSet.map(f => (f._1 -> f._2.toString().replaceAll("\"", ""))).toMap
 		Some(HTMLQueryAnswer(answer, HTMLQuery(htmlToDisplayOnBallotPage)))
 	}

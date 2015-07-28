@@ -17,7 +17,7 @@ trait DAO {
 
   def createQuestion(html: String, outputCode: Long, batchId: Long, uuid: UUID = UUID.randomUUID(), dateTime: DateTime = new DateTime()): Long
 
-  def getAnswer(questionId: Long): Option[String]
+  def getAnswer(questionId: Long): List[String]
 
   def getQuestionUUID(questionId: Long): Option[String]
 

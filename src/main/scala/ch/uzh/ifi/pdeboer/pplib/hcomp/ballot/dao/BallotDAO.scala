@@ -35,9 +35,9 @@ class BallotDAO extends DAO{
     }
   }
 
-  override def getAnswer(questionId: Long): Option[String] = {
+  override def getAnswer(questionId: Long): List[String] = {
     DB readOnly { implicit session =>
-      sql"select answer_json from answer where question_id = ${questionId}".map(rs => rs.string("answer_json")).single().apply()
+      sql"select answer_json from answer where question_id = ${questionId}".map(rs => rs.string("answer_json")).list().apply()
     }
   }
 
