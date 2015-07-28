@@ -206,19 +206,19 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 					<div class="col-sm-12">
 						<h3>
 							<label class="radio-inline" style="margin-left: 7%;margin-right: 15%;">
-								<input type="radio" name="accuracy" value="1" required="required"/>
+								<input type="radio" name="confidence" value="1" required="required"/>
 								1</label>
 							<label class="radio-inline" style="margin-right: 15%;">
-								<input type="radio" name="accuracy" value="2"/>
+								<input type="radio" name="confidence" value="2"/>
 								2</label>
 							<label class="radio-inline" style="margin-right: 15%;">
-								<input type="radio" name="accuracy" value="3"/>
+								<input type="radio" name="confidence" value="3"/>
 								3</label>
 							<label class="radio-inline" style="margin-right: 15%;">
-								<input type="radio" name="accuracy" value="4"/>
+								<input type="radio" name="confidence" value="4"/>
 								4</label>
 							<label class="radio-inline">
-								<input type="radio" name="accuracy" value="5"/>
+								<input type="radio" name="confidence" value="5"/>
 								5</label>
 						</h3>
 					</div>
