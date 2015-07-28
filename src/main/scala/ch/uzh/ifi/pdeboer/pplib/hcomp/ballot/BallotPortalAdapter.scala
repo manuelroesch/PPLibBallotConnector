@@ -24,7 +24,7 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 			case p: BallotProperties => p
 			case _ => {
 				val uuid = UUID.randomUUID()
-				val batch = dao.createBatch(0, uuid)
+				val batchId = dao.createBatch(0, uuid)
 				new BallotProperties(Batch(uuid), List(Asset(Array.empty[Byte], "application/pdf")), 0)
 			}
 		}
@@ -81,13 +81,14 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 
 					if (ans.answer.trim.equals(expectedCodeFromDecoratedPortal + "")) {
 						decorated.approveAndBonusAnswer(ans)
+            logger.info(s"approving answer $ans of worker ${ans.responsibleWorkers.mkString(",")} to question $questionId")
 						extractSingleAnswerFromDatabase(questionId, htmlToDisplayOnBallotPage)
 					} else {
 						decorated.rejectAnswer(ans, "Invalid code")
 						logger.info(s"rejecting answer $ans of worker ${ans.responsibleWorkers.mkString(",")} to question $questionId")
 						if (numRetriesProcessQuery > 0) {
 							numRetriesProcessQuery -= 1
-							processQuery(query, properties)
+							processQuery(query, actualProperties)
 						} else {
 							logger.error("Query reached the maximum number of retry attempts.")
 							None
