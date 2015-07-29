@@ -8,7 +8,7 @@ import ch.uzh.ifi.pdeboer.pplib.hcomp._
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.persistence.DBSettings
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.{Asset, BallotPortalAdapter, BallotProperties, Batch}
 import ch.uzh.ifi.pdeboer.pplib.util.CollectionUtils._
-import ch.uzh.ifi.pdeboer.pplib.util.LazyLogger
+import ch.uzh.ifi.pdeboer.pplib.util.{CollectionUtils, LazyLogger}
 import org.apache.commons.codec.binary.Base64
 
 import scala.io.Source
@@ -23,7 +23,6 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 	val ballotPortalAdapter = HComp(BallotPortalAdapter.PORTAL_KEY)
 
 	val SNIPPET_DIR = "../snippets/"
-	val OUTPUT_DIR = "../output/"
 
 	val ANSWERS_PER_QUERY = 10
 
@@ -48,7 +47,7 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 		val pdfBinary = Stream.continually(pdfInputStream.read).takeWhile(-1 !=).map(_.toByte).toArray
 		pdfSource.close()
 
-		val contentType = new MimetypesFileTypeMap().getContentType(new File(OUTPUT_DIR + pdfName))
+		val contentType = new MimetypesFileTypeMap().getContentType(new File(SNIPPET_DIR + pdfName))
 
 		val properties = new BallotProperties(Batch(UUID.randomUUID()),
       List(Asset(pdfBinary, contentType, pdfName+"_"+snippet.getName.substring(0,snippet.getName.indexOf("_")))), 1, paymentCents = 50)
