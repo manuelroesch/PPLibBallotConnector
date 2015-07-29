@@ -80,7 +80,6 @@ class BallotDAO extends DAO{
 
   override def updateAnswer(answerId: Long, accepted: Boolean) = {
     DB localTx { implicit session =>
-      println("UPDATING ANSWER ID: "  + answerId + " TO ACCEPTED = " + accepted)
       sql"update answer SET accepted = ${accepted} WHERE id = ${answerId}"
         .update().apply()
     }
