@@ -159,10 +159,9 @@ class DAOTest extends DAO with LazyLogger {
 		questions.get(questionId)
 	}
 
-	override def createQuestion(html: String, outputCode: Long, batchId: Long, uuid: UUID = UUID.randomUUID(), dateTime: DateTime = new DateTime()): Long = {
+	override def createQuestion(html: String, batchId: Long, uuid: UUID = UUID.randomUUID(), dateTime: DateTime = new DateTime()): Long = {
 		questions += ((questions.size + 1).toLong -> UUID.randomUUID().toString)
 		answers += ((answers.size + 1).toLong -> "{\"answer\":\"yes\"}")
-		logger.debug("Adding new Question with outputCode: " + outputCode)
 		questions.size.toLong
 	}
 
@@ -182,4 +181,9 @@ class DAOTest extends DAO with LazyLogger {
     assets.size.toLong
   }
 
+  override def updateAnswer(answerId: Long, accepted: Boolean): Unit = ???
+
+  override def getAnswerIdByOutputCode(insertOutput: String): Option[Long] = ???
+
+  override def getExpectedOutputCodeFromAnswerId(ansId: Long): Option[Long] = ???
 }

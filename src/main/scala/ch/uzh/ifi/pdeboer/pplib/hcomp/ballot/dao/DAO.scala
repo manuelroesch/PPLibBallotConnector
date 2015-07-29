@@ -15,12 +15,18 @@ trait DAO {
 
   def createBatch(allowedAnswerPerTurker: Int, uuid: UUID): Long
 
-  def createQuestion(html: String, outputCode: Long, batchId: Long, uuid: UUID = UUID.randomUUID(), dateTime: DateTime = new DateTime()): Long
+  def createQuestion(html: String, batchId: Long, uuid: UUID = UUID.randomUUID(), dateTime: DateTime = new DateTime()): Long
 
   def getAnswer(questionId: Long): List[String]
 
   def getQuestionUUID(questionId: Long): Option[String]
 
   def getBatchIdByUUID(uuid: UUID): Option[Long]
+
+  def updateAnswer(answerId: Long, accepted: Boolean)
+
+  def getAnswerIdByOutputCode(insertOutput: String): Option[Long]
+
+  def getExpectedOutputCodeFromAnswerId(ansId: Long) : Option[Long]
 
 }

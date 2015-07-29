@@ -38,9 +38,6 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 			dao.getBatchIdByUUID(actualProperties.batch.uuid).getOrElse(
 				dao.createBatch(actualProperties.allowedAnswersPerTurker, actualProperties.batch.uuid))
 
-
-		val expectedCodeFromDecoratedPortal = actualProperties.outputCode
-
 		def checkAndFixFormFields: Boolean = {
 			(htmlToDisplayOnBallotPage \\ "form").forall(f =>
 				if (f.attribute("action").isEmpty && f.attribute("method").isEmpty) {
@@ -64,7 +61,7 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 					None
 				} else {
 					val questionUUID = UUID.randomUUID()
-					val questionId = dao.createQuestion(htmlToDisplayOnBallotPage.toString(), expectedCodeFromDecoratedPortal, batchIdFromDB, questionUUID)
+					val questionId = dao.createQuestion(htmlToDisplayOnBallotPage.toString(), batchIdFromDB, questionUUID)
 
 					actualProperties.assets.foreach(asset => dao.createAsset(asset.binary, asset.contentType, questionId, asset.filename))
 
@@ -79,21 +76,26 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 							   <a href=\"$link\">$link</a>""".stripMargin, "", "Are these two words in the text related?"), properties)
 						.get.asInstanceOf[FreetextAnswer]
 
-					if (ans.answer.trim.equals(expectedCodeFromDecoratedPortal + "")) {
-						decorated.approveAndBonusAnswer(ans)
+          val ansId = dao.getAnswerIdByOutputCode(ans.answer.trim)
+
+					if (ansId.isDefined) {
+            decorated.approveAndBonusAnswer(ans)
+            dao.updateAnswer(ansId.get, true)
+
             logger.info(s"approving answer $ans of worker ${ans.responsibleWorkers.mkString(",")} to question $questionId")
-						extractSingleAnswerFromDatabase(questionId, htmlToDisplayOnBallotPage)
-					} else {
-						decorated.rejectAnswer(ans, "Invalid code")
-						logger.info(s"rejecting answer $ans of worker ${ans.responsibleWorkers.mkString(",")} to question $questionId")
-						if (numRetriesProcessQuery > 0) {
-							numRetriesProcessQuery -= 1
-							processQuery(query, actualProperties)
-						} else {
-							logger.error("Query reached the maximum number of retry attempts.")
-							None
-						}
-					}
+            extractSingleAnswerFromDatabase(questionId, htmlToDisplayOnBallotPage)
+          }
+          else {
+            decorated.rejectAnswer(ans, "Invalid code")
+            logger.info(s"rejecting answer $ans of worker ${ans.responsibleWorkers.mkString(",")} to question $questionId")
+            if (numRetriesProcessQuery > 0) {
+              numRetriesProcessQuery -= 1
+              processQuery(query, actualProperties)
+            } else {
+              logger.error("Query reached the maximum number of retry attempts.")
+              None
+            }
+          }
 				}
 			} else {
 				logger.error("There exists no Form tag in the html page.")

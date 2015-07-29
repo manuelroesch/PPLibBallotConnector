@@ -41,9 +41,21 @@ class BallotDAO extends DAO{
     }
   }
 
-  override def createQuestion(html: String, outputCode: Long, batchId: Long, uuid: UUID = UUID.randomUUID(), dateTime: DateTime = new DateTime()): Long = {
+  override def getAnswerIdByOutputCode(insertOutput: String): Option[Long] = {
+    DB readOnly { implicit session =>
+      sql"select id from answer where expected_output_code = ${insertOutput}".map(rs => rs.long("id")).single().apply()
+    }
+  }
+
+  override def getExpectedOutputCodeFromAnswerId(ansId: Long) : Option[Long] = {
+    DB readOnly { implicit session =>
+      sql"select expected_output_code from answer where id = ${ansId}".map(rs => rs.long("expected_output_code")).single().apply()
+    }
+  }
+
+  override def createQuestion(html: String, batchId: Long, uuid: UUID = UUID.randomUUID(), dateTime: DateTime = new DateTime()): Long = {
     DB localTx { implicit session =>
-      sql"insert into question(batch_id, html, output_code, create_time, uuid) values(${batchId}, ${html}, ${outputCode}, ${dateTime}, ${uuid.toString})".updateAndReturnGeneratedKey().apply()
+      sql"insert into question(batch_id, html, create_time, uuid) values(${batchId}, ${html}, ${dateTime}, ${uuid.toString})".updateAndReturnGeneratedKey().apply()
     }
   }
 
@@ -66,9 +78,18 @@ class BallotDAO extends DAO{
     }
   }
 
+  override def updateAnswer(answerId: Long, accepted: Boolean) = {
+    DB localTx { implicit session =>
+      println("UPDATING ANSWER ID: "  + answerId + " TO ACCEPTED = " + accepted)
+      sql"update answer SET accepted = ${accepted} WHERE id = ${answerId}"
+        .update().apply()
+    }
+  }
+
   override def getAssetIdsByQuestionId(questionId: Long): List[Long] = {
     DB readOnly { implicit session =>
       sql"select * from assets where question_id = ${questionId}".map(rs => rs.long("id")).list().apply()
     }
   }
+
 }
