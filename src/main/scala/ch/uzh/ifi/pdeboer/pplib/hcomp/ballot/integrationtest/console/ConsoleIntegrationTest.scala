@@ -13,6 +13,7 @@ import org.apache.commons.codec.binary.Base64
 
 import scala.io.Source
 import scala.xml.NodeSeq
+
 /**
  * Created by mattia on 07.07.15.
  */
@@ -40,7 +41,7 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 		val ballotHtmlPage: NodeSeq = createHtmlPage(base64Image)
 		val query = HTMLQuery(ballotHtmlPage)
 
-		val pdfName = snippet.getName.substring(snippet.getName.indexOf("_")+1, snippet.getName.lastIndexOf("-"))
+		val pdfName = snippet.getName.substring(snippet.getName.indexOf("_") + 1, snippet.getName.lastIndexOf("-"))
 		val pdfInputStream: InputStream = new FileInputStream(SNIPPET_DIR + snippet.getName)
 
 		val pdfSource = Source.fromInputStream(pdfInputStream)
@@ -50,7 +51,7 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 		val contentType = new MimetypesFileTypeMap().getContentType(new File(SNIPPET_DIR + pdfName))
 
 		val properties = new BallotProperties(Batch(UUID.randomUUID()),
-      List(Asset(pdfBinary, contentType, pdfName+"_"+snippet.getName.substring(0,snippet.getName.indexOf("_")))), 1, paymentCents = 50)
+			List(Asset(pdfBinary, contentType, pdfName + "_" + snippet.getName.substring(0, snippet.getName.indexOf("_")))), 1, paymentCents = 50)
 
 		var answers = List.empty[HTMLQueryAnswer]
 		do {
@@ -220,12 +221,12 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 							<label class="radio-inline" style="margin-right: 10%;">
 								<input type="radio" name="confidence" value="5"/>
 								5</label>
-              <label class="radio-inline" style="margin-right: 10%;">
-                <input type="radio" name="confidence" value="6"/>
-                6</label>
-              <label class="radio-inline">
-                <input type="radio" name="confidence" value="7"/>
-                7</label>
+							<label class="radio-inline" style="margin-right: 10%;">
+								<input type="radio" name="confidence" value="6"/>
+								6</label>
+							<label class="radio-inline">
+								<input type="radio" name="confidence" value="7"/>
+								7</label>
 						</h3>
 					</div>
 				</div>
