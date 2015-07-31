@@ -23,6 +23,7 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 	val ballotPortalAdapter = HComp(BallotPortalAdapter.PORTAL_KEY)
 
 	val SNIPPET_DIR = "../snippets/"
+	val OUTPUT_DIR = "../output/"
 
 	val ANSWERS_PER_QUERY = 10
 
@@ -40,17 +41,22 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 		val ballotHtmlPage: NodeSeq = createHtmlPage(base64Image)
 		val query = HTMLQuery(ballotHtmlPage)
 
-		val pdfName = snippet.getName.substring(snippet.getName.indexOf("_")+1, snippet.getName.lastIndexOf("-"))
-		val pdfInputStream: InputStream = new FileInputStream(SNIPPET_DIR + snippet.getName)
+		val pdfName = snippet.getName.substring(0, snippet.getName.lastIndexOf("-"))+".pdf"
+		val pdfInputStream: InputStream = new FileInputStream(OUTPUT_DIR + pdfName)
 
 		val pdfSource = Source.fromInputStream(pdfInputStream)
 		val pdfBinary = Stream.continually(pdfInputStream.read).takeWhile(-1 !=).map(_.toByte).toArray
 		pdfSource.close()
 
-		val contentType = new MimetypesFileTypeMap().getContentType(new File(SNIPPET_DIR + pdfName))
+		val contentType = new MimetypesFileTypeMap().getContentType(new File(OUTPUT_DIR + pdfName))
+
+    val iterationMatch = snippet.getName.substring(0, snippet.getName.indexOf("_"))
+    val originalPDFFilename = snippet.getName.substring(snippet.getName.indexOf("_")+1,snippet.getName.indexOf("-"))
+
+    val filnameForResult = originalPDFFilename+"_"+iterationMatch
 
 		val properties = new BallotProperties(Batch(UUID.randomUUID()),
-      List(Asset(pdfBinary, contentType, pdfName+"_"+snippet.getName.substring(0,snippet.getName.indexOf("_")))), 1, paymentCents = 50)
+      List(Asset(pdfBinary, contentType, filnameForResult)), 1, paymentCents = 50)
 
 		var answers = List.empty[HTMLQueryAnswer]
 		do {
@@ -61,7 +67,7 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 							answers ::= ans.get
 							logger.info("Answer: " + ans.get.answers.mkString("\n- "))
 						} else {
-							logger.info("Error while getting the answer")
+							logger.info("Error while getting the answer.")
 						}
 					}
 					case _ => logger.info("Unknown error!")
@@ -108,9 +114,26 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 				and a
 				<span style="background-color:#00FF00;">prerequisite marked in green.</span>
 			</p>
-			<div>
-				<img src={imageBase64Format} style="border:1px solid black;" width="90%" height="90%"></img>
-			</div>
+
+      <div class="row" style="display: table;">
+        <div class="col-md-2" style="float: none;display: table-cell;vertical-align: top;"> </div>
+        <div class="col-md-8" style="float: none;display: table-cell;vertical-align: top;">
+          <div id="imgContainer" style="width:100%; height:350px; border:1px solid black;overflow:auto;">
+            <img src={imageBase64Format} width="100%"></img>
+          </div>
+        </div>
+        <div class="col-md-2" style="float: none;display: table-cell;vertical-align: top;">
+          <button type="button" id="up" class="btn btn-info" style="width:100px;" aria-hidden="true">
+            <span class="glyphicon glyphicon-arrow-up"> </span> Up
+          </button>
+          <br />
+          <br />
+          <button type="button" id="down" class="btn btn-info" style="width:100px;" aria-hidden="true">
+            <span class="glyphicon glyphicon-arrow-down"> </span> Down
+          </button>
+        </div>
+      </div>
+      <br />
 
 			<div id="assets">
 				If you would like to read more context in order to give better and more accurate answers, you can browse the PDF file by clicking
@@ -236,6 +259,49 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 			</form>
 			<br/>
 			<br/>
+      <script type="text/javascript">
+        {scala.xml.PCData(
+        """
+          var step = 10;
+          var scrolling = false;
+
+          $('#up').bind('click', function(event) {
+            event.preventDefault();
+            $('#imgContainer').animate({
+              scrollTop: '-=' + step + 'px'
+            });
+          }).bind('mouseover', function(event) {
+            scrolling = true;
+            scrollContent('up');
+          }).bind('mouseout', function(event) {
+            scrolling = false;
+          });
+
+
+          $('#down').bind('click', function(event) {
+            event.preventDefault();
+            $('#imgContainer').animate({
+              scrollTop: '+=' + step + 'px'
+            });
+          }).bind('mouseover', function(event) {
+            scrolling = true;
+            scrollContent('down');
+          }).bind('mouseout', function(event) {
+            scrolling = false;
+          });
+
+          function scrollContent(direction) {
+            var amount = (direction === 'up' ? '-=1px' : '+=1px');
+            $('#imgContainer').animate({
+              scrollTop: amount
+            }, 10, function() {
+              if (scrolling) {
+                scrollContent(direction);
+              }
+            });
+          }
+      """)}
+      </script>
 		</div>
 	}
 
