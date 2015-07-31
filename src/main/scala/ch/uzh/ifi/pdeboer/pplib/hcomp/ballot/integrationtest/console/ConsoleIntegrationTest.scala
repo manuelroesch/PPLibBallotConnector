@@ -228,29 +228,21 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 
 				<div class="form-group" style="width:100%;">
 					<div class="col-sm-12">
-						<h3>
-							<label class="radio-inline" style="margin-left: 3%;margin-right: 10%;">
-								<input type="radio" name="confidence" value="1" required="required"/>
-								1</label>
-							<label class="radio-inline" style="margin-right: 10%;">
-								<input type="radio" name="confidence" value="2"/>
-								2</label>
-							<label class="radio-inline" style="margin-right: 10%;">
-								<input type="radio" name="confidence" value="3"/>
-								3</label>
-							<label class="radio-inline" style="margin-right: 10%;">
-								<input type="radio" name="confidence" value="4"/>
-								4</label>
-							<label class="radio-inline" style="margin-right: 10%;">
-								<input type="radio" name="confidence" value="5"/>
-								5</label>
-							<label class="radio-inline" style="margin-right: 10%;">
-								<input type="radio" name="confidence" value="6"/>
-								6</label>
-							<label class="radio-inline">
-								<input type="radio" name="confidence" value="7"/>
-								7</label>
-						</h3>
+            <div class="well">
+              <input id="ex1" data-slider-id="ex1Slider" type="text" name="confidence" data-slider-min="1" data-slider-max="7" data-slider-step="1" data-slider-value="1" data="confidence: '1'" value="1" style="display: none;width:100%;">
+              </input>
+            </div>
+            <script type="text/javascript">
+              {scala.xml.PCData(
+              """
+              $('#ex1').slider({
+                tooltip: 'always',
+                formatter: function(value) {
+                  return value;
+                }
+              });
+              """)}
+            </script>
 					</div>
 				</div>
 
