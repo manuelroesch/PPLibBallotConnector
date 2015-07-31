@@ -13,6 +13,7 @@ import org.apache.commons.codec.binary.Base64
 
 import scala.io.Source
 import scala.xml.NodeSeq
+
 /**
  * Created by mattia on 07.07.15.
  */
@@ -243,12 +244,12 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 							<label class="radio-inline" style="margin-right: 10%;">
 								<input type="radio" name="confidence" value="5"/>
 								5</label>
-              <label class="radio-inline" style="margin-right: 10%;">
-                <input type="radio" name="confidence" value="6"/>
-                6</label>
-              <label class="radio-inline">
-                <input type="radio" name="confidence" value="7"/>
-                7</label>
+							<label class="radio-inline" style="margin-right: 10%;">
+								<input type="radio" name="confidence" value="6"/>
+								6</label>
+							<label class="radio-inline">
+								<input type="radio" name="confidence" value="7"/>
+								7</label>
 						</h3>
 					</div>
 				</div>
