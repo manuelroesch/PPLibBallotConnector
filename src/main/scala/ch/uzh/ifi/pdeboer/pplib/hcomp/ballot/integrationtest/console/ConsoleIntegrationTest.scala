@@ -26,7 +26,7 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 	val SNIPPET_DIR = "../snippets/"
 	val OUTPUT_DIR = "../output/"
 
-	val ANSWERS_PER_QUERY = 10
+	val ANSWERS_PER_QUERY = 1
 
 	new File(SNIPPET_DIR).listFiles(new FilenameFilter {
 		override def accept(dir: File, name: String): Boolean = name.endsWith(".png")
@@ -39,10 +39,12 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 		val snippetBinary = Stream.continually(snippetInputStream.read).takeWhile(-1 !=).map(_.toByte).toArray
 		snippetSource.close()
 
-		val ballotHtmlPage: NodeSeq = createHtmlPage(base64Image)
+    val isMethodOnTop: Boolean = snippet.getName.substring(snippet.getName.lastIndexOf("-")+1, snippet.getName.indexOf(".png")).equalsIgnoreCase("methodOnTop")
+
+		val ballotHtmlPage: NodeSeq = createHtmlPage(base64Image, isMethodOnTop)
 		val query = HTMLQuery(ballotHtmlPage)
 
-		val pdfName = snippet.getName.substring(0, snippet.getName.lastIndexOf("-"))+".pdf"
+		val pdfName = snippet.getName.substring(0, snippet.getName.indexOf("-"))+".pdf"
 		val pdfInputStream: InputStream = new FileInputStream(OUTPUT_DIR + pdfName)
 
 		val pdfSource = Source.fromInputStream(pdfInputStream)
@@ -51,10 +53,10 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 
 		val contentType = new MimetypesFileTypeMap().getContentType(new File(OUTPUT_DIR + pdfName))
 
-    val iterationMatch = snippet.getName.substring(0, snippet.getName.indexOf("_"))
+    val permutationNumber = snippet.getName.substring(0, snippet.getName.indexOf("_"))
     val originalPDFFilename = snippet.getName.substring(snippet.getName.indexOf("_")+1,snippet.getName.indexOf("-"))
 
-    val filnameForResult = originalPDFFilename+"_"+iterationMatch
+    val filnameForResult = originalPDFFilename+"_"+permutationNumber
 
 		val properties = new BallotProperties(Batch(UUID.randomUUID()),
       List(Asset(pdfBinary, contentType, filnameForResult)), 1, paymentCents = 50)
@@ -89,9 +91,10 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 		"data:image/png;base64," + Base64.encodeBase64String(imageData)
 	}
 
-	def createHtmlPage(imageBase64Format: String): NodeSeq = {
+	def createHtmlPage(imageBase64Format: String, isMethodOnTop: Boolean): NodeSeq = {
 		<div ng-controller="QuestionCtrl">
-			<p>
+
+      <p>
 				Thank you for participating in our survey.
 				<br/>
 				Our goal is to see whether you are able to grasp some of the main concepts in the field of statistics without needing to be an expert in that field - just by basic text understanding. For that matter, we have prepared multiple such surveys; in all of which you can participate
@@ -120,18 +123,29 @@ object ConsoleIntegrationTest extends App with LazyLogger {
         <div class="col-md-2" style="float: none;display: table-cell;vertical-align: top;"> </div>
         <div class="col-md-8" style="float: none;display: table-cell;vertical-align: top;">
           <div id="imgContainer" style="width:100%; height:350px; border:1px solid black;overflow:auto;">
-            <img src={imageBase64Format} width="100%"></img>
+            <img id="snippet" src={imageBase64Format} width="100%"></img>
           </div>
         </div>
         <div class="col-md-2" style="float: none;display: table-cell;vertical-align: top;">
-          <button type="button" id="up" class="btn btn-info" style="width:100px;" aria-hidden="true">
-            <span class="glyphicon glyphicon-arrow-up"> </span> Up
-          </button>
-          <br />
-          <br />
-          <button type="button" id="down" class="btn btn-info" style="width:100px;" aria-hidden="true">
-            <span class="glyphicon glyphicon-arrow-down"> </span> Down
-          </button>
+          <div id="snippetButtons">
+
+            <button type="button" id="top" class="btn btn-info" style="width:200px;" aria-hidden="true">
+              <span class="glyphicon glyphicon-arrow-up"> </span>{if (isMethodOnTop) {
+              "Scroll to Method"
+            } else {
+              "Scroll to Prerequisite"
+            }}
+            </button>
+                <br />
+                <br />
+              <button type="button" id="bottom" class="btn btn-info" style="width:200px;" aria-hidden="true">
+                <span class="glyphicon glyphicon-arrow-down"> </span> {if (isMethodOnTop) {
+                "Scroll to Prerequisite"
+              } else {
+                "Scroll to Method"
+              }}
+              </button>
+          </div>
         </div>
       </div>
       <br />
@@ -155,21 +169,6 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 					<li>example for an indirect relationship: "Our data was tested for [PREREQUISITE]. Using [METHOD] on our data, we have found that ..."</li>
 				</ul>
 			</div>
-
-			<script type="text/javascript">
-				{scala.xml.PCData(
-				"""
-					  function checkFeedbackForm()  {
-						var value = document.getElementById('descriptionIsRelated').value;
-						if(value.length == 0 || value == 'Your text here') {
-							alert('Please provide feedback!');
-							return false;
-						} else {
-							return true;
-						}
-					}
-				""")}
-			</script>
 
 			<form onsubmit="return checkFeedbackForm()">
 				<h3>
@@ -232,17 +231,6 @@ object ConsoleIntegrationTest extends App with LazyLogger {
               <input id="ex1" data-slider-id="ex1Slider" type="text" name="confidence" data-slider-min="1" data-slider-max="7" data-slider-step="1" data-slider-value="1" data="confidence: '1'" value="1" style="display: none;width:100%;">
               </input>
             </div>
-            <script type="text/javascript">
-              {scala.xml.PCData(
-              """
-              $('#ex1').slider({
-                tooltip: 'always',
-                formatter: function(value) {
-                  return value;
-                }
-              });
-              """)}
-            </script>
 					</div>
 				</div>
 
@@ -254,8 +242,59 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 			<br/>
       <script type="text/javascript">
         {scala.xml.PCData(
+        """$('#ex1').slider({
+                tooltip: 'always',
+                  formatter: function(value) {
+                  return value;
+                }
+              });
         """
-          var step = 10;
+      )}
+      </script>
+
+      <script type="text/javascript">
+        {scala.xml.PCData( """
+          $('#top').click(function() {
+            $('#imgContainer').animate({
+              scrollTop:0
+              }, 500);
+          });
+
+          $('#bottom').click(function() {
+            $('#imgContainer').animate({
+              scrollTop: $('#imgContainer')[0].scrollHeight
+            }, 500);
+          });
+
+
+          $(document).ready( function() {
+            if($('#snippet').height() < $('#imgContainer').height()){
+              $('#snippetButtons').style.display='none';
+            }
+          });
+
+          function checkFeedbackForm()  {
+            var value = document.getElementById('descriptionIsRelated').value;
+						if(value.length == 0 || value == 'Your text here') {
+						  alert('Please provide feedback!');
+							return false;
+            } else {
+						  return true;
+						}
+          }; """
+      )}
+      </script>
+      <script type="text/javascript">
+        {scala.xml.PCData("""
+
+        $('#ex1').slider({
+          tooltip: 'always',
+          formatter: function(value) {
+            return value;
+          }
+        });
+
+        var step = 10;
           var scrolling = false;
 
           $('#up').bind('click', function(event) {

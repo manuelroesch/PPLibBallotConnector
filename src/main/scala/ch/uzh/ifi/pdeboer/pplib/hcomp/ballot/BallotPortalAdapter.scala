@@ -31,7 +31,7 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 
 		var htmlToDisplayOnBallotPage: NodeSeq = query match {
 			case q: HTMLQuery => q.html
-			case _ => XML.loadString(query.question)
+			case _ => scala.xml.Unparsed(query.toString)
 		}
 
 		val batchIdFromDB: Long =
@@ -42,7 +42,7 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 			(htmlToDisplayOnBallotPage \\ "form").forall(f =>
 				if (f.attribute("action").isEmpty && f.attribute("method").isEmpty) {
 					val correctedHtmlToDisplayOnBallotPage = htmlToDisplayOnBallotPage.toString().replaceAll("\\<" + f.label + "(.*)\\>", "<form action=\"" + baseURL + "storeAnswer\" method=\"get\" $1>")
-					htmlToDisplayOnBallotPage = XML.loadString(correctedHtmlToDisplayOnBallotPage)
+					htmlToDisplayOnBallotPage = scala.xml.PCData(correctedHtmlToDisplayOnBallotPage)
 					true
 				} else {
 					logger.error("Form contains an action and/or method attribute. Please remove them.")
@@ -56,7 +56,8 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 
 				val formWithoutActionAndMethod: Boolean = checkAndFixFormFields
 
-				if (!formWithoutActionAndMethod || !(htmlToDisplayOnBallotPage \\ "form").exists(form => ensureFormHasValidInputElements(form))) {
+				if (!formWithoutActionAndMethod && !(htmlToDisplayOnBallotPage \\ "form").exists(form =>
+            ensureFormHasValidInputElements(form))) {
 					logger.error("Form's content is not valid.")
 					None
 				} else {
