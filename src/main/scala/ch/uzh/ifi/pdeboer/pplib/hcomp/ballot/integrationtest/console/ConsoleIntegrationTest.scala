@@ -7,7 +7,6 @@ import javax.activation.MimetypesFileTypeMap
 import ch.uzh.ifi.pdeboer.pplib.hcomp._
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.persistence.DBSettings
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.{Asset, BallotPortalAdapter, BallotProperties, Batch}
-import ch.uzh.ifi.pdeboer.pplib.util.CollectionUtils._
 import ch.uzh.ifi.pdeboer.pplib.util.LazyLogger
 import org.apache.commons.codec.binary.Base64
 
@@ -26,11 +25,16 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 	val SNIPPET_DIR = "../snippets/"
 	val OUTPUT_DIR = "../output/"
 
-	val ANSWERS_PER_QUERY = 1
+  val RESULT_CSV_FILENAME = "results.csv"
+
+  val LIKERT_VALUE_CLEANED_ANSWERS = 5
+	val ANSWERS_PER_QUERY = 2
+
+  var allAnswers = collection.mutable.Map.empty[String, List[CsvAnswer]]
 
 	new File(SNIPPET_DIR).listFiles(new FilenameFilter {
 		override def accept(dir: File, name: String): Boolean = name.endsWith(".png")
-	}).toList.mpar.foreach(snippet => {
+	}).toList.foreach(snippet => {
 
 		val base64Image = getBase64String(snippet)
 
@@ -44,7 +48,7 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 		val ballotHtmlPage: NodeSeq = createHtmlPage(base64Image, isMethodOnTop)
 		val query = HTMLQuery(ballotHtmlPage)
 
-		val pdfName = snippet.getName.substring(0, snippet.getName.indexOf("-"))+".pdf"
+		val pdfName = snippet.getName.substring(0, snippet.getName.indexOf("-"))
 		val pdfInputStream: InputStream = new FileInputStream(OUTPUT_DIR + pdfName)
 
 		val pdfSource = Source.fromInputStream(pdfInputStream)
@@ -82,7 +86,88 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 		}
 		while (answers.size < ANSWERS_PER_QUERY)
 
+    val answersToCSV = convertToCSVFormat(answers)
+    if(allAnswers.get(snippet.getName).isDefined){
+      allAnswers.update(snippet.getName, allAnswers.get(snippet.getName).get ::: answersToCSV)
+    } else {
+      allAnswers += (snippet.getName -> answersToCSV)
+    }
 	})
+
+  createCSVReport
+  
+
+  def createCSVReport: Unit = {
+    val writer = new PrintWriter(new File(RESULT_CSV_FILENAME))
+
+    val result = allAnswers.map(answer => {
+      val singleAndFilteredCSVStructure = extractSingleAndFilteredResult(answer)
+      answer._2.map(singleResult => {
+        singleAndFilteredCSVStructure + "\n"
+      }).mkString("")
+    }).mkString("")
+    
+    writer.write("snippet,yes answers,no answers,cleaned yes,cleaned no,yes answers,no answers,cleaned yes,cleaned no\n"+result)
+    writer.close()
+  }
+  
+  def extractSingleAndFilteredResult(ans: (String, List[CsvAnswer])): String = {
+
+    var allYesQ1, allNoQ1, filteredYesQ1, filteredNoQ1 = 0
+    var allYesQ2, allNoQ2, filteredYesQ2, filteredNoQ2 = 0
+
+    ans._2.foreach(csvAns => {
+      if(isPositive(csvAns.q1)){
+        allYesQ1 += 1
+        if(csvAns.likert >= LIKERT_VALUE_CLEANED_ANSWERS){
+          filteredYesQ1 += 1
+        }
+
+        if(isPositive(csvAns.q2)){
+          allYesQ2 += 1
+          if(csvAns.likert >= LIKERT_VALUE_CLEANED_ANSWERS){
+            filteredYesQ2 += 1
+          }
+        }else if(isNegative(csvAns.q2)){
+          allNoQ1 += 1
+          if(csvAns.likert >= LIKERT_VALUE_CLEANED_ANSWERS){
+            filteredNoQ2 += 1
+          }
+        }
+
+      }else if(isNegative(csvAns.q1)){
+        allNoQ1 += 1
+        if(csvAns.likert >= LIKERT_VALUE_CLEANED_ANSWERS){
+          filteredNoQ1 += 1
+        }
+      }
+    })
+
+    ans._1 + "," + allYesQ1 + "," + allNoQ1 + "," + filteredYesQ1 + "," + filteredNoQ1 + "," + allYesQ2 + "," + allNoQ2 + "," + filteredYesQ2 + "," + filteredNoQ2
+  }
+
+  def isPositive(answer: String): Boolean = {
+    answer.equalsIgnoreCase("yes")
+  }
+
+  def isNegative(answer: String): Boolean = {
+    answer.equalsIgnoreCase("no")
+  }
+
+  def convertToCSVFormat(answers: List[HTMLQueryAnswer]): List[CsvAnswer] = {
+    answers.map(ans => {
+      CsvAnswer(ans.get("isRelated").getOrElse("-"),
+        ans.get("isCheckedBefore").getOrElse("-"),
+        ans.get("confidence").getOrElse("-1").toInt,
+        ans.get("descriptionIsRelated").getOrElse("Empty"))
+    })
+  }
+
+  case class CsvAnswer(q1: String, q2: String, likert: Int, feedback: String) {
+    override def toString() = {
+      q1+","+q2+","+likert+","+feedback
+    }
+  }
 
 	def getBase64String(image: File) = {
 		val imageInFile: FileInputStream = new FileInputStream(image)
