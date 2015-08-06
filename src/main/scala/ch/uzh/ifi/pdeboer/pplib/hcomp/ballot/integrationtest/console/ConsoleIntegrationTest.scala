@@ -190,18 +190,8 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 			<p>
 				In the field of statistics, one generally uses
 				<b>statistical methods</b>
-				(such as ANOVA) to compare groups of data and derive findings.
-				<br/>
-				These
-				<b>Statistical methods</b>
-				in general require some
-				<b>prerequisites</b>
-				to be satisfied before being applied to data.
-				<br/>
-				Please have a look at the text-snipplet below. You'll find a
-				<span style="background-color:#FFFF00;">statistical method marked in yellow</span>
-				and a
-				<span style="background-color:#00FF00;">prerequisite marked in green.</span>
+				(such as ANOVA) to compare groups of data and derive findings. These <b>Statistical methods</b> in general require some
+				<b>prerequisites</b> to be satisfied before being applied to data. Please have a look at the text-snipplet below. You'll find a <span style="background-color:#FFFF00;">statistical method marked in yellow</span> and a <span style="background-color:#00FF00;">prerequisite marked in green.</span>
 			</p>
 
       <div class="row" style="display: table;">
@@ -236,7 +226,7 @@ object ConsoleIntegrationTest extends App with LazyLogger {
       <br />
 
 			<div id="assets">
-				If you would like to read more context in order to give better and more accurate answers, you can browse the PDF file by clicking
+				If you would like to read more context in order to give better and more accurate answers, you can browse the PDF file by clicking <img src="http://www.santacroceopera.it/Images/Pages/PDF.png"></img>
 			</div>
 
 			<br/>
@@ -354,7 +344,7 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 
           $(document).ready( function() {
             if($('#snippet').height() < $('#imgContainer').height()){
-              $('#snippetButtons').style.display='none';
+              $('#snippetButtons').hide();
             }
           });
 
