@@ -7,6 +7,7 @@ import javax.activation.MimetypesFileTypeMap
 import ch.uzh.ifi.pdeboer.pplib.hcomp._
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.persistence.DBSettings
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.{Asset, BallotPortalAdapter, BallotProperties, Batch}
+import ch.uzh.ifi.pdeboer.pplib.util.CollectionUtils._
 import ch.uzh.ifi.pdeboer.pplib.util.LazyLogger
 import org.apache.commons.codec.binary.Base64
 
@@ -28,13 +29,13 @@ object ConsoleIntegrationTest extends App with LazyLogger {
   val RESULT_CSV_FILENAME = "results.csv"
 
   val LIKERT_VALUE_CLEANED_ANSWERS = 5
-	val ANSWERS_PER_QUERY = 2
+	val ANSWERS_PER_QUERY = 10
 
   var allAnswers = collection.mutable.Map.empty[String, List[CsvAnswer]]
 
 	new File(SNIPPET_DIR).listFiles(new FilenameFilter {
 		override def accept(dir: File, name: String): Boolean = name.endsWith(".png")
-	}).toList.foreach(snippet => {
+	}).toList.mpar.foreach(snippet => {
 
 		val base64Image = getBase64String(snippet)
 
