@@ -29,7 +29,7 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 			}
 		}
 
-		var htmlToDisplayOnBallotPage: NodeSeq = query match {
+		val htmlToDisplayOnBallotPage: NodeSeq = query match {
 			case q: HTMLQuery => q.html
 			case _ => scala.xml.Unparsed(query.toString)
 		}
@@ -38,53 +38,61 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 			dao.getBatchIdByUUID(actualProperties.batch.uuid).getOrElse(
 				dao.createBatch(actualProperties.allowedAnswersPerTurker, actualProperties.batch.uuid))
 
-		def checkAndFixFormFields: Boolean = {
-			(htmlToDisplayOnBallotPage \\ "form").forall(f =>
-				if (f.attribute("action").isEmpty && f.attribute("method").isEmpty) {
-					val correctedHtmlToDisplayOnBallotPage = htmlToDisplayOnBallotPage.toString().replaceAll("\\<" + f.label + "(.*)\\>", "<form action=\"" + baseURL + "storeAnswer\" method=\"get\" $1>")
-					htmlToDisplayOnBallotPage = scala.xml.PCData(correctedHtmlToDisplayOnBallotPage)
-					true
-				} else {
-					logger.error("Form contains an action and/or method attribute. Please remove them.")
-					false
-				}
-			)
-		}
 
 		val answer: Option[HCompAnswer] = {
-			if ((htmlToDisplayOnBallotPage \\ "form").nonEmpty) {
 
-				val formWithoutActionAndMethod: Boolean = checkAndFixFormFields
+      var txt = htmlToDisplayOnBallotPage.toString()
 
-				if (!formWithoutActionAndMethod && !(htmlToDisplayOnBallotPage \\ "form").exists(form =>
-            ensureFormHasValidInputElements(form))) {
-					logger.error("Form's content is not valid.")
-					None
-				} else {
-					val questionUUID = UUID.randomUUID()
-					val questionId = dao.createQuestion(htmlToDisplayOnBallotPage.toString(), batchIdFromDB, questionUUID)
+      if ((htmlToDisplayOnBallotPage \\ "form").size > 0) {
+        println("Transforming page...")
 
-					actualProperties.assets.foreach(asset => dao.createAsset(asset.binary, asset.contentType, questionId, asset.filename))
+        (htmlToDisplayOnBallotPage \\ "form").forall(f =>
+          if (f.attribute("action").isEmpty && f.attribute("method").isEmpty) {
+            txt = htmlToDisplayOnBallotPage.toString().replaceAll("\\<" + f.label + "(.*)\\>", "<form action=\"" + baseURL + "storeAnswer\" method=\"get\" $1>")
+            true
+          } else {
+            logger.error("Form contains an action and/or method attribute. Please remove them.")
+            false
+          }
+        )
+        val html = scala.xml.PCData(txt)
 
-					val link = baseURL + "showQuestion/" + questionUUID
+        println(s"Result: $")
 
-					val ans = decorated.sendQueryAndAwaitResult(
-						FreetextQuery(
-							s"""
+        val x = html.toString().replace("<![CDATA[", "").substring(0, html.toString().length-12)
+        println(x)
+        println(scala.xml.Unparsed(x).toString())
+
+        if(!(html \\ "form").exists(f => {
+          ensureFormHasValidInputElements(f)
+        })) {
+          logger.error("Form's content is not valid.")
+          None
+        } else {
+          val questionUUID = UUID.randomUUID()
+          val questionId = dao.createQuestion(html.toString(), batchIdFromDB, questionUUID)
+
+          actualProperties.assets.foreach(asset => dao.createAsset(asset.binary, asset.contentType, questionId, asset.filename))
+
+          val link = baseURL + "showQuestion/" + questionUUID
+
+          val ans = decorated.sendQueryAndAwaitResult(
+            FreetextQuery(
+              s"""
 							   Hey there. Thank you for being interested in this task! In the following <a href=\"$link\">URL</a> you'll find a Survey showing you a text snippet and asking you if two terms (highlighted in the text) do have a relationship of some sorts.<br/>
 							   Please fill in the survey and, once finished, enter the confirmation code below such that we can pay you. <br/>
 							   Please note that you will only be able to submit one assignment for this survey. In case you're unsure if you've already participated, click on the link and the system will tell you if you're not eligible.  <br />
 							   <a href=\"$link\">$link</a>""".stripMargin, "", "Are these two words in the text related?"), properties)
-						.get.asInstanceOf[FreetextAnswer]
+            .get.asInstanceOf[FreetextAnswer]
 
           val ansId = dao.getAnswerIdByOutputCode(ans.answer.trim)
 
-					if (ansId.isDefined) {
+          if (ansId.isDefined) {
             decorated.approveAndBonusAnswer(ans)
             dao.updateAnswer(ansId.get, true)
 
             logger.info(s"approving answer $ans of worker ${ans.responsibleWorkers.mkString(",")} to question $questionId")
-            extractSingleAnswerFromDatabase(questionId, htmlToDisplayOnBallotPage)
+            extractSingleAnswerFromDatabase(questionId, html)
           }
           else {
             decorated.rejectAnswer(ans, "Invalid code")
@@ -97,17 +105,18 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
               None
             }
           }
-				}
-			} else {
-				logger.error("There exists no Form tag in the html page.")
-				None
-			}
+        }
+      } else {
+        logger.error("There exists no form for this question.")
+        None
+      }
+
 		}
 		answer
 	}
 
 	def extractSingleAnswerFromDatabase(questionId: Long, htmlToDisplayOnBallotPage: NodeSeq): Option[HCompAnswer] = {
-		val result = Json.parse(dao.getAnswer(questionId).headOption.getOrElse("{}")).asInstanceOf[JsObject]
+		val result = Json.parse(dao.getAnswers(questionId).headOption.getOrElse("{}")).asInstanceOf[JsObject]
 		val answer = result.fieldSet.map(f => (f._1 -> f._2.toString().replaceAll("\"", ""))).toMap
 		Some(HTMLQueryAnswer(answer, HTMLQuery(htmlToDisplayOnBallotPage)))
 	}
@@ -117,6 +126,9 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 	override def cancelQuery(query: HCompQuery): Unit = decorated.cancelQuery(query)
 
 	def ensureFormHasValidInputElements(form: NodeSeq): Boolean = {
+
+    logger.debug("Ensuring that form has valid input elements...")
+
 		val supportedFields = List[(String, Map[String, String])](
 			"input" -> Map("type" -> "submit"),
 			"textarea" -> Map("name" -> ""),
@@ -127,6 +139,7 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 
 		supportedFields.foreach(formField => {
 			if ((form \\ formField._1).nonEmpty) {
+        logger.debug("Form contains element: " + formField._1)
 				checkAttributesOfInputElements ::= ((form \\ formField._1) -> formField._2)
 			}
 		})
@@ -135,7 +148,10 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 			logger.error("The form doesn't contain any input, select, textarea or button.")
 			false
 		} else {
-			checkAttributesOfInputElements.forall(a => checkAttributesValueForInputElements(a._1, a._2))
+			checkAttributesOfInputElements.forall(a => {
+        logger.debug(s"Checking form input: " + a._1 + " for: " + a._2)
+        checkAttributesValueForInputElements(a._1, a._2)
+      })
 		}
 	}
 

@@ -354,7 +354,7 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 
           $(document).ready( function() {
             if($('#snippet').height() < $('#imgContainer').height()){
-              $('#snippetButtons').style.display='none';
+              $('#snippetButtons').hide();
             }
           });
 
