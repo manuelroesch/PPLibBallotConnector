@@ -31,7 +31,7 @@ object ConsoleIntegrationTest extends App with LazyLogger {
   val RESULT_CSV_FILENAME = "results.csv"
 
   val LIKERT_VALUE_CLEANED_ANSWERS = 5
-  val ANSWERS_PER_QUERY = 2
+  val ANSWERS_PER_QUERY = 10
 
   /* Directories structure:
      - ../snippets/year/method/pdfFileName/
@@ -50,8 +50,7 @@ object ConsoleIntegrationTest extends App with LazyLogger {
     }).toList
   }).toList
 
-  //TODO: add mpar here
-  val allAnswers: Map[String, List[CsvAnswer]] = allSnippets.map(snippet => {
+  val allAnswers: Map[String, List[CsvAnswer]] = allSnippets.mpar.map(snippet => {
 
     val base64Image = getBase64String(snippet)
 
