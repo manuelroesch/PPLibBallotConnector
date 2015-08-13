@@ -37,75 +37,69 @@ object ConsoleIntegrationTest extends App with LazyLogger {
   var allAnswers = collection.mutable.Map.empty[String, List[CsvAnswer]]
 
   /* Directories structure:
-     - ../snippets/method/pdfFileName/
+     - ../snippets/year/method/pdfFileName/
      pdfFileName contains:
-      * a directory for all permutations of method and its assumptions. This directory contains the whole pdf file as PNG
       * for each permutation a snippet
+      * for each permutation a complete version of the pdf in PNG format (ending with *.pdf.png)
       * for each permutation a pdf file with the relative highlight
   */
-	new File(SNIPPET_DIR).listFiles(filterDirectories).par.foreach(methodDir => {
-    methodDir.listFiles(filterDirectories).par.foreach(pdfNameDir => {
-      pdfNameDir.listFiles(new FilenameFilter {
-        override def accept(dir: File, name: String): Boolean = name.endsWith(".png")
-      }).toList.mpar.foreach(snippet => {
+	new File(SNIPPET_DIR).listFiles(filterDirectories).par.foreach(yearDir => {
+    yearDir.listFiles(filterDirectories).par.foreach(methodDir => {
+      methodDir.listFiles(filterDirectories).par.foreach(pdfDir => {
+        pdfDir.listFiles(new FilenameFilter {
+          override def accept(dir: File, name: String): Boolean = name.endsWith("OnTop.png")
+        }).toList.mpar.foreach(snippet => {
 
-        val base64Image = getBase64String(snippet)
+          val base64Image = getBase64String(snippet)
 
-        val snippetInputStream: InputStream = new FileInputStream(snippet)
-        val snippetSource = Source.fromInputStream(snippetInputStream)
-        val snippetBinary = Stream.continually(snippetInputStream.read).takeWhile(-1 !=).map(_.toByte).toArray
-        snippetSource.close()
+          val snippetInputStream: InputStream = new FileInputStream(snippet)
 
-        val isMethodOnTop: Boolean = snippet.getName.substring(snippet.getName.lastIndexOf("-")+1, snippet.getName.indexOf(".png")).equalsIgnoreCase("methodOnTop")
+          val isMethodOnTop: Boolean = snippet.getName.substring(snippet.getName.lastIndexOf("-") + 1, snippet.getName.indexOf(".png")).equalsIgnoreCase("methodOnTop")
 
-        val ballotHtmlPage: NodeSeq = createHtmlPage(base64Image, isMethodOnTop)
-        val query = HTMLQuery(ballotHtmlPage)
+          val ballotHtmlPage: NodeSeq = createHtmlPage(base64Image, isMethodOnTop)
+          val query = HTMLQuery(ballotHtmlPage)
 
-        val pdfName = snippet.getName.substring(0, snippet.getName.indexOf("-"))
-        val pdfPath = snippet.getParentFile.getPath
-        val pdfInputStream: InputStream = new FileInputStream(pdfPath +"/"+ pdfName)
+          val pdfName = snippet.getName.substring(0, snippet.getName.indexOf("-"))
+          val pdfPath = snippet.getParentFile.getPath
+          val pdfInputStream: InputStream = new FileInputStream(pdfPath + "/" + pdfName)
 
-        val pdfSource = Source.fromInputStream(pdfInputStream)
-        val pdfBinary = Stream.continually(pdfInputStream.read).takeWhile(-1 !=).map(_.toByte).toArray
-        pdfSource.close()
+          val pdfSource = Source.fromInputStream(pdfInputStream)
+          val pdfBinary = Stream.continually(pdfInputStream.read).takeWhile(-1 !=).map(_.toByte).toArray
+          pdfSource.close()
 
-        val contentType = new MimetypesFileTypeMap().getContentType(new File(pdfPath +"/"+ pdfName))
+          val contentType = new MimetypesFileTypeMap().getContentType(new File(pdfPath + "/" + pdfName))
 
-        val permutationNumber = snippet.getName.substring(0, snippet.getName.indexOf("_"))
-        val originalPDFFilename = snippet.getName.substring(snippet.getName.indexOf("_")+1,snippet.getName.indexOf("-"))
+          val properties = new BallotProperties(Batch(UUID.randomUUID()),
+            List(Asset(pdfBinary, contentType, pdfName)), 1, paymentCents = 50)
 
-        val filnameForResult = originalPDFFilename+"_"+permutationNumber
-
-        val properties = new BallotProperties(Batch(UUID.randomUUID()),
-          List(Asset(pdfBinary, contentType, filnameForResult)), 1, paymentCents = 50)
-
-        var answers = List.empty[HTMLQueryAnswer]
-        do {
-          try {
-            ballotPortalAdapter.processQuery(query, properties) match {
-              case ans: Option[HTMLQueryAnswer] => {
-                if (ans.isDefined) {
-                  answers ::= ans.get
-                  logger.info("Answer: " + ans.get.answers.mkString("\n- "))
-                } else {
-                  logger.info("Error while getting the answer.")
+          var answers = List.empty[HTMLQueryAnswer]
+          do {
+            try {
+              ballotPortalAdapter.processQuery(query, properties) match {
+                case ans: Option[HTMLQueryAnswer] => {
+                  if (ans.isDefined) {
+                    answers ::= ans.get
+                    logger.info("Answer: " + ans.get.answers.mkString("\n- "))
+                  } else {
+                    logger.info("Error while getting the answer.")
+                  }
                 }
+                case _ => logger.info("Unknown error!")
               }
-              case _ => logger.info("Unknown error!")
+            }
+            catch {
+              case e: Throwable => logger.error("There was a problem with the query engine", e)
             }
           }
-          catch {
-            case e: Throwable => logger.error("There was a problem with the query engine", e)
-          }
-        }
-        while (answers.size < ANSWERS_PER_QUERY)
+          while (answers.size < ANSWERS_PER_QUERY)
 
-        val answersToCSV = convertToCSVFormat(answers)
-        if(allAnswers.get(snippet.getName).isDefined){
-          allAnswers.update(snippet.getName, allAnswers.get(snippet.getName).get ::: answersToCSV)
-        } else {
-          allAnswers += (snippet.getName -> answersToCSV)
-        }
+          val answersToCSV = convertToCSVFormat(answers)
+          if (allAnswers.get(snippet.getName).isDefined) {
+            allAnswers.update(snippet.getName, allAnswers.get(snippet.getName).get ::: answersToCSV)
+          } else {
+            allAnswers += (snippet.getName -> answersToCSV)
+          }
+        })
       })
     })
   })
