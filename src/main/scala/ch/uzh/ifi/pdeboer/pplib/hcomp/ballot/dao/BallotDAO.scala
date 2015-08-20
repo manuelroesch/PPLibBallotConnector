@@ -28,7 +28,6 @@ class BallotDAO extends DAO{
     }
   }
 
-
   override def createBatch(allowedAnswersPerTurker: Int, uuid: UUID): Long = {
     DB localTx { implicit session =>
       sql"insert into batch(allowed_answers_per_turker, uuid) values(${allowedAnswersPerTurker}, ${uuid.toString})".updateAndReturnGeneratedKey().apply()
@@ -91,4 +90,44 @@ class BallotDAO extends DAO{
     }
   }
 
+  def getPermutationsIdsByPdfName(pdfName: String): List[Long] = {
+    DB readOnly { implicit session =>
+      DB readOnly { implicit session =>
+        sql"select * from permutations where pdf_name = ${pdfName}".map(rs => rs.long("id")).list().apply()
+      }
+    }
+  }
+
+  def getStateOfPermutationId(id: Long) : Option[Long] = {
+    DB readOnly { implicit session =>
+      sql"select state from permutations where id = ${id}".map(rs => rs.long("state")).single().apply()
+    }
+  }
+
+  def getGroupByPermutationId(id: Long) : Option[String] = {
+    DB readOnly { implicit session =>
+      sql"select permutation_group from permutations where id = ${id}".map(rs => rs.string("permutation_group")).single().apply()
+    }
+  }
+
+  def getMethodUpByPermutationId(id: Long) : Option[Boolean] = {
+    DB readOnly { implicit session =>
+      sql"select method_up from permutations where id = ${id}".map(rs => rs.boolean("method_up")).single().apply()
+    }
+  }
+
+  def updateStateOfPermutationIds(ids: List[Long], newState: Long) = {
+    DB localTx { implicit session =>
+      ids.foreach(id => {
+        sql"update permutations SET state = ${newState} WHERE id = ${id}"
+          .update().apply()
+      })
+    }
+  }
+
+  def getIdsByPdfNameAndPermutationNumber(pdfName: String, permutationNum: Int) : List[Long] = {
+    DB readOnly { implicit session =>
+      sql"""select id from permutations where pdf_name = ${pdfName} and permutation_group like ${permutationNum+"$"} """.map(rs => rs.long("id")).list().apply()
+    }
+  }
 }

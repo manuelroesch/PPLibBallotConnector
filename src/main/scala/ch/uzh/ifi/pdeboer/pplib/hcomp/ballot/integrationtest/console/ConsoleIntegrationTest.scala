@@ -5,6 +5,7 @@ import java.util.UUID
 import javax.activation.MimetypesFileTypeMap
 
 import ch.uzh.ifi.pdeboer.pplib.hcomp._
+import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.dao.BallotDAO
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.persistence.DBSettings
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.{Asset, BallotPortalAdapter, BallotProperties, Batch}
 import ch.uzh.ifi.pdeboer.pplib.util.LazyLogger
@@ -22,7 +23,7 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 
   val ballotPortalAdapter = HComp(BallotPortalAdapter.PORTAL_KEY)
 
-  val SNIPPET_DIR = "../snippets/"
+  val SNIPPET_DIR = "../merge_method_snippets/"
 
   val filterDirectories = new FilenameFilter {
     override def accept(dir: File, name: String): Boolean = new File(dir, name).isDirectory
@@ -33,13 +34,7 @@ object ConsoleIntegrationTest extends App with LazyLogger {
   val LIKERT_VALUE_CLEANED_ANSWERS = 5
   val ANSWERS_PER_QUERY = 10
 
-  /* Directories structure:
-     - ../snippets/year/method/pdfFileName/
-     pdfFileName contains:
-      * for each permutation a snippet
-      * for each permutation a complete version of the pdf in PNG format (ending with *.pdf.png)
-      * for each permutation a pdf file with the relative highlight
-  */
+
   val allSnippets = new File(SNIPPET_DIR).listFiles(filterDirectories).par.flatMap(yearDir => {
     yearDir.listFiles(filterDirectories).par.flatMap(methodDir => {
       methodDir.listFiles(filterDirectories).par.flatMap(pdfDir => {
@@ -50,7 +45,26 @@ object ConsoleIntegrationTest extends App with LazyLogger {
     }).toList
   }).toList
 
-  val allAnswers: Map[String, List[CsvAnswer]] = allSnippets.mpar.map(snippet => {
+  allSnippets.map(snippet => {
+
+    //TODO: 1. disabilita tutte le domande che hanno come assumption la stessa di cui abbiamo una risposta
+    val permutationNum = snippet.getName.substring(snippet.getName.lastIndexOf("_")+1, snippet.getName.indexOf(".pdf")).toInt
+    val pdfNameWithoutPermutationNum = snippet.getName.substring(0, snippet.getName.lastIndexOf("_"))+".pdf"
+
+    //TODO: se abbiamo già una risposta salta la domanda se no vai avanti
+    val DB = new BallotDAO
+    val permutationIdsOfPaper = DB.getPermutationsIdsByPdfName(pdfNameWithoutPermutationNum)
+
+    val similarSnippetsIds = DB.getIdsByPdfNameAndPermutationNumber(pdfNameWithoutPermutationNum, permutationNum)
+
+    if(similarSnippetsIds.exists(id => DB.getStateOfPermutationId(id) == -1)){
+      logger.debug(s"Snippet which may be merged $similarSnippetsIds")
+    }else {
+      // Skip the snippet because we already have an answer for it
+    }
+
+    //TODO: 2. Dosabilita tutti i metodi mergiati che testano la stessa assumption in un altra posizione
+
 
     val base64Image = getBase64String(snippet)
 
@@ -106,7 +120,10 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 
     writer.write("snippet,yes answers,no answers,cleaned yes,cleaned no,yes answers,no answers,cleaned yes,cleaned no,feedbacks\n")
 
-    val results : String = allAnswers.map(snippetAnswers => {
+    //TODO: extract all answers from the database
+
+    val results : String = ""
+    /*allAnswers.map(snippetAnswers => {
       val snippetName = snippetAnswers._1
       val yesQ1 = snippetAnswers._2.filter(ans => isPositive(ans.q1).get).size
       val yesQ2 = snippetAnswers._2.filter(ans => isPositive(ans.q2).isDefined && isPositive(ans.q2).get).size
@@ -122,7 +139,7 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 
       snippetName + "," + yesQ1 + "," + noQ1 + "," + cleanedYesQ1 + "," + cleanedNoQ1 + "," + yesQ2 + "," + noQ2 + "," + cleanedYesQ2 + "," + cleanedNoQ2 + "," + feedbacks
     }).mkString("\n")
-
+    */
     writer.write(results)
 
     writer.close()

@@ -75,6 +75,19 @@ object DBInitializer extends LazyLogger {
           }
       }
 
+      //permutations TABLE
+      try {
+        sql"select 1 from permutations limit 1".map(_.long(1)).single.apply()
+        logger.debug("Table permutation already initialized")
+      }
+      catch {
+        case e: java.sql.SQLException =>
+          DB autoCommit { implicit s =>
+            sql"CREATE TABLE permutations (id BIGINT NOT NULL AUTO_INCREMENT, pdf_name VARCHAR(255) NOT NULL, method_up TINYINT(1) NOT NULL DEFAULT 0, permutation_group VARCHAR(255) NOT NULL, state BIGINT NOT NULL DEFAULT -1, PRIMARY KEY(id));".execute().apply()
+            logger.debug("Table permutations created")
+          }
+      }
+
     }
   }
 }
