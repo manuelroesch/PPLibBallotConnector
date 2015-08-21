@@ -15,7 +15,7 @@ trait DAO {
 
   def createBatch(allowedAnswerPerTurker: Int, uuid: UUID): Long
 
-  def createQuestion(html: String, batchId: Long, uuid: UUID = UUID.randomUUID(), dateTime: DateTime = new DateTime()): Long
+  def createQuestion(html: String, batchId: Long, uuid: UUID = UUID.randomUUID(), dateTime: DateTime = new DateTime(), hints: Long): Long
 
   def getAnswer(questionId: Long): List[String]
 
