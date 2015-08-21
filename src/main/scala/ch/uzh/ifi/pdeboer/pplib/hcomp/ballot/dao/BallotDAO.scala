@@ -125,9 +125,16 @@ class BallotDAO extends DAO{
     }
   }
 
-  def getIdsByPdfNameAndPermutationNumber(pdfName: String, permutationNum: Int) : List[Long] = {
+  def getIdsByGroupAndPdfName(group: Int, pdfName: String) : List[Long] = {
     DB readOnly { implicit session =>
-      sql"""select id from permutations where pdf_name = ${pdfName} and permutation_group like ${permutationNum+"$"} """.map(rs => rs.long("id")).list().apply()
+      sql"""select id from permutations where pdf_name = ${pdfName} and group_nr = ${group}""".map(rs => rs.long("id")).list().apply()
     }
   }
+
+  def getIdsByAssumptionAndPdfName(assumption: String, pdfName: String): List[Long] = {
+    DB readOnly { implicit session =>
+      sql"""select id from permutations where pdf_name = ${pdfName} and permutation_group like %/${assumption}""".map(rs => rs.long("id")).list().apply()
+    }
+  }
+
 }
