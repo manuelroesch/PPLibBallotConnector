@@ -19,8 +19,9 @@ import scala.xml.NodeSeq
  */
 object ConsoleIntegrationTest extends App with LazyLogger {
 
-  val ANSWERS_PER_QUERY = 1
+  val ANSWERS_PER_QUERY = 10
   val RESULT_CSV_FILENAME = "results.csv"
+  val SNIPPET_DIR = "../eujoupract_snippets/"
   val LIKERT_VALUE_CLEANED_ANSWERS = 5
 
   DBSettings.initialize()
@@ -35,13 +36,7 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 
   val ballotPortalAdapter = HComp(BallotPortalAdapter.PORTAL_KEY)
 
-  val SNIPPET_DIR = "../eujoupract_snippets/"
-
-  val filterDirectories = new FilenameFilter {
-    override def accept(dir: File, name: String): Boolean = new File(dir, name).isDirectory
-  }
-
-  dao.getAllPermutations().groupBy(_.pdfPath).foreach(group => {
+  dao.getAllPermutations().groupBy(gr => gr.groupName.startsWith(gr.groupName.substring(0, gr.groupName.indexOf("/")))).par.foreach(group => {
     group._2.foreach(permutation => {
       val p = dao.getPermutationById(permutation.id)
       if(p.isDefined && p.get.state == 0) {
@@ -107,7 +102,6 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 
     val base64Image = getBase64String(snippet)
 
-    val snippetInputStream: InputStream = new FileInputStream(snippet)
     val ballotHtmlPage: NodeSeq = createHtmlPage(base64Image, dao.getPermutationById(hints).get.methodOnTop)
     val query = HTMLQuery(ballotHtmlPage)
     val pdfName = snippet.getName
