@@ -105,7 +105,7 @@ class BallotDAO extends DAO{
       ESCAPED BY '"'
       LINES TERMINATED BY '\n'
       IGNORE 1 LINES
-        (group_name, method_index, snippet_filename, pdf_path)""".update().apply()
+        (group_name, method_index, snippet_filename, pdf_path, method_on_top)""".update().apply()
     }
 
     true
@@ -114,7 +114,7 @@ class BallotDAO extends DAO{
   def getAllPermutations() : List[Permutation] = {
     DB readOnly { implicit session =>
       sql"select * from permutations".map(rs =>
-        Permutation(rs.long("id"), rs.string("group_name"), rs.string("method_index"), rs.string("snippet_filename"), rs.string("pdf_path"), rs.long("state"), rs.int("excluded_step"))
+        Permutation(rs.long("id"), rs.string("group_name"), rs.string("method_index"), rs.string("snippet_filename"), rs.string("pdf_path"), rs.boolean("method_on_top"), rs.long("state"), rs.int("excluded_step"))
       ).list().apply()
     }
   }
@@ -122,7 +122,7 @@ class BallotDAO extends DAO{
   def getPermutationById(id: Long) : Option[Permutation] = {
     DB readOnly { implicit session =>
       sql"select * from permutations where id = ${id}".map(rs =>
-        Permutation(rs.long("id"), rs.string("group_name"), rs.string("method_index"), rs.string("snippet_filename"), rs.string("pdf_path"), rs.long("state"), rs.int("excluded_step"))
+        Permutation(rs.long("id"), rs.string("group_name"), rs.string("method_index"), rs.string("snippet_filename"), rs.string("pdf_path"), rs.boolean("method_on_top"), rs.long("state"), rs.int("excluded_step"))
       ).single().apply()
     }
   }
@@ -130,7 +130,7 @@ class BallotDAO extends DAO{
   def getAllOpenByGroupName(groupName: String) : List[Permutation] = {
     DB readOnly { implicit session =>
       sql"select * from permutations where group_name = ${groupName} and state = 0".map(rs =>
-        Permutation(rs.long("id"), rs.string("group_name"), rs.string("method_index"), rs.string("snippet_filename"), rs.string("pdf_path"), rs.long("state"), rs.int("excluded_step"))
+        Permutation(rs.long("id"), rs.string("group_name"), rs.string("method_index"), rs.string("snippet_filename"), rs.string("pdf_path"), rs.boolean("method_on_top"), rs.long("state"), rs.int("excluded_step"))
       ).list().apply()
     }
   }
@@ -162,7 +162,7 @@ class BallotDAO extends DAO{
   def getAllPermutationsWithStateEquals(state: Long): List[Permutation] = {
     DB readOnly { implicit session =>
       sql"select * from permutations where state = ${state}".map(rs =>
-        Permutation(rs.long("id"), rs.string("group_name"), rs.string("method_index"), rs.string("snippet_filename"), rs.string("pdf_path"), rs.long("state"), rs.int("excluded_step"))
+        Permutation(rs.long("id"), rs.string("group_name"), rs.string("method_index"), rs.string("snippet_filename"), rs.string("pdf_path"), rs.boolean("method_on_top"), rs.long("state"), rs.int("excluded_step"))
       ).list().apply()
     }
   }

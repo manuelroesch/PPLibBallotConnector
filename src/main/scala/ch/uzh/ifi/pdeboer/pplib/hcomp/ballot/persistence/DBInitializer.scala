@@ -44,7 +44,7 @@ object DBInitializer extends LazyLogger {
       catch {
         case e: java.sql.SQLException =>
           DB autoCommit { implicit s =>
-            sql"CREATE TABLE permutations (id BIGINT NOT NULL AUTO_INCREMENT, group_name VARCHAR(255) NOT NULL, method_index VARCHAR(255) NOT NULL, snippet_filename VARCHAR(255) NOT NULL, pdf_path VARCHAR(255) NOT NULL, state BIGINT NOT NULL DEFAULT 0, excluded_step INT DEFAULT 0, PRIMARY KEY(id));".execute().apply()
+            sql"CREATE TABLE permutations (id BIGINT NOT NULL AUTO_INCREMENT, group_name VARCHAR(255) NOT NULL, method_index VARCHAR(255) NOT NULL, snippet_filename VARCHAR(255) NOT NULL, pdf_path VARCHAR(255) NOT NULL, method_on_top bool not null, state BIGINT NOT NULL DEFAULT 0, excluded_step INT DEFAULT 0, PRIMARY KEY(id));".execute().apply()
             logger.debug("Table permutations created")
           }
       }
