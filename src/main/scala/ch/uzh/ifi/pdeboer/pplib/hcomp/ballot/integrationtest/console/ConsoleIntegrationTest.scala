@@ -6,7 +6,7 @@ import javax.activation.MimetypesFileTypeMap
 
 import ch.uzh.ifi.pdeboer.pplib.hcomp._
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.dao.BallotDAO
-import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.persistence.DBSettings
+import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.persistence.{Answer, DBSettings}
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.{Asset, BallotPortalAdapter, BallotProperties, Batch}
 import ch.uzh.ifi.pdeboer.pplib.util.LazyLogger
 import org.apache.commons.codec.binary.Base64
@@ -19,7 +19,7 @@ import scala.xml.NodeSeq
  */
 object ConsoleIntegrationTest extends App with LazyLogger {
 
-  val ANSWERS_PER_QUERY = 1
+  val ANSWERS_PER_QUERY = 10
   val RESULT_CSV_FILENAME = "results.csv"
   val LIKERT_VALUE_CLEANED_ANSWERS = 5
 
@@ -41,7 +41,7 @@ object ConsoleIntegrationTest extends App with LazyLogger {
     override def accept(dir: File, name: String): Boolean = new File(dir, name).isDirectory
   }
 
-  dao.getAllPermutations().groupBy(_.pdfPath).foreach(group => {
+  dao.getAllPermutations().groupBy(_.pdfPath).par.foreach(group => {
     group._2.foreach(permutation => {
       val p = dao.getPermutationById(permutation.id)
       if(p.isDefined && p.get.state == 0) {
@@ -147,17 +147,19 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 
     writer.write("snippet,yes answers,no answers,cleaned yes,cleaned no,yes answers,no answers,cleaned yes,cleaned no,feedbacks,firstExclusion,secondExclusion\n")
 
-    val results = dao.getAllQuestions.map(question => {
-      val hints = question.hints
-      val yesYes = dao.getPermutationById(hints)
-      val skipped = dao.getAllPermutationsWithStateEquals(hints).filterNot(f => f.excluded_step == 0)
+    val results = dao.getAllAnswers.map(answer => {
+      val hints = dao.getHintByQuestionId(answer.questionId).get
 
-      val allAns = dao.getAnswer(question.id)
-      val a : List[Map[String, String]] = allAns.map(a => a.substring(1, a.length - 1).replaceAll("\"", "").split(",").toList.map(aa => aa.split(":").head.replaceAll(" ", "") -> aa.split(":")(1).substring(1)).toMap)
+      val allPermutationsDisabledByActualAnswer = dao.getAllPermutationsWithStateEquals(hints).filterNot(f => f.excluded_step == 0)
 
-      val answers: List[CsvAnswer] = convertToCSVFormat(a)
+      val snippetName = dao.getAssetFileNameByQuestionId(answer.questionId).get
 
-      val snippetName = dao.getAssetFileNameByQuestionId(question.id).get
+      val aa : List[Answer]= dao.getAllAnswersBySnippet(snippetName)
+
+      val cleanFormatAnswers : List[Map[String, String]] = aa.map(a => a.answerJson.substring(1, a.answerJson.length - 1)
+        .replaceAll("\"", "").split(",").toList.map(aa => aa.split(":").head.replaceAll(" ", "") -> aa.split(":")(1).substring(1)).toMap)
+
+      val answers: List[CsvAnswer] = convertToCSVFormat(cleanFormatAnswers)
 
       val yesQ1 = answers.count(ans => isPositive(ans.q1).get)
       val yesQ2 = answers.count(ans => isPositive(ans.q2).isDefined && isPositive(ans.q2).get)
@@ -171,18 +173,14 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 
       val feedbacks = answers.map(_.feedback).mkString(";")
 
-      val allAffectedPermutations = dao.getAllPermutationsWithStateEquals(question.hints)
-
-      val firstExcluded = skipped.filter(f => f.excluded_step == 1).map(_.snippetFilename).mkString(";")
-      val secondExcluded = skipped.filter(f => f.excluded_step == 2).map(_.snippetFilename).mkString(";")
+      val firstExcluded = allPermutationsDisabledByActualAnswer.filter(f => f.excluded_step == 1).map(_.snippetFilename).mkString(";")
+      val secondExcluded = allPermutationsDisabledByActualAnswer.filter(f => f.excluded_step == 2).map(_.snippetFilename).mkString(";")
 
       snippetName + "," + yesQ1 + "," + noQ1 + "," + cleanedYesQ1 + "," + cleanedNoQ1 + "," + yesQ2 + "," + noQ2 + "," + cleanedYesQ2 + "," + cleanedNoQ2 + "," + feedbacks + "," + firstExcluded + "," + secondExcluded
     })
 
     writer.write(results.mkString("\n"))
-
     writer.close()
-
   }
 
   def isPositive(answer: Option[String]): Option[Boolean] = {

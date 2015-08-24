@@ -2,7 +2,7 @@ package ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.dao
 
 import java.util.UUID
 
-import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.persistence.Permutation
+import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.persistence.{Answer, Permutation}
 import org.joda.time.DateTime
 import scalikejdbc._
 
@@ -147,8 +147,6 @@ class BallotDAO extends DAO{
     result.filter(r => r.groupName.startsWith(partialGroupName)).map(m => m)
   }
 
-  case class Question(id: Long, hints: Long)
-
   def getAllQuestions : List[Question] = {
     DB readOnly { implicit session =>
       sql"select * from question".map(rs => Question(rs.long("id"), rs.long("hints"))).list().apply()
@@ -167,6 +165,28 @@ class BallotDAO extends DAO{
         Permutation(rs.long("id"), rs.string("group_name"), rs.string("method_index"), rs.string("snippet_filename"), rs.string("pdf_path"), rs.long("state"), rs.int("excluded_step"))
       ).list().apply()
     }
+  }
+
+  case class Question(id: Long, hints: Long)
+
+
+  def getAllAnswers() : List[Answer] = {
+    DB readOnly { implicit session =>
+      sql"select * from answer".map(rs =>
+        Answer(rs.long("id"), rs.long("question_id"), rs.string("answer_json"), rs.boolean("accepted"))
+      ).list().apply()
+    }
+  }
+
+  def getHintByQuestionId(qId: Long) : Option[Long] = {
+    DB readOnly { implicit session =>
+      sql"select id from question".map(rs =>
+        rs.long("id")).single().apply()
+    }
+  }
+
+  def getAllAnswersBySnippet(fileName: String) : List[Answer] = {
+    getAllAnswers.filter(f => f.answerJson.contains(fileName))
   }
 
 }
