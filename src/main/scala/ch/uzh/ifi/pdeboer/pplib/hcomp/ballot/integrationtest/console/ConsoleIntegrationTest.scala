@@ -45,7 +45,7 @@ object ConsoleIntegrationTest extends App with LazyLogger {
     group._2.foreach(permutation => {
       val p = dao.getPermutationById(permutation.id)
       if(p.isDefined && p.get.state == 0) {
-        val answers = askQuestion(new File(p.get.snippetFilename), p.get.id)
+        val answers = getAnswersForSnippet(new File(p.get.snippetFilename), p.get.id)
         // Aggregate answer and look if cleaned Q1 = y and Q2 = Y is the result
         val cleanedYesQ1 = answers._2.filter(ans => ans.likert>=LIKERT_VALUE_CLEANED_ANSWERS && isPositive(ans.q1).get).size
         val cleanedYesQ2 = answers._2.filter(ans => ans.likert>=LIKERT_VALUE_CLEANED_ANSWERS && isPositive(ans.q2).isDefined && isPositive(ans.q2).get).size
@@ -73,7 +73,7 @@ object ConsoleIntegrationTest extends App with LazyLogger {
   createCSVReport
 
 
-  def getMoreAnswer(query: HTMLQuery, properties: BallotProperties): HTMLQueryAnswer = {
+  def askQuestion(query: HTMLQuery, properties: BallotProperties): HTMLQueryAnswer = {
     val ans : Option[HTMLQueryAnswer] =
       try {
       ballotPortalAdapter.processQuery(query, properties) match {
@@ -101,11 +101,11 @@ object ConsoleIntegrationTest extends App with LazyLogger {
     if(ans.isDefined){
       ans.get
     }else {
-      getMoreAnswer(query, properties)
+      askQuestion(query, properties)
     }
   }
 
-  def askQuestion(snippet: File, hints: Long) : (String, List[CsvAnswer]) = {
+  def getAnswersForSnippet(snippet: File, hints: Long) : (String, List[CsvAnswer]) = {
 
     val base64Image = getBase64String(snippet)
 
@@ -138,7 +138,7 @@ object ConsoleIntegrationTest extends App with LazyLogger {
     if(it == to){
       soFar
     }else {
-      recursiveGetAnswers(it+1, to, query, properties, soFar ::: List[HTMLQueryAnswer](getMoreAnswer(query, properties)))
+      recursiveGetAnswers(it+1, to, query, properties, soFar ::: List[HTMLQueryAnswer](askQuestion(query, properties)))
     }
   }
 
@@ -147,27 +147,27 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 
     writer.write("snippet,yes answers,no answers,cleaned yes,cleaned no,yes answers,no answers,cleaned yes,cleaned no,feedbacks,firstExclusion,secondExclusion\n")
 
-    val results = dao.getAllQuestions.flatMap(question => {
+    val results = dao.getAllQuestions.map(question => {
       val hints = question.hints
       val yesYes = dao.getPermutationById(hints)
       val skipped = dao.getAllPermutationsWithStateEquals(hints).filterNot(f => f.excluded_step == 0)
 
       val allAns = dao.getAnswer(question.id)
-      val a : List[List[String]] = allAns.map(a => a.substring(1, a.length - 1).split(",").toList)
+      val a : List[Map[String, String]] = allAns.map(a => a.substring(1, a.length - 1).replaceAll("\"", "").split(",").toList.map(aa => aa.split(":").head.replaceAll(" ", "") -> aa.split(":")(1).substring(1)).toMap)
 
-      val answers: List[CsvAnswer] = convertToCSVFormat(a.map(ans => Map[String, String](ans.split(":").head -> ans.split(":")(1))))
+      val answers: List[CsvAnswer] = convertToCSVFormat(a)
 
-      val snippetName = dao.getAssetFileNameByQuestionId(question.id)
+      val snippetName = dao.getAssetFileNameByQuestionId(question.id).get
 
-      val yesQ1 = answers.filter(ans => isPositive(ans.q1).get).size
-      val yesQ2 = answers.filter(ans => isPositive(ans.q2).isDefined && isPositive(ans.q2).get).size
-      val noQ1 = answers.filter(ans => isNegative(ans.q1).get).size
-      val noQ2 = answers.filter(ans => isNegative(ans.q2).isDefined && isNegative(ans.q2).get).size
+      val yesQ1 = answers.count(ans => isPositive(ans.q1).get)
+      val yesQ2 = answers.count(ans => isPositive(ans.q2).isDefined && isPositive(ans.q2).get)
+      val noQ1 = answers.count(ans => isNegative(ans.q1).get)
+      val noQ2 = answers.count(ans => isNegative(ans.q2).isDefined && isNegative(ans.q2).get)
 
-      val cleanedYesQ1 = answers.filter(ans => ans.likert >= LIKERT_VALUE_CLEANED_ANSWERS && isPositive(ans.q1).get).size
-      val cleanedYesQ2 = answers.filter(ans => ans.likert >= LIKERT_VALUE_CLEANED_ANSWERS && isPositive(ans.q2).isDefined && isPositive(ans.q2).get).size
-      val cleanedNoQ1 = answers.filter(ans => ans.likert >= LIKERT_VALUE_CLEANED_ANSWERS && isNegative(ans.q1).get).size
-      val cleanedNoQ2 = answers.filter(ans => ans.likert >= LIKERT_VALUE_CLEANED_ANSWERS && isNegative(ans.q2).isDefined && isNegative(ans.q2).get).size
+      val cleanedYesQ1 = answers.count(ans => ans.likert >= LIKERT_VALUE_CLEANED_ANSWERS && isPositive(ans.q1).get)
+      val cleanedYesQ2 = answers.count(ans => ans.likert >= LIKERT_VALUE_CLEANED_ANSWERS && isPositive(ans.q2).isDefined && isPositive(ans.q2).get)
+      val cleanedNoQ1 = answers.count(ans => ans.likert >= LIKERT_VALUE_CLEANED_ANSWERS && isNegative(ans.q1).get)
+      val cleanedNoQ2 = answers.count(ans => ans.likert >= LIKERT_VALUE_CLEANED_ANSWERS && isNegative(ans.q2).isDefined && isNegative(ans.q2).get)
 
       val feedbacks = answers.map(_.feedback).mkString(";")
 
@@ -179,7 +179,7 @@ object ConsoleIntegrationTest extends App with LazyLogger {
       snippetName + "," + yesQ1 + "," + noQ1 + "," + cleanedYesQ1 + "," + cleanedNoQ1 + "," + yesQ2 + "," + noQ2 + "," + cleanedYesQ2 + "," + cleanedNoQ2 + "," + feedbacks + "," + firstExcluded + "," + secondExcluded
     })
 
-    writer.append(results.mkString("\n"))
+    writer.write(results.mkString("\n"))
 
     writer.close()
 
