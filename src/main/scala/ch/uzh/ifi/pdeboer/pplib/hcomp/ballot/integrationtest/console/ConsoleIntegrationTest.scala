@@ -7,14 +7,14 @@ import javax.activation.MimetypesFileTypeMap
 import ch.uzh.ifi.pdeboer.pplib.hcomp._
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.persistence.DBSettings
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.{Asset, BallotPortalAdapter, BallotProperties, Batch}
-import ch.uzh.ifi.pdeboer.pplib.util.CollectionUtils._
 import ch.uzh.ifi.pdeboer.pplib.util.LazyLogger
 import org.apache.commons.codec.binary.Base64
 //import ch.uzh.ifi.pdeboer.pplib.util.CollectionUtils._
 
+import ch.uzh.ifi.pdeboer.pplib.util.CollectionUtils._
+
 import scala.io.Source
 import scala.xml.NodeSeq
-import ch.uzh.ifi.pdeboer.pplib.util.CollectionUtils._
 /**
  * Created by mattia on 07.07.15.
  */
@@ -24,7 +24,7 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 
   val ballotPortalAdapter = HComp(BallotPortalAdapter.PORTAL_KEY)
 
-  val SNIPPET_DIR = "../merge_method_snippets/"
+  val SNIPPET_DIR = "../snippets/"
 
   val filterDirectories = new FilenameFilter {
     override def accept(dir: File, name: String): Boolean = new File(dir, name).isDirectory
