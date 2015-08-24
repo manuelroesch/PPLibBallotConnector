@@ -19,7 +19,7 @@ import scala.xml.NodeSeq
  */
 object ConsoleIntegrationTest extends App with LazyLogger {
 
-  val ANSWERS_PER_QUERY = 10
+  val ANSWERS_PER_QUERY = 2
   val RESULT_CSV_FILENAME = "results.csv"
   val LIKERT_VALUE_CLEANED_ANSWERS = 5
 
@@ -41,7 +41,7 @@ object ConsoleIntegrationTest extends App with LazyLogger {
     override def accept(dir: File, name: String): Boolean = new File(dir, name).isDirectory
   }
 
-  dao.getAllPermutations().groupBy(_.pdfPath).par.foreach(group => {
+  dao.getAllPermutations().groupBy(_.pdfPath).foreach(group => {
     group._2.foreach(permutation => {
       val p = dao.getPermutationById(permutation.id)
       if(p.isDefined && p.get.state == 0) {
@@ -147,16 +147,14 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 
     writer.write("snippet,yes answers,no answers,cleaned yes,cleaned no,yes answers,no answers,cleaned yes,cleaned no,feedbacks,firstExclusion,secondExclusion\n")
 
-    val results = dao.getAllAnswers.map(answer => {
-      val hints = dao.getHintByQuestionId(answer.questionId).get
+    val results = dao.getAllAnswers.groupBy(g => {dao.getAssetFileNameByQuestionId(g.questionId).get}).map(answersForSnippet => {
 
+      val hints = dao.getHintByQuestionId(answersForSnippet._2.head.questionId).get
       val allPermutationsDisabledByActualAnswer = dao.getAllPermutationsWithStateEquals(hints).filterNot(f => f.excluded_step == 0)
+      val snippetName = answersForSnippet._1
+      val aa: List[Answer] = dao.getAllAnswersBySnippet(snippetName)
 
-      val snippetName = dao.getAssetFileNameByQuestionId(answer.questionId).get
-
-      val aa : List[Answer]= dao.getAllAnswersBySnippet(snippetName)
-
-      val cleanFormatAnswers : List[Map[String, String]] = aa.map(a => a.answerJson.substring(1, a.answerJson.length - 1)
+      val cleanFormatAnswers: List[Map[String, String]] = aa.map(a => a.answerJson.substring(1, a.answerJson.length - 1)
         .replaceAll("\"", "").split(",").toList.map(aa => aa.split(":").head.replaceAll(" ", "") -> aa.split(":")(1).substring(1)).toMap)
 
       val answers: List[CsvAnswer] = convertToCSVFormat(cleanFormatAnswers)
@@ -177,6 +175,7 @@ object ConsoleIntegrationTest extends App with LazyLogger {
       val secondExcluded = allPermutationsDisabledByActualAnswer.filter(f => f.excluded_step == 2).map(_.snippetFilename).mkString(";")
 
       snippetName + "," + yesQ1 + "," + noQ1 + "," + cleanedYesQ1 + "," + cleanedNoQ1 + "," + yesQ2 + "," + noQ2 + "," + cleanedYesQ2 + "," + cleanedNoQ2 + "," + feedbacks + "," + firstExcluded + "," + secondExcluded
+
     })
 
     writer.write(results.mkString("\n"))

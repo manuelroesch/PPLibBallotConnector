@@ -180,8 +180,8 @@ class BallotDAO extends DAO{
 
   def getHintByQuestionId(qId: Long) : Option[Long] = {
     DB readOnly { implicit session =>
-      sql"select id from question".map(rs =>
-        rs.long("id")).single().apply()
+      sql"select hints from question where id = ${qId}".map(rs =>
+        rs.long("hints")).single().apply()
     }
   }
 
