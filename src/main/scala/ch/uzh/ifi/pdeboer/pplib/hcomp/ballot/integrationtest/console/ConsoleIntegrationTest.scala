@@ -14,7 +14,7 @@ import org.apache.commons.codec.binary.Base64
 
 import scala.io.Source
 import scala.xml.NodeSeq
-
+import ch.uzh.ifi.pdeboer.pplib.util.CollectionUtils._
 /**
  * Created by mattia on 07.07.15.
  */
