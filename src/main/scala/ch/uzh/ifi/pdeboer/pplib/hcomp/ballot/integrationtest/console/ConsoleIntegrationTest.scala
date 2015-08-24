@@ -7,8 +7,10 @@ import javax.activation.MimetypesFileTypeMap
 import ch.uzh.ifi.pdeboer.pplib.hcomp._
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.persistence.DBSettings
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.{Asset, BallotPortalAdapter, BallotProperties, Batch}
+import ch.uzh.ifi.pdeboer.pplib.util.CollectionUtils._
 import ch.uzh.ifi.pdeboer.pplib.util.LazyLogger
 import org.apache.commons.codec.binary.Base64
+//import ch.uzh.ifi.pdeboer.pplib.util.CollectionUtils._
 
 import scala.io.Source
 import scala.xml.NodeSeq
@@ -22,7 +24,7 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 
   val ballotPortalAdapter = HComp(BallotPortalAdapter.PORTAL_KEY)
 
-  val SNIPPET_DIR = "../snippets/"
+  val SNIPPET_DIR = "../merge_method_snippets/"
 
   val filterDirectories = new FilenameFilter {
     override def accept(dir: File, name: String): Boolean = new File(dir, name).isDirectory
@@ -74,32 +76,43 @@ object ConsoleIntegrationTest extends App with LazyLogger {
     val properties = new BallotProperties(Batch(UUID.randomUUID()),
       List(Asset(pdfBinary, contentType, pdfName)), 1, paymentCents = 50)
 
-    var answers = List.empty[HTMLQueryAnswer]
-    do {
-      try {
-        ballotPortalAdapter.processQuery(query, properties) match {
-          case ans: Option[HTMLQueryAnswer] => {
-            if (ans.isDefined) {
-              answers ::= ans.get
-              logger.info("Answer: " + ans.get.answers.mkString("\n- "))
-            } else {
-              logger.info("Error while getting the answer.")
-            }
-          }
-          case _ => logger.info("Unknown error!")
-        }
-      }
-      catch {
-        case e: Throwable => logger.error("There was a problem with the query engine", e)
-      }
-    }
-    while (answers.size < ANSWERS_PER_QUERY)
+    val answers = getAnswers(0, query, properties, List.empty[HTMLQueryAnswer])
 
-    (snippet.getName.substring(0, snippet.getName.indexOf("-"))+"_"+snippet.getParentFile.getParentFile.getName -> convertToCSVFormat(answers))
+    snippet.getName.substring(0, snippet.getName.indexOf("-"))+"_"+snippet.getParentFile.getParentFile.getName -> convertToCSVFormat(answers)
   }).toList.toMap
 
   createCSVReport
 
+
+  def getAnswers(it: Int, query: HTMLQuery, properties: BallotProperties, soFar: List[HTMLQueryAnswer]) : List[HTMLQueryAnswer] = {
+    if(it < ANSWERS_PER_QUERY) {
+      try {
+        ballotPortalAdapter.processQuery(query, properties) match {
+          case ans: Option[HTMLQueryAnswer] => {
+            if (ans.isDefined) {
+              logger.info("Answer: " + ans.get.answers.mkString("\n- "))
+              getAnswers(it+1, query, properties, soFar:::List[HTMLQueryAnswer](ans.get))
+            } else {
+              logger.info("Error while getting the answer.")
+              getAnswers(it, query, properties, soFar)
+            }
+          }
+          case _ => {
+            logger.info("Unknown error!")
+            getAnswers(it, query, properties, soFar)
+          }
+        }
+      }
+      catch {
+        case e: Throwable => {
+          logger.error("There was a problem with the query engine", e)
+          getAnswers(it, query, properties, soFar)
+        }
+      }
+    }else {
+      soFar
+    }
+  }
 
   def createCSVReport: Unit = {
     val writer = new PrintWriter(new File(RESULT_CSV_FILENAME))
@@ -108,15 +121,15 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 
     val results : String = allAnswers.map(snippetAnswers => {
       val snippetName = snippetAnswers._1
-      val yesQ1 = snippetAnswers._2.filter(ans => isPositive(ans.q1).get).size
-      val yesQ2 = snippetAnswers._2.filter(ans => isPositive(ans.q2).isDefined && isPositive(ans.q2).get).size
-      val noQ1 = snippetAnswers._2.filter(ans => isNegative(ans.q1).get).size
-      val noQ2 = snippetAnswers._2.filter(ans => isNegative(ans.q2).isDefined && isNegative(ans.q2).get).size
+      val yesQ1 = snippetAnswers._2.count(ans => isPositive(ans.q1).get)
+      val yesQ2 = snippetAnswers._2.count(ans => isPositive(ans.q2).isDefined && isPositive(ans.q2).get)
+      val noQ1 = snippetAnswers._2.count(ans => isNegative(ans.q1).get)
+      val noQ2 = snippetAnswers._2.count(ans => isNegative(ans.q2).isDefined && isNegative(ans.q2).get)
 
-      val cleanedYesQ1 = snippetAnswers._2.filter(ans => ans.likert>=LIKERT_VALUE_CLEANED_ANSWERS && isPositive(ans.q1).get).size
-      val cleanedYesQ2 = snippetAnswers._2.filter(ans => ans.likert>=LIKERT_VALUE_CLEANED_ANSWERS && isPositive(ans.q2).isDefined && isPositive(ans.q2).get).size
-      val cleanedNoQ1 = snippetAnswers._2.filter(ans => ans.likert>=LIKERT_VALUE_CLEANED_ANSWERS && isNegative(ans.q1).get).size
-      val cleanedNoQ2 = snippetAnswers._2.filter(ans => ans.likert>=LIKERT_VALUE_CLEANED_ANSWERS && isNegative(ans.q2).isDefined && isNegative(ans.q2).get).size
+      val cleanedYesQ1 = snippetAnswers._2.count(ans => ans.likert>=LIKERT_VALUE_CLEANED_ANSWERS && isPositive(ans.q1).get)
+      val cleanedYesQ2 = snippetAnswers._2.count(ans => ans.likert>=LIKERT_VALUE_CLEANED_ANSWERS && isPositive(ans.q2).isDefined && isPositive(ans.q2).get)
+      val cleanedNoQ1 = snippetAnswers._2.count(ans => ans.likert>=LIKERT_VALUE_CLEANED_ANSWERS && isNegative(ans.q1).get)
+      val cleanedNoQ2 = snippetAnswers._2.count(ans => ans.likert>=LIKERT_VALUE_CLEANED_ANSWERS && isNegative(ans.q2).isDefined && isNegative(ans.q2).get)
 
       val feedbacks = snippetAnswers._2.map(_.feedback).mkString(";")
 
