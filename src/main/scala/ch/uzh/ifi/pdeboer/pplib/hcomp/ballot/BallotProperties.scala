@@ -12,11 +12,13 @@ class BallotProperties(
                         batch1: Batch,
                         asset1: List[Asset],
                         allowedAnswersPerTurker1: Int,
-                        paymentCents: Int = 0) extends HCompQueryProperties(paymentCents) {
+                        paymentCents: Int = 0,
+                        hints1: Long) extends HCompQueryProperties(paymentCents) {
 
   val batch = batch1
   val assets = asset1
   val allowedAnswersPerTurker = allowedAnswersPerTurker1
+  val hints = hints1
 }
 
 private[ballot]

@@ -25,7 +25,7 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 			case _ => {
 				val uuid = UUID.randomUUID()
 				val batchId = dao.createBatch(0, uuid)
-				new BallotProperties(Batch(uuid), List(Asset(Array.empty[Byte], "application/pdf", "empty filename")), 0)
+				new BallotProperties(Batch(uuid), List(Asset(Array.empty[Byte], "application/pdf", "empty filename")), 0, hints1 = 0)
 			}
 		}
 
@@ -62,7 +62,7 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 					None
 				} else {
 					val questionUUID = UUID.randomUUID()
-					val questionId = dao.createQuestion(htmlToDisplayOnBallotPage.toString(), batchIdFromDB, questionUUID)
+					val questionId = dao.createQuestion(htmlToDisplayOnBallotPage.toString(), batchIdFromDB, questionUUID, hints = actualProperties.hints)
 
 					actualProperties.assets.foreach(asset => dao.createAsset(asset.binary, asset.contentType, questionId, asset.filename))
 

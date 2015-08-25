@@ -5,68 +5,111 @@ import java.util.UUID
 import javax.activation.MimetypesFileTypeMap
 
 import ch.uzh.ifi.pdeboer.pplib.hcomp._
-import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.persistence.DBSettings
+import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.dao.BallotDAO
+import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.persistence.{Answer, DBSettings}
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.{Asset, BallotPortalAdapter, BallotProperties, Batch}
 import ch.uzh.ifi.pdeboer.pplib.util.LazyLogger
 import org.apache.commons.codec.binary.Base64
-//import ch.uzh.ifi.pdeboer.pplib.util.CollectionUtils._
+import play.api.libs.json.Json
 
 import ch.uzh.ifi.pdeboer.pplib.util.CollectionUtils._
 
 import scala.io.Source
 import scala.xml.NodeSeq
+
 /**
  * Created by mattia on 07.07.15.
  */
 object ConsoleIntegrationTest extends App with LazyLogger {
 
+  val ANSWERS_PER_QUERY = 1
+  val RESULT_CSV_FILENAME = "results.csv"
+  val SNIPPET_DIR = "../eujoupract_snippets/"
+  val LIKERT_VALUE_CLEANED_ANSWERS = 5
+
   DBSettings.initialize()
+  val dao = new BallotDAO
+  try {
+    if (args(0).equalsIgnoreCase("init")) {
+      dao.loadPermutationsCSV(args(1))
+    }
+  } catch {
+    case e: Exception => logger.debug("Resuming last run...")
+  }
 
   val ballotPortalAdapter = HComp(BallotPortalAdapter.PORTAL_KEY)
 
-  val SNIPPET_DIR = "../snippets/"
+  dao.getAllPermutations().groupBy(gr => gr.groupName.startsWith(gr.groupName.substring(0, gr.groupName.indexOf("/")))).foreach(group => {
+    group._2.foreach(permutation => {
+      val p = dao.getPermutationById(permutation.id)
+      if(p.isDefined && p.get.state == 0) {
+        val answers = getAnswers(new File(p.get.snippetFilename), p.get.id)
+        // Aggregate answer and look if cleaned Q1 = y and Q2 = Y is the result
+        val cleanedYesQ1 = answers._2.count(ans => ans.likert>=LIKERT_VALUE_CLEANED_ANSWERS && isPositive(ans.q1).get)
+        val cleanedYesQ2 = answers._2.count(ans => ans.likert>=LIKERT_VALUE_CLEANED_ANSWERS && isPositive(ans.q2).isDefined && isPositive(ans.q2).get)
+        val cleanedNoQ1 = answers._2.count(ans => ans.likert>=LIKERT_VALUE_CLEANED_ANSWERS && isNegative(ans.q1).get)
+        val cleanedNoQ2 = answers._2.count(ans => ans.likert>=LIKERT_VALUE_CLEANED_ANSWERS && isNegative(ans.q2).isDefined && isNegative(ans.q2).get)
+        if(cleanedYesQ1> cleanedNoQ1 && cleanedYesQ2 > cleanedNoQ2){
+          //Set state of permutation to 1
+          dao.updateStateOfPermutationId(p.get.id, p.get.id)
+          // disable some permutations
+          dao.getAllOpenByGroupName(p.get.groupName).map(g => {
+            dao.updateStateOfPermutationId(g.id, p.get.id, 1)
+          })
+          val secondStep = p.get.groupName.split("/")
+          dao.getAllOpenGroupsStartingWith(secondStep.slice(0,2).mkString("/")).filter(_.methodIndex == p.get.methodIndex).map(g => {
+            dao.updateStateOfPermutationId(g.id, p.get.id, 2)
+          })
+        }else {
+          //Set state of permutation to -1
+          dao.updateStateOfPermutationId(p.get.id, -1)
+        }
+      }
+    })
+  })
 
-  val filterDirectories = new FilenameFilter {
-    override def accept(dir: File, name: String): Boolean = new File(dir, name).isDirectory
+  createCSVReport
+
+
+  def askQuestions(it: Int, query: HTMLQuery, properties: BallotProperties, sofar: List[HTMLQueryAnswer]): List[HTMLQueryAnswer] = {
+    if(it < ANSWERS_PER_QUERY) {
+      try {
+       ballotPortalAdapter.processQuery(query, properties) match {
+         case ans: Option[HTMLQueryAnswer] => {
+           if (ans.isDefined) {
+             logger.info("Answer: " + ans.get.answers.mkString("\n- "))
+             askQuestions(it+1, query, properties, sofar ::: List[HTMLQueryAnswer](ans.get))
+           } else {
+             logger.info("Error while getting the answer.")
+             askQuestions(it, query, properties, sofar)
+           }
+         }
+         case _ => {
+           logger.info("Unknown error!")
+           askQuestions(it, query, properties, sofar)
+         }
+       }
+     }
+     catch {
+       case e: Throwable => {
+         logger.error("There was a problem with the query engine", e)
+         askQuestions(it, query, properties, sofar)
+       }
+     }
+   }else {
+     sofar
+   }
   }
 
-  val RESULT_CSV_FILENAME = "results.csv"
-
-  val LIKERT_VALUE_CLEANED_ANSWERS = 5
-  val ANSWERS_PER_QUERY = 10
-
-  /* Directories structure:
-     - ../snippets/year/method/pdfFileName/
-     pdfFileName contains:
-      * for each permutation a snippet
-      * for each permutation a complete version of the pdf in PNG format (ending with *.pdf.png)
-      * for each permutation a pdf file with the relative highlight
-  */
-  val allSnippets = new File(SNIPPET_DIR).listFiles(filterDirectories).par.flatMap(yearDir => {
-    yearDir.listFiles(filterDirectories).par.flatMap(methodDir => {
-      methodDir.listFiles(filterDirectories).par.flatMap(pdfDir => {
-        pdfDir.listFiles(new FilenameFilter {
-          override def accept(dir: File, name: String): Boolean = name.endsWith("OnTop.png")
-        }).map(snippet => snippet)
-      }).toList
-    }).toList
-  }).toList
-
-  val allAnswers: Map[String, List[CsvAnswer]] = allSnippets.mpar.map(snippet => {
+  def getAnswers(snippet: File, hints: Long) : (String, List[CsvAnswer]) = {
 
     val base64Image = getBase64String(snippet)
 
-    val snippetInputStream: InputStream = new FileInputStream(snippet)
-
-    val isMethodOnTop: Boolean = snippet.getName.substring(snippet.getName.lastIndexOf("-") + 1, snippet.getName.indexOf(".png")).equalsIgnoreCase("methodOnTop")
-
-    val ballotHtmlPage: NodeSeq = createHtmlPage(base64Image, isMethodOnTop)
+    val ballotHtmlPage: NodeSeq = createHtmlPage(base64Image, dao.getPermutationById(hints).get.methodOnTop)
     val query = HTMLQuery(ballotHtmlPage)
-
-    val pdfName = snippet.getName.substring(0, snippet.getName.indexOf("-"))
+    val pdfName = snippet.getName
     val pdfPath = snippet.getParentFile.getPath
     val pdfInputStream: InputStream = new FileInputStream(pdfPath + "/" + pdfName)
-
     val pdfSource = Source.fromInputStream(pdfInputStream)
     val pdfBinary = Stream.continually(pdfInputStream.read).takeWhile(-1 !=).map(_.toByte).toArray
     pdfSource.close()
@@ -74,70 +117,51 @@ object ConsoleIntegrationTest extends App with LazyLogger {
     val contentType = new MimetypesFileTypeMap().getContentType(new File(pdfPath + "/" + pdfName))
 
     val properties = new BallotProperties(Batch(UUID.randomUUID()),
-      List(Asset(pdfBinary, contentType, pdfName)), 1, paymentCents = 50)
+      List(Asset(pdfBinary, contentType, pdfName)), 1, 50, hints)
 
-    val answers = getAnswers(0, query, properties, List.empty[HTMLQueryAnswer])
+    val answers : List[HTMLQueryAnswer] = askQuestions(0, query, properties, List.empty[HTMLQueryAnswer])
 
-    snippet.getName.substring(0, snippet.getName.indexOf("-"))+"_"+snippet.getParentFile.getParentFile.getName -> convertToCSVFormat(answers)
-  }).toList.toMap
-
-  createCSVReport
-
-
-  def getAnswers(it: Int, query: HTMLQuery, properties: BallotProperties, soFar: List[HTMLQueryAnswer]) : List[HTMLQueryAnswer] = {
-    if(it < ANSWERS_PER_QUERY) {
-      try {
-        ballotPortalAdapter.processQuery(query, properties) match {
-          case ans: Option[HTMLQueryAnswer] => {
-            if (ans.isDefined) {
-              logger.info("Answer: " + ans.get.answers.mkString("\n- "))
-              getAnswers(it+1, query, properties, soFar:::List[HTMLQueryAnswer](ans.get))
-            } else {
-              logger.info("Error while getting the answer.")
-              getAnswers(it, query, properties, soFar)
-            }
-          }
-          case _ => {
-            logger.info("Unknown error!")
-            getAnswers(it, query, properties, soFar)
-          }
-        }
-      }
-      catch {
-        case e: Throwable => {
-          logger.error("There was a problem with the query engine", e)
-          getAnswers(it, query, properties, soFar)
-        }
-      }
-    }else {
-      soFar
-    }
+    pdfName -> convertToCSVFormat(answers.map(_.answers))
   }
+
 
   def createCSVReport: Unit = {
     val writer = new PrintWriter(new File(RESULT_CSV_FILENAME))
 
-    writer.write("snippet,yes answers,no answers,cleaned yes,cleaned no,yes answers,no answers,cleaned yes,cleaned no,feedbacks\n")
+    writer.write("snippet,yes answers,no answers,cleaned yes,cleaned no,yes answers,no answers,cleaned yes,cleaned no,feedbacks,firstExclusion,secondExclusion\n")
 
-    val results : String = allAnswers.map(snippetAnswers => {
-      val snippetName = snippetAnswers._1
-      val yesQ1 = snippetAnswers._2.count(ans => isPositive(ans.q1).get)
-      val yesQ2 = snippetAnswers._2.count(ans => isPositive(ans.q2).isDefined && isPositive(ans.q2).get)
-      val noQ1 = snippetAnswers._2.count(ans => isNegative(ans.q1).get)
-      val noQ2 = snippetAnswers._2.count(ans => isNegative(ans.q2).isDefined && isNegative(ans.q2).get)
+    val results = dao.getAllAnswers.groupBy(g => {dao.getAssetFileNameByQuestionId(g.questionId).get}).map(answersForSnippet => {
 
-      val cleanedYesQ1 = snippetAnswers._2.count(ans => ans.likert>=LIKERT_VALUE_CLEANED_ANSWERS && isPositive(ans.q1).get)
-      val cleanedYesQ2 = snippetAnswers._2.count(ans => ans.likert>=LIKERT_VALUE_CLEANED_ANSWERS && isPositive(ans.q2).isDefined && isPositive(ans.q2).get)
-      val cleanedNoQ1 = snippetAnswers._2.count(ans => ans.likert>=LIKERT_VALUE_CLEANED_ANSWERS && isNegative(ans.q1).get)
-      val cleanedNoQ2 = snippetAnswers._2.count(ans => ans.likert>=LIKERT_VALUE_CLEANED_ANSWERS && isNegative(ans.q2).isDefined && isNegative(ans.q2).get)
+      val hints = dao.getHintByQuestionId(answersForSnippet._2.head.questionId).get
+      val allPermutationsDisabledByActualAnswer = dao.getAllPermutationsWithStateEquals(hints).filterNot(f => f.excluded_step == 0)
+      val snippetName = answersForSnippet._1
+      val aa: List[Answer] = dao.getAllAnswersBySnippet(snippetName)
 
-      val feedbacks = snippetAnswers._2.map(_.feedback).mkString(";")
+      //val cleanFormatAnswers: List[Map[String, String]] = aa.map(a => a.answerJson.substring(1, a.answerJson.length - 1) .replaceAll("\"", "").split(",").toList.map(aa => aa.split(":").head.replaceAll(" ", "") -> aa.split(":")(1).substring(1)).toMap)
+      val cleanFormatAnswers: List[Map[String, String]] = aa.map(a => Json.parse(a.answerJson).as[Map[String, String]])
 
-      snippetName + "," + yesQ1 + "," + noQ1 + "," + cleanedYesQ1 + "," + cleanedNoQ1 + "," + yesQ2 + "," + noQ2 + "," + cleanedYesQ2 + "," + cleanedNoQ2 + "," + feedbacks
-    }).mkString("\n")
+      val answers: List[CsvAnswer] = convertToCSVFormat(cleanFormatAnswers)
 
-    writer.write(results)
+      val yesQ1 = answers.count(ans => isPositive(ans.q1).get)
+      val yesQ2 = answers.count(ans => isPositive(ans.q2).isDefined && isPositive(ans.q2).get)
+      val noQ1 = answers.count(ans => isNegative(ans.q1).get)
+      val noQ2 = answers.count(ans => isNegative(ans.q2).isDefined && isNegative(ans.q2).get)
 
+      val cleanedYesQ1 = answers.count(ans => ans.likert >= LIKERT_VALUE_CLEANED_ANSWERS && isPositive(ans.q1).get)
+      val cleanedYesQ2 = answers.count(ans => ans.likert >= LIKERT_VALUE_CLEANED_ANSWERS && isPositive(ans.q2).isDefined && isPositive(ans.q2).get)
+      val cleanedNoQ1 = answers.count(ans => ans.likert >= LIKERT_VALUE_CLEANED_ANSWERS && isNegative(ans.q1).get)
+      val cleanedNoQ2 = answers.count(ans => ans.likert >= LIKERT_VALUE_CLEANED_ANSWERS && isNegative(ans.q2).isDefined && isNegative(ans.q2).get)
+
+      val feedbacks = answers.map(_.feedback).mkString(";")
+
+      val firstExcluded = allPermutationsDisabledByActualAnswer.filter(f => f.excluded_step == 1).map(_.snippetFilename).mkString(";")
+      val secondExcluded = allPermutationsDisabledByActualAnswer.filter(f => f.excluded_step == 2).map(_.snippetFilename).mkString(";")
+
+      snippetName + "," + yesQ1 + "," + noQ1 + "," + cleanedYesQ1 + "," + cleanedNoQ1 + "," + yesQ2 + "," + noQ2 + "," + cleanedYesQ2 + "," + cleanedNoQ2 + "," + feedbacks + "," + firstExcluded + "," + secondExcluded
+
+    })
+
+    writer.write(results.mkString("\n"))
     writer.close()
   }
 
@@ -161,7 +185,7 @@ object ConsoleIntegrationTest extends App with LazyLogger {
     }
   }
 
-  def convertToCSVFormat(answers: List[HTMLQueryAnswer]): List[CsvAnswer] = {
+  def convertToCSVFormat(answers: List[Map[String, String]]): List[CsvAnswer] = {
     answers.map(ans => {
       val isRelated = ans.get("isRelated")
       val isCheckedBefore = ans.get("isCheckedBefore")

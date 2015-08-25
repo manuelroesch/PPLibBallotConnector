@@ -36,6 +36,19 @@ object DBInitializer extends LazyLogger {
           }
       }
 
+      //permutations TABLE
+      try {
+        sql"select 1 from permutations limit 1".map(_.long(1)).single.apply()
+        logger.debug("Table permutation already initialized")
+      }
+      catch {
+        case e: java.sql.SQLException =>
+          DB autoCommit { implicit s =>
+            sql"CREATE TABLE permutations (id BIGINT NOT NULL AUTO_INCREMENT, group_name VARCHAR(255) NOT NULL, method_index VARCHAR(255) NOT NULL, snippet_filename VARCHAR(255) NOT NULL, pdf_path VARCHAR(255) NOT NULL, method_on_top bool not null, state BIGINT NOT NULL DEFAULT 0, excluded_step INT DEFAULT 0, PRIMARY KEY(id));".execute().apply()
+            logger.debug("Table permutations created")
+          }
+      }
+
       //Question TABLE
       try {
         sql"select 1 from question limit 1".map(_.long(1)).single.apply()
@@ -44,7 +57,7 @@ object DBInitializer extends LazyLogger {
       catch {
         case e: java.sql.SQLException =>
           DB autoCommit { implicit s =>
-            sql"CREATE TABLE question (id BIGINT NOT NULL AUTO_INCREMENT, batch_id BIGINT NOT NULL, html LONGTEXT NOT NULL, create_time DATETIME NOT NULL, uuid VARCHAR(255) NOT NULL, PRIMARY KEY(id), FOREIGN KEY(batch_id) REFERENCES batch(id));".execute().apply()
+            sql"CREATE TABLE question (id BIGINT NOT NULL AUTO_INCREMENT, batch_id BIGINT NOT NULL, html LONGTEXT NOT NULL, create_time DATETIME NOT NULL, uuid VARCHAR(255) NOT NULL, hints BIGINT NOT NULL, PRIMARY KEY(id), FOREIGN KEY(batch_id) REFERENCES batch(id), FOREIGN KEY(hints) REFERENCES permutations(id));".execute().apply()
             logger.debug("Table question created")
           }
       }
@@ -70,11 +83,10 @@ object DBInitializer extends LazyLogger {
       catch {
         case e: java.sql.SQLException =>
           DB autoCommit { implicit s =>
-            sql"CREATE TABLE answer (id BIGINT NOT NULL AUTO_INCREMENT, question_id BIGINT NOT NULL, user_id BIGINT NOT NULL, time datetime NOT NULL, answer_json varchar(1000) NOT NULL, expected_output_code BIGINT NOT NULL, accepted bool not null default 0, PRIMARY KEY(id), FOREIGN KEY(question_id) REFERENCES question(id), FOREIGN KEY(user_id) REFERENCES user(id));".execute().apply()
+            sql"CREATE TABLE answer (id BIGINT NOT NULL AUTO_INCREMENT, question_id BIGINT NOT NULL, user_id BIGINT NOT NULL, time datetime NOT NULL, answer_json LONGTEXT NOT NULL, expected_output_code BIGINT NOT NULL, accepted bool not null default 0, PRIMARY KEY(id), FOREIGN KEY(question_id) REFERENCES question(id), FOREIGN KEY(user_id) REFERENCES user(id));".execute().apply()
             logger.debug("Table answer created")
           }
       }
-
     }
   }
 }
