@@ -10,6 +10,7 @@ import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.persistence.{Answer, DBSettings}
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.{Asset, BallotPortalAdapter, BallotProperties, Batch}
 import ch.uzh.ifi.pdeboer.pplib.util.LazyLogger
 import org.apache.commons.codec.binary.Base64
+import play.api.libs.json.Json
 
 import scala.io.Source
 import scala.xml.NodeSeq
@@ -19,7 +20,7 @@ import scala.xml.NodeSeq
  */
 object ConsoleIntegrationTest extends App with LazyLogger {
 
-  val ANSWERS_PER_QUERY = 10
+  val ANSWERS_PER_QUERY = 1
   val RESULT_CSV_FILENAME = "results.csv"
   val SNIPPET_DIR = "../eujoupract_snippets/"
   val LIKERT_VALUE_CLEANED_ANSWERS = 5
@@ -36,7 +37,7 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 
   val ballotPortalAdapter = HComp(BallotPortalAdapter.PORTAL_KEY)
 
-  dao.getAllPermutations().groupBy(gr => gr.groupName.startsWith(gr.groupName.substring(0, gr.groupName.indexOf("/")))).par.foreach(group => {
+  dao.getAllPermutations().groupBy(gr => gr.groupName.startsWith(gr.groupName.substring(0, gr.groupName.indexOf("/")))).foreach(group => {
     group._2.foreach(permutation => {
       val p = dao.getPermutationById(permutation.id)
       if(p.isDefined && p.get.state == 0) {
@@ -54,7 +55,7 @@ object ConsoleIntegrationTest extends App with LazyLogger {
             dao.updateStateOfPermutationId(g.id, p.get.id, 1)
           })
           val secondStep = p.get.groupName.split("/")
-          dao.getAllOpenGroupsStartingWith(secondStep.slice(0,2).mkString("/")).find(_.methodIndex == p.get.methodIndex).map(g => {
+          dao.getAllOpenGroupsStartingWith(secondStep.slice(0,2).mkString("/")).filter(_.methodIndex == p.get.methodIndex).map(g => {
             dao.updateStateOfPermutationId(g.id, p.get.id, 2)
           })
         }else {
@@ -134,8 +135,8 @@ object ConsoleIntegrationTest extends App with LazyLogger {
       val snippetName = answersForSnippet._1
       val aa: List[Answer] = dao.getAllAnswersBySnippet(snippetName)
 
-      val cleanFormatAnswers: List[Map[String, String]] = aa.map(a => a.answerJson.substring(1, a.answerJson.length - 1)
-        .replaceAll("\"", "").split(",").toList.map(aa => aa.split(":").head.replaceAll(" ", "") -> aa.split(":")(1).substring(1)).toMap)
+      //val cleanFormatAnswers: List[Map[String, String]] = aa.map(a => a.answerJson.substring(1, a.answerJson.length - 1) .replaceAll("\"", "").split(",").toList.map(aa => aa.split(":").head.replaceAll(" ", "") -> aa.split(":")(1).substring(1)).toMap)
+      val cleanFormatAnswers: List[Map[String, String]] = aa.map(a => Json.parse(a.answerJson).as[Map[String, String]])
 
       val answers: List[CsvAnswer] = convertToCSVFormat(cleanFormatAnswers)
 
