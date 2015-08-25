@@ -12,8 +12,6 @@ import ch.uzh.ifi.pdeboer.pplib.util.LazyLogger
 import org.apache.commons.codec.binary.Base64
 import play.api.libs.json.Json
 
-import ch.uzh.ifi.pdeboer.pplib.util.CollectionUtils._
-
 import scala.io.Source
 import scala.xml.NodeSeq
 
@@ -24,7 +22,6 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 
   val ANSWERS_PER_QUERY = 1
   val RESULT_CSV_FILENAME = "results.csv"
-  val SNIPPET_DIR = "../eujoupract_snippets/"
   val LIKERT_VALUE_CLEANED_ANSWERS = 5
 
   DBSettings.initialize()
