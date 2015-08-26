@@ -8,6 +8,7 @@ import ch.uzh.ifi.pdeboer.pplib.hcomp._
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.dao.BallotDAO
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.persistence.{Answer, DBSettings}
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.{Asset, BallotPortalAdapter, BallotProperties, Batch}
+import ch.uzh.ifi.pdeboer.pplib.util.CollectionUtils._
 import ch.uzh.ifi.pdeboer.pplib.util.LazyLogger
 import org.apache.commons.codec.binary.Base64
 import play.api.libs.json.Json
@@ -36,7 +37,7 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 
   val ballotPortalAdapter = HComp(BallotPortalAdapter.PORTAL_KEY)
 
-  dao.getAllPermutations().groupBy(gr => gr.groupName.startsWith(gr.groupName.substring(0, gr.groupName.indexOf("/")))).par.foreach(group => {
+  dao.getAllPermutations().groupBy(gr => gr.groupName.startsWith(gr.groupName.substring(0, gr.groupName.indexOf("/")))).toSeq.mpar.foreach(group => {
     group._2.foreach(permutation => {
       val p = dao.getPermutationById(permutation.id)
       if(p.isDefined && p.get.state == 0) {
