@@ -186,4 +186,6 @@ class DAOTest extends DAO with LazyLogger {
   override def getAnswerIdByOutputCode(insertOutput: String): Option[Long] = ???
 
   override def getExpectedOutputCodeFromAnswerId(ansId: Long): Option[Long] = ???
+
+  override def getQuestionIdByUUID(uuid: String): Option[Long] = ???
 }

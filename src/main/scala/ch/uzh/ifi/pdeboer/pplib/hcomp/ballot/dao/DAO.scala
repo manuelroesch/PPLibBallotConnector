@@ -29,4 +29,6 @@ trait DAO {
 
   def getExpectedOutputCodeFromAnswerId(ansId: Long) : Option[Long]
 
+  def getQuestionIdByUUID(uuid: String) : Option[Long]
+
 }

@@ -59,6 +59,12 @@ class BallotDAO extends DAO{
     }
   }
 
+  override def getQuestionIdByUUID(uuid: String) : Option[Long] = {
+    DB readOnly { implicit session =>
+      sql"select id from question where uuid = ${uuid}".map(rs => rs.long("id")).single().apply()
+    }
+  }
+
   override def getQuestionUUID(questionId: Long): Option[String] = {
     DB readOnly { implicit session =>
       sql"select uuid from answer where question_id = ${questionId}".map(rs => rs.string("uuid")).single().apply()

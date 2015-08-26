@@ -21,7 +21,9 @@ class ConsolePortalAdapter(param: String = "") extends HCompPortalAdapter with A
 
 		println(freeTextQuery.question)
 
-		Some(FreetextAnswer(freeTextQuery, scala.io.StdIn.readLine("\n> ").toString()))
+
+		Some(FreetextAnswer(freeTextQuery, scala.io.StdIn.readLine("> ").trim))
+
 	}
 
 	override def getDefaultPortalKey: String = ConsolePortalAdapter.PORTAL_KEY

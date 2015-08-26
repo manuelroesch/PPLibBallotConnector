@@ -4,7 +4,7 @@ import java.util.UUID
 
 import ch.uzh.ifi.pdeboer.pplib.hcomp._
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.dao.{BallotDAO, DAO}
-import play.api.libs.json.{JsObject, Json}
+import play.api.libs.json.Json
 
 import scala.xml._
 
@@ -84,7 +84,7 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
             dao.updateAnswer(ansId.get, true)
 
             logger.info(s"approving answer $ans of worker ${ans.responsibleWorkers.mkString(",")} to question $questionId")
-            extractSingleAnswerFromDatabase(questionId, htmlToDisplayOnBallotPage)
+            extractSingleAnswerFromDatabase(questionUUID.toString, htmlToDisplayOnBallotPage)
           }
           else {
             decorated.rejectAnswer(ans, "Invalid code")
@@ -106,10 +106,9 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 		answer
 	}
 
-	def extractSingleAnswerFromDatabase(questionId: Long, htmlToDisplayOnBallotPage: NodeSeq): Option[HCompAnswer] = {
-		val result = Json.parse(dao.getAnswer(questionId).headOption.getOrElse("{}")).asInstanceOf[JsObject]
-		val answer = result.fieldSet.map(f => (f._1 -> f._2.toString().replaceAll("\"", ""))).toMap
-		Some(HTMLQueryAnswer(answer, HTMLQuery(htmlToDisplayOnBallotPage)))
+	def extractSingleAnswerFromDatabase(questionId: String, htmlToDisplayOnBallotPage: NodeSeq): Option[HCompAnswer] = {
+		val result = Json.parse(dao.getAnswer(dao.getQuestionIdByUUID(questionId).get).head).asInstanceOf[Map[String, String]]
+		Some(HTMLQueryAnswer(result, HTMLQuery(htmlToDisplayOnBallotPage)))
 	}
 
 	override def getDefaultPortalKey: String = BallotPortalAdapter.PORTAL_KEY
