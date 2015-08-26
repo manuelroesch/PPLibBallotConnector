@@ -41,7 +41,7 @@ object ConsoleIntegrationTest extends App with LazyLogger {
     group._2.foreach(permutation => {
       val p = dao.getPermutationById(permutation.id)
       if(p.isDefined && p.get.state == 0) {
-        val answers : List[Map[String, String]] = getAnswers(new File(p.get.pdfPath), new File(p.get.snippetFilename), p.get.id)
+        val answers: List[Map[String, String]] = prepareHCompQuestionAndAsk(new File(p.get.pdfPath), new File(p.get.snippetFilename), p.get.id)
         // Aggregate answer and look if cleaned Q1 = y and Q2 = Y is the result
         val cleanedYesQ1 = answers.count(ans => ans.get("confidence").get.toInt>=LIKERT_VALUE_CLEANED_ANSWERS && isPositive(ans.get("isRelated")).get)
         val cleanedYesQ2 = answers.count(ans => ans.get("confidence").get.toInt>=LIKERT_VALUE_CLEANED_ANSWERS && isPositive(ans.get("isCheckedBefore")).isDefined && isPositive(ans.get("isCheckedBefore")).get)
@@ -69,7 +69,7 @@ object ConsoleIntegrationTest extends App with LazyLogger {
   createCSVReport
 
 
-  def getAnswers(pdfFile: File, snippet: File, hints: Long) : List[Map[String, String]] = {
+  def prepareHCompQuestionAndAsk(pdfFile: File, snippet: File, hints: Long): List[Map[String, String]] = {
 
     val base64Image = getBase64String(snippet)
 
