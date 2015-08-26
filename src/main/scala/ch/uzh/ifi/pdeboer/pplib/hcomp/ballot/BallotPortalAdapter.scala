@@ -4,7 +4,7 @@ import java.util.UUID
 
 import ch.uzh.ifi.pdeboer.pplib.hcomp._
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.dao.{BallotDAO, DAO}
-import play.api.libs.json.Json
+import play.api.libs.json.{JsObject, Json}
 
 import scala.xml._
 
@@ -107,8 +107,9 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 	}
 
 	def extractSingleAnswerFromDatabase(questionId: String, htmlToDisplayOnBallotPage: NodeSeq): Option[HCompAnswer] = {
-		val result = Json.parse(dao.getAnswer(dao.getQuestionIdByUUID(questionId).get).head).asInstanceOf[Map[String, String]]
-		Some(HTMLQueryAnswer(result, HTMLQuery(htmlToDisplayOnBallotPage)))
+		val result = Json.parse(dao.getAnswer(dao.getQuestionIdByUUID(questionId).get).head).asInstanceOf[JsObject]
+    val answer = result.fieldSet.map(f => (f._1 -> f._2.toString().replaceAll("\"", ""))).toMap
+    Some(HTMLQueryAnswer(answer, HTMLQuery(htmlToDisplayOnBallotPage)))
 	}
 
 	override def getDefaultPortalKey: String = BallotPortalAdapter.PORTAL_KEY
