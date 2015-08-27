@@ -13,6 +13,7 @@ dist
 /.classpath
 /.project
 /RUNNING_PID
+/src/test/scala/testttt.scala
 /.settings
 
 src/main/resources/application.conf

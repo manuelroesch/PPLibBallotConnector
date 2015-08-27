@@ -72,8 +72,8 @@ object ConsoleIntegrationTest extends App with LazyLogger {
   def prepareHCompQuestionAndAsk(pdfFile: File, snippet: File, hints: Long): List[Map[String, String]] = {
 
     val base64Image = getBase64String(snippet)
-
-    val ballotHtmlPage: NodeSeq = createHtmlPage(base64Image, dao.getPermutationById(hints).get.methodOnTop)
+    val permutation = dao.getPermutationById(hints)
+    val ballotHtmlPage: NodeSeq = createHtmlPage(base64Image, dao.getPermutationById(hints).get.methodOnTop, permutation.get.relativeHeightTop, permutation.get.relativeHeightBottom)
     val query = HTMLQuery(ballotHtmlPage)
     val pdfName = pdfFile.getName
     val pdfPath = pdfFile.getParentFile.getPath
@@ -200,7 +200,7 @@ object ConsoleIntegrationTest extends App with LazyLogger {
     "data:image/png;base64," + Base64.encodeBase64String(imageData)
   }
 
-  def createHtmlPage(imageBase64Format: String, isMethodOnTop: Boolean): NodeSeq = {
+  def createHtmlPage(imageBase64Format: String, isMethodOnTop: Boolean, relativeHeightTop: Double = 0, relativeHeightBottom: Double = 0): NodeSeq = {
     <div ng-controller="QuestionCtrl">
 
       <p>
@@ -355,20 +355,22 @@ object ConsoleIntegrationTest extends App with LazyLogger {
         {scala.xml.PCData( """
           $('#top').click(function() {
             $('#imgContainer').animate({
-              scrollTop:0
-              }, 500);
+              scrollTop: $('#imgContainer')[0].scrollHeight*"""+(relativeHeightTop-2.0)+"""/100
+              }, 1000);
           });
 
           $('#bottom').click(function() {
             $('#imgContainer').animate({
-              scrollTop: $('#imgContainer')[0].scrollHeight
-            }, 500);
+              scrollTop: $('#imgContainer')[0].scrollHeight*"""+(relativeHeightBottom-2.0)+"""/100
+              }, 1000);
           });
 
 
           $(document).ready( function() {
             if($('#snippet').height() < $('#imgContainer').height()){
               $('#snippetButtons').hide();
+            }else{
+              $('#top').click();
             }
           });
 
