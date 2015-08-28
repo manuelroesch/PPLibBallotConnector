@@ -51,11 +51,11 @@ object ConsoleIntegrationTest extends App with LazyLogger {
           //Set state of permutation to 1
           dao.updateStateOfPermutationId(p.get.id, p.get.id)
           // disable some permutations
-          dao.getAllOpenByGroupName(p.get.groupName).map(g => {
+          dao.getAllOpenByGroupName(p.get.groupName).foreach(g => {
             dao.updateStateOfPermutationId(g.id, p.get.id, 1)
           })
           val secondStep = p.get.groupName.split("/")
-          dao.getAllOpenGroupsStartingWith(secondStep.slice(0,2).mkString("/")).filter(_.methodIndex == p.get.methodIndex).map(g => {
+          dao.getAllOpenGroupsStartingWith(secondStep.slice(0, 2).mkString("/")).filter(_.methodIndex == p.get.methodIndex).foreach(g => {
             dao.updateStateOfPermutationId(g.id, p.get.id, 2)
           })
         }else {
