@@ -174,10 +174,9 @@ class BallotDAO extends DAO{
 
   case class Question(id: Long, hints: Long)
 
-
   def getAllAnswers() : List[Answer] = {
     DB readOnly { implicit session =>
-      sql"select * from answer".map(rs =>
+      sql"select * from answer where accepted = 1".map(rs =>
         Answer(rs.long("id"), rs.long("question_id"), rs.string("answer_json"), rs.boolean("accepted"))
       ).list().apply()
     }

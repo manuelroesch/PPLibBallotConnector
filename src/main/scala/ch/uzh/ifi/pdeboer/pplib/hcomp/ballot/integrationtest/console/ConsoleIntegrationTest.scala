@@ -10,6 +10,7 @@ import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.{Asset, BallotPortalAdapter, Ballot
 import ch.uzh.ifi.pdeboer.pplib.util.CollectionUtils._
 import ch.uzh.ifi.pdeboer.pplib.util.LazyLogger
 import org.apache.commons.codec.binary.Base64
+import play.api.libs.json.{JsObject, Json}
 
 import scala.io.Source
 import scala.xml.NodeSeq
@@ -105,10 +106,6 @@ object ConsoleIntegrationTest extends App with LazyLogger {
               askQuestion(it, query, properties, sofar)
             }
           }
-          case _ => {
-            logger.info("Unknown error!")
-            askQuestion(it, query, properties, sofar)
-          }
         }
       }
       catch {
@@ -134,7 +131,7 @@ object ConsoleIntegrationTest extends App with LazyLogger {
       val snippetName = answersForSnippet._1
       val aa: List[Answer] = dao.getAllAnswersBySnippet(snippetName)
 
-      val cleanFormatAnswers: List[Map[String, String]] = aa.map(a => a.answerJson.substring(1, a.answerJson.length - 1) .replaceAll("\"", "").split(",").toList.map(aa => aa.split(":").head.replaceAll(" ", "") -> aa.split(":")(1).substring(1)).toMap)
+      val cleanFormatAnswers: List[Map[String, String]] = aa.map(a => Json.parse(a.answerJson).as[JsObject].fields.map(field => field._1 -> field._2.toString().replaceAll("\"", "")).toMap)
       val answers: List[CsvAnswer] = convertToCSVFormat(cleanFormatAnswers)
 
       val yesQ1 = answers.count(ans => isPositive(ans.q1).get)
