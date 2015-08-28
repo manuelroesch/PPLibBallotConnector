@@ -2,6 +2,7 @@ package ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.dao
 
 import java.util.UUID
 
+import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.persistence.{Answer, Question}
 import org.joda.time.DateTime
 
 /**
@@ -30,5 +31,17 @@ trait DAO {
   def getExpectedOutputCodeFromAnswerId(ansId: Long) : Option[Long]
 
   def getQuestionIdByUUID(uuid: String) : Option[Long]
+
+  def countAllAnswers() : Int
+
+  def countAllBatches() : Int
+
+  def countAllQuestions() : Int
+
+  def getAllQuestions : List[Question]
+
+  def getAssetFileNameByQuestionId(qId: Long) : Option[String]
+
+  def getAllAnswers() : List[Answer]
 
 }

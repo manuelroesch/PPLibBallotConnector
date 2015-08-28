@@ -27,9 +27,9 @@ class BallotIntegrationTest {
     DBSettings.initialize()
 
     val dao = new BallotDAO()
-    val countQuestions = dao.countAllQuestions()
-    val countAnswers = dao.countAllAnswers()
-    val countBatches = dao.countAllBatches()
+    val countQuestions : Int = dao.countAllQuestions()
+    val countAnswers : Int = dao.countAllAnswers()
+    val countBatches : Int = dao.countAllBatches()
 
     val decoratedPortalAdapter = new IntegrationPortalAdapter()
     val ballotPortalAdapter = new BallotPortalAdapter(decoratedPortalAdapter, dao, "http://localhost:9000/")
@@ -51,14 +51,14 @@ class BallotIntegrationTest {
       </div>
 
     val query = HTMLQuery(ballotHtmlPage)
-    val properties = new BallotProperties(Batch(), List(Asset(Array.empty[Byte], "application/pdf", "empty filename")), 1, hints1 = 0)
+    val properties = new BallotProperties(Batch(), List(Asset(Array.empty[Byte], "application/pdf", "empty filename")), 1, permutationId1 = 0)
 
     ballotPortalAdapter.processQuery(query, properties) match {
       case ans : Option[HTMLQueryAnswer] => {
         Assert.assertEquals(ans.get.answers.get("answer").get, "Yes")
-        Assert.assertTrue(dao.countAllQuestions().get == countQuestions.get+1)
-        Assert.assertTrue(dao.countAllAnswers().get == countAnswers.get+1)
-        Assert.assertTrue(dao.countAllBatches().get == countBatches.get+1)
+        Assert.assertEquals(dao.countAllQuestions(),countQuestions+1)
+        Assert.assertEquals(dao.countAllAnswers(), countAnswers+1)
+        Assert.assertEquals(dao.countAllBatches(), countBatches+1)
       }
     }
 

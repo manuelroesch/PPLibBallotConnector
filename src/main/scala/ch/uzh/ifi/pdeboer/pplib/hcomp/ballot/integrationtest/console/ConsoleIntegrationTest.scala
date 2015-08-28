@@ -2,17 +2,17 @@ package ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.integrationtest.console
 
 import java.io._
 import java.util.UUID
+import javax.activation.MimetypesFileTypeMap
 
 import ch.uzh.ifi.pdeboer.pplib.hcomp._
+import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot._
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.dao.BallotDAO
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.persistence.{Answer, DBSettings, Permutation}
-import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.{Asset, BallotPortalAdapter, BallotProperties, Batch}
 import ch.uzh.ifi.pdeboer.pplib.util.CollectionUtils._
 import ch.uzh.ifi.pdeboer.pplib.util.LazyLogger
-import org.apache.commons.codec.binary.Base64
+import com.typesafe.config.ConfigFactory
 import play.api.libs.json.{JsObject, Json}
 
-import scala.io.Source
 import scala.xml.NodeSeq
 
 /**
@@ -20,9 +20,11 @@ import scala.xml.NodeSeq
  */
 object ConsoleIntegrationTest extends App with LazyLogger {
 
-  val ANSWERS_PER_QUERY = 1
-  val RESULT_CSV_FILENAME = "results.csv"
-  val LIKERT_VALUE_CLEANED_ANSWERS = 5
+  val config = ConfigFactory.load()
+
+  val ANSWERS_PER_QUERY = config.getInt("answersPerSnippet")
+  val RESULT_CSV_FILENAME = config.getString("resultFilename")
+  val LIKERT_VALUE_CLEANED_ANSWERS = config.getInt("likertCleanedAnswers")
 
   DBSettings.initialize()
   val dao = new BallotDAO
@@ -47,10 +49,10 @@ object ConsoleIntegrationTest extends App with LazyLogger {
     })
   })
 
-  createCSVReport
+  writeCSVReport
 
   def executePermutationWith250(p: Permutation) = {
-    val answers: List[CsvAnswer] = prepareHCompQuestionAndAsk(new File(p.pdfPath), new File(p.snippetFilename), p.id)
+    val answers: List[CsvAnswer] = buildAndAskQuestion(new File(p.pdfPath), new File(p.snippetFilename), p.id)
     
     if (shouldOtherSnippetsBeDisabled(answers)) {
       dao.updateStateOfPermutationId(p.id, p.id)
@@ -75,25 +77,20 @@ object ConsoleIntegrationTest extends App with LazyLogger {
   }
 
 
-  def prepareHCompQuestionAndAsk(pdfFile: File, snippet: File, hints: Long): List[CsvAnswer] = {
+  def buildAndAskQuestion(pdfFile: File, snippetFile: File, permutationId: Long): List[CsvAnswer] = {
 
-    val base64Image = getBase64String(snippet)
-    val permutation = dao.getPermutationById(hints)
-    val ballotHtmlPage: NodeSeq = createHtmlPage(base64Image, dao.getPermutationById(hints).get.methodOnTop, permutation.get.relativeHeightTop, permutation.get.relativeHeightBottom)
-    val query = HTMLQuery(ballotHtmlPage)
-    val pdfName = pdfFile.getName
-    val pdfPath = pdfFile.getParentFile.getPath
+    val base64Image = Utils.getBase64String(snippetFile)
+    val permutation = dao.getPermutationById(permutationId).get
+    val ballotHtmlPage: NodeSeq = createHtmlPage(base64Image, permutation.methodOnTop, permutation.relativeHeightTop, permutation.relativeHeightBottom)
     val pdfInputStream: InputStream = new FileInputStream(pdfFile)
-    val pdfSource = Source.fromInputStream(pdfInputStream)
     val pdfBinary = Stream.continually(pdfInputStream.read).takeWhile(-1 !=).map(_.toByte).toArray
-    pdfSource.close()
 
-    val contentType = "application/pdf"//new MimetypesFileTypeMap().getContentType(pdfFile)
+    val contentType = new MimetypesFileTypeMap().getContentType(pdfFile.getName)
 
     val properties = new BallotProperties(Batch(UUID.randomUUID()),
-      List(Asset(pdfBinary, contentType, pdfName)), 1, 50, hints)
+      List(Asset(pdfBinary, contentType, pdfFile.getName)), 1, 50, permutationId)
 
-    val answers : List[HTMLQueryAnswer] = askQuestion(0, query, properties, List.empty[HTMLQueryAnswer])
+    val answers : List[HTMLQueryAnswer] = askQuestion(0, HTMLQuery(ballotHtmlPage), properties, List.empty[HTMLQueryAnswer])
 
     answers.map(a => CsvAnswer(a.answers.get("isRelated"), a.answers.get("isCheckedBefore"), a.answers.get("confidence").get.toInt, a.answers.get("descriptionIsRelated").get))
   }
@@ -107,8 +104,8 @@ object ConsoleIntegrationTest extends App with LazyLogger {
               logger.info(s"Answer: ${ans.get.answers.mkString("\n- ")}")
               askQuestion(it+1, query, properties, sofar ::: List[HTMLQueryAnswer](ans.get))
             } else {
-              logger.info("Error while getting the answer.")
-              askQuestion(it, query, properties, sofar)
+              logger.info("Error while getting the answer. The query may contain some errors.")
+              sofar
             }
           }
         }
@@ -124,14 +121,14 @@ object ConsoleIntegrationTest extends App with LazyLogger {
     }
   }
 
-  def createCSVReport: Unit = {
+  def writeCSVReport = {
     val writer = new PrintWriter(new File(RESULT_CSV_FILENAME))
 
     writer.write("snippet,yes answers,no answers,cleaned yes,cleaned no,yes answers,no answers,cleaned yes,cleaned no,feedbacks,firstExclusion,secondExclusion\n")
 
     val results = dao.getAllAnswers.groupBy(g => {dao.getAssetFileNameByQuestionId(g.questionId).get}).map(answersForSnippet => {
 
-      val hints = dao.getHintByQuestionId(answersForSnippet._2.head.questionId).get
+      val hints = dao.getPermutationIdByQuestionId(answersForSnippet._2.head.questionId).get
       val allPermutationsDisabledByActualAnswer = dao.getAllPermutationsWithStateEquals(hints).filterNot(f => f.excluded_step == 0)
       val snippetName = answersForSnippet._1
       val aa: List[Answer] = dao.getAllAnswersBySnippet(snippetName)
@@ -158,15 +155,13 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 
     })
 
-    writer.write(results.mkString("\n"))
+    writer.append(results.mkString("\n"))
     writer.close()
   }
 
   def isPositive(answer: Option[String]): Option[Boolean] = {
     if(answer.isDefined) {
       Some(answer.get.equalsIgnoreCase("yes"))
-    }else if (answer.isDefined) {
-      Some(false)
     }else{
       None
     }
@@ -175,8 +170,6 @@ object ConsoleIntegrationTest extends App with LazyLogger {
   def isNegative(answer: Option[String]): Option[Boolean] = {
     if(answer.isDefined) {
       Some(answer.get.equalsIgnoreCase("no"))
-    }else if (answer.isDefined) {
-      Some(false)
     }else{
       None
     }
@@ -194,13 +187,7 @@ object ConsoleIntegrationTest extends App with LazyLogger {
   }
 
   case class CsvAnswer(q1: Option[String], q2: Option[String], likert: Int, feedback: String)
-
-  def getBase64String(image: File) = {
-    val imageInFile: FileInputStream = new FileInputStream(image)
-    val imageData = new Array[Byte](image.length().asInstanceOf[Int])
-    imageInFile.read(imageData)
-    "data:image/png;base64," + Base64.encodeBase64String(imageData)
-  }
+  
 
   def createHtmlPage(imageBase64Format: String, isMethodOnTop: Boolean, relativeHeightTop: Double = 0, relativeHeightBottom: Double = 0): NodeSeq = {
     <div ng-controller="QuestionCtrl">

@@ -2,7 +2,7 @@ package ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.dao
 
 import java.util.UUID
 
-import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.persistence.{Answer, Permutation}
+import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.persistence.{Answer, Permutation, Question}
 import org.joda.time.DateTime
 import scalikejdbc._
 
@@ -11,21 +11,21 @@ import scalikejdbc._
  */
 class BallotDAO extends DAO{
 
-  def countAllAnswers() = {
+  override def countAllAnswers() : Int = {
     DB readOnly { implicit session =>
-      sql"select count(*) as count from answer".map(rs => rs.int("count")).single().apply()
+      sql"select count(*) as count from answer".map(rs => rs.int("count")).single().apply().get
     }
   }
 
-  def countAllBatches() = {
+  override def countAllBatches() : Int = {
     DB readOnly { implicit session =>
-      sql"select count(*) as count from batch".map(rs => rs.int("count")).single().apply()
+      sql"select count(*) as count from batch".map(rs => rs.int("count")).single().apply().get
     }
   }
 
-  def countAllQuestions() = {
+  override def countAllQuestions() : Int = {
     DB readOnly { implicit session =>
-      sql"select count(*) as count from question".map(rs => rs.int("count")).single().apply()
+      sql"select count(*) as count from question".map(rs => rs.int("count")).single().apply().get
     }
   }
 
@@ -53,9 +53,9 @@ class BallotDAO extends DAO{
     }
   }
 
-  override def createQuestion(html: String, batchId: Long, uuid: UUID = UUID.randomUUID(), dateTime: DateTime = new DateTime(), hints: Long): Long = {
+  override def createQuestion(html: String, batchId: Long, uuid: UUID = UUID.randomUUID(), dateTime: DateTime = new DateTime(), permutationId: Long): Long = {
     DB localTx { implicit session =>
-      sql"insert into question(batch_id, html, create_time, uuid, hints) values(${batchId}, ${html}, ${dateTime}, ${uuid.toString}, ${hints})".updateAndReturnGeneratedKey().apply()
+      sql"insert into question(batch_id, html, create_time, uuid, permutation) values(${batchId}, ${html}, ${dateTime}, ${uuid.toString}, ${permutationId})".updateAndReturnGeneratedKey().apply()
     }
   }
 
@@ -153,13 +153,13 @@ class BallotDAO extends DAO{
     result.filter(r => r.groupName.startsWith(partialGroupName)).map(m => m)
   }
 
-  def getAllQuestions : List[Question] = {
+  override def getAllQuestions : List[Question] = {
     DB readOnly { implicit session =>
-      sql"select * from question".map(rs => Question(rs.long("id"), rs.long("hints"))).list().apply()
+      sql"select * from question".map(rs => Question(rs.long("id"), rs.long("permutation"))).list().apply()
     }
   }
 
-  def getAssetFileNameByQuestionId(qId: Long) : Option[String] = {
+  override def getAssetFileNameByQuestionId(qId: Long) : Option[String] = {
     DB readOnly { implicit session =>
       sql"select filename from assets where question_id = ${qId}".map(rs => rs.string("filename")).single().apply()
     }
@@ -172,9 +172,7 @@ class BallotDAO extends DAO{
     }
   }
 
-  case class Question(id: Long, hints: Long)
-
-  def getAllAnswers() : List[Answer] = {
+  override def getAllAnswers() : List[Answer] = {
     DB readOnly { implicit session =>
       sql"select * from answer where accepted = 1".map(rs =>
         Answer(rs.long("id"), rs.long("question_id"), rs.string("answer_json"), rs.boolean("accepted"))
@@ -182,10 +180,10 @@ class BallotDAO extends DAO{
     }
   }
 
-  def getHintByQuestionId(qId: Long) : Option[Long] = {
+  def getPermutationIdByQuestionId(qId: Long) : Option[Long] = {
     DB readOnly { implicit session =>
-      sql"select hints from question where id = ${qId}".map(rs =>
-        rs.long("hints")).single().apply()
+      sql"select permutation from question where id = ${qId}".map(rs =>
+        rs.long("permutation")).single().apply()
     }
   }
 
