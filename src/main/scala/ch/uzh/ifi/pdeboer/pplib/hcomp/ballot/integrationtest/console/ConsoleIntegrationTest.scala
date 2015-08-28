@@ -5,7 +5,7 @@ import java.util.UUID
 
 import ch.uzh.ifi.pdeboer.pplib.hcomp._
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.dao.BallotDAO
-import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.persistence.{Answer, DBSettings}
+import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.persistence.{Answer, DBSettings, Permutation}
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.{Asset, BallotPortalAdapter, BallotProperties, Batch}
 import ch.uzh.ifi.pdeboer.pplib.util.CollectionUtils._
 import ch.uzh.ifi.pdeboer.pplib.util.LazyLogger
@@ -42,35 +42,40 @@ object ConsoleIntegrationTest extends App with LazyLogger {
     group._2.foreach(permutation => {
       val p = dao.getPermutationById(permutation.id)
       if(p.isDefined && p.get.state == 0) {
-        val answers: List[Map[String, String]] = prepareHCompQuestionAndAsk(new File(p.get.pdfPath), new File(p.get.snippetFilename), p.get.id)
-        // Aggregate answer and look if cleaned Q1 = y and Q2 = Y is the result
-        val cleanedYesQ1 = answers.count(ans => ans.get("confidence").get.toInt>=LIKERT_VALUE_CLEANED_ANSWERS && isPositive(ans.get("isRelated")).get)
-        val cleanedYesQ2 = answers.count(ans => ans.get("confidence").get.toInt>=LIKERT_VALUE_CLEANED_ANSWERS && isPositive(ans.get("isCheckedBefore")).isDefined && isPositive(ans.get("isCheckedBefore")).get)
-        val cleanedNoQ1 = answers.count(ans => ans.get("confidence").get.toInt>=LIKERT_VALUE_CLEANED_ANSWERS && isNegative(ans.get("isRelated")).get)
-        val cleanedNoQ2 = answers.count(ans => ans.get("confidence").get.toInt>=LIKERT_VALUE_CLEANED_ANSWERS && isNegative(ans.get("isCheckedBefore")).isDefined && isNegative(ans.get("isCheckedBefore")).get)
-        if(cleanedYesQ1> cleanedNoQ1 && cleanedYesQ2 > cleanedNoQ2){
-          //Set state of permutation to 1
-          dao.updateStateOfPermutationId(p.get.id, p.get.id)
-          // disable some permutations
-          dao.getAllOpenByGroupName(p.get.groupName).foreach(g => {
-            dao.updateStateOfPermutationId(g.id, p.get.id, 1)
-          })
-          val secondStep = p.get.groupName.split("/")
-          dao.getAllOpenGroupsStartingWith(secondStep.slice(0, 2).mkString("/")).filter(_.methodIndex == p.get.methodIndex).foreach(g => {
-            dao.updateStateOfPermutationId(g.id, p.get.id, 2)
-          })
-        }else {
-          //Set state of permutation to -1
-          dao.updateStateOfPermutationId(p.get.id, -1)
-        }
+        executePermutationWith250(p.get)
       }
     })
   })
 
   createCSVReport
 
+  def executePermutationWith250(p: Permutation) = {
+    val answers: List[CsvAnswer] = prepareHCompQuestionAndAsk(new File(p.pdfPath), new File(p.snippetFilename), p.id)
+    
+    if (shouldOtherSnippetsBeDisabled(answers)) {
+      dao.updateStateOfPermutationId(p.id, p.id)
+      dao.getAllOpenByGroupName(p.groupName).foreach(g => {
+        dao.updateStateOfPermutationId(g.id, p.id, 1)
+      })
+      val groupName = p.groupName.split("/")
+      dao.getAllOpenGroupsStartingWith(groupName.slice(0, 2).mkString("/")).filter(_.methodIndex == p.methodIndex).foreach(g => {
+        dao.updateStateOfPermutationId(g.id, p.id, 2)
+      })
+    } else {
+      dao.updateStateOfPermutationId(p.id, -1)
+    }
+  }
+  
+  def shouldOtherSnippetsBeDisabled(answers: List[CsvAnswer]) : Boolean = {
+    val cleanedYesQ1 = answers.count(ans => ans.likert >= LIKERT_VALUE_CLEANED_ANSWERS && isPositive(ans.q1).get)
+    val cleanedYesQ2 = answers.count(ans => ans.likert >= LIKERT_VALUE_CLEANED_ANSWERS && isPositive(ans.q2).isDefined && isPositive(ans.q2).get)
+    val cleanedNoQ1 = answers.count(ans => ans.likert >= LIKERT_VALUE_CLEANED_ANSWERS && isNegative(ans.q1).get)
+    val cleanedNoQ2 = answers.count(ans => ans.likert >= LIKERT_VALUE_CLEANED_ANSWERS && isNegative(ans.q2).isDefined && isNegative(ans.q2).get)
+    cleanedYesQ1 > cleanedNoQ1 && cleanedYesQ2 > cleanedNoQ2
+  }
 
-  def prepareHCompQuestionAndAsk(pdfFile: File, snippet: File, hints: Long): List[Map[String, String]] = {
+
+  def prepareHCompQuestionAndAsk(pdfFile: File, snippet: File, hints: Long): List[CsvAnswer] = {
 
     val base64Image = getBase64String(snippet)
     val permutation = dao.getPermutationById(hints)
@@ -90,7 +95,7 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 
     val answers : List[HTMLQueryAnswer] = askQuestion(0, query, properties, List.empty[HTMLQueryAnswer])
 
-    answers.map(a => a.answers)
+    answers.map(a => CsvAnswer(a.answers.get("isRelated"), a.answers.get("isCheckedBefore"), a.answers.get("confidence").get.toInt, a.answers.get("descriptionIsRelated").get))
   }
 
   def askQuestion(it: Int, query: HTMLQuery, properties: BallotProperties, sofar: List[HTMLQueryAnswer]): List[HTMLQueryAnswer] = {
