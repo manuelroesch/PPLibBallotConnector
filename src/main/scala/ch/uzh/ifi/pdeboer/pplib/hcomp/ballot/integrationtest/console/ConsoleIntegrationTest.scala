@@ -313,7 +313,24 @@ object ConsoleIntegrationTest extends App with LazyLogger {
           <textarea class="form-control" name="descriptionIsRelated" id="descriptionIsRelated" rows="5" required="required">Your text here</textarea>
         </div>
 
-        <input type="hidden" name="confidence" value="7"></input>
+        <hr style="width:100%"/>
+        <p>
+          Please select the number below that best represents how certain you feel about the answer you have provided before.
+        </p>
+
+        <div class="form-group" style="width:100%;">
+          <label class="col-sm-6 control-label">Not certain at all</label>
+          <label class="col-sm-6 control-label" style="text-align: right">Absolutely certain</label>
+        </div>
+
+        <div class="form-group" style="width:100%;">
+          <div class="col-sm-12">
+            <div class="well">
+              <input id="ex1" data-slider-id="ex1Slider" type="text" name="confidence" data-slider-min="1" data-slider-max="7" data-slider-step="1" data-slider-value="1" data="confidence: '1'" value="1" style="display: none;width:100%;">
+              </input>
+            </div>
+          </div>
+        </div>
 
         <hr style="width:100%"/>
         <input type="submit" class="btn btn-large btn-primary" style="width:150px;float:right;" value="Submit Answer"/>
@@ -321,6 +338,17 @@ object ConsoleIntegrationTest extends App with LazyLogger {
       </form>
       <br/>
       <br/>
+      <script type="text/javascript">
+        {scala.xml.PCData(
+        """$('#ex1').slider({
+                tooltip: 'always',
+                  formatter: function(value) {
+                  return value;
+                }
+              });
+        """
+      )}
+      </script>
 
       <script type="text/javascript">
         {scala.xml.PCData( """
@@ -356,7 +384,56 @@ object ConsoleIntegrationTest extends App with LazyLogger {
           }; """
       )}
       </script>
+      <script type="text/javascript">
+        {scala.xml.PCData("""
 
+        $('#ex1').slider({
+          tooltip: 'always',
+          formatter: function(value) {
+            return value;
+          }
+        });
+
+        var step = 10;
+          var scrolling = false;
+
+          $('#up').bind('click', function(event) {
+            event.preventDefault();
+            $('#imgContainer').animate({
+              scrollTop: '-=' + step + 'px'
+            });
+          }).bind('mouseover', function(event) {
+            scrolling = true;
+            scrollContent('up');
+          }).bind('mouseout', function(event) {
+            scrolling = false;
+          });
+
+
+          $('#down').bind('click', function(event) {
+            event.preventDefault();
+            $('#imgContainer').animate({
+              scrollTop: '+=' + step + 'px'
+            });
+          }).bind('mouseover', function(event) {
+            scrolling = true;
+            scrollContent('down');
+          }).bind('mouseout', function(event) {
+            scrolling = false;
+          });
+
+          function scrollContent(direction) {
+            var amount = (direction === 'up' ? '-=1px' : '+=1px');
+            $('#imgContainer').animate({
+              scrollTop: amount
+            }, 10, function() {
+              if (scrolling) {
+                scrollContent(direction);
+              }
+            });
+          }
+                          """)}
+      </script>
     </div>
   }
 
