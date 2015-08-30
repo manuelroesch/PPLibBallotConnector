@@ -192,7 +192,7 @@ class DAOTest extends DAO with LazyLogger {
 
   override def countAllAnswers(): Int = ???
 
-  override def getAllAnswers(): List[Answer] = ???
+	override def allAnswers(): List[Answer] = ???
 
   override def countAllBatches(): Int = ???
 

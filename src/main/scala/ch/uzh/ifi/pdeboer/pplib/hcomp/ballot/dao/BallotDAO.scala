@@ -172,7 +172,7 @@ class BallotDAO extends DAO{
     }
   }
 
-  override def getAllAnswers() : List[Answer] = {
+  override def allAnswers: List[Answer] = {
     DB readOnly { implicit session =>
       sql"select * from answer where accepted = 1".map(rs =>
         Answer(rs.long("id"), rs.long("question_id"), rs.string("answer_json"), rs.boolean("accepted"))
@@ -188,7 +188,7 @@ class BallotDAO extends DAO{
   }
 
   def getAllAnswersBySnippet(fileName: String) : List[Answer] = {
-    getAllAnswers.filter(f => f.answerJson.contains(fileName))
+    allAnswers.filter(f => f.answerJson.contains(fileName))
   }
 
 }

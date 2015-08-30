@@ -42,6 +42,6 @@ trait DAO {
 
   def getAssetFileNameByQuestionId(qId: Long) : Option[String]
 
-  def getAllAnswers() : List[Answer]
+  def allAnswers(): List[Answer]
 
 }

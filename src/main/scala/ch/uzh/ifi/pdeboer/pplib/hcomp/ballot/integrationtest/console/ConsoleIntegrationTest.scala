@@ -121,12 +121,14 @@ object ConsoleIntegrationTest extends App with LazyLogger {
     }
   }
 
-  def writeCSVReport = {
+  def writeCSVReport() = {
     val writer = new PrintWriter(new File(RESULT_CSV_FILENAME))
 
     writer.write("snippet,yes answers,no answers,cleaned yes,cleaned no,yes answers,no answers,cleaned yes,cleaned no,feedbacks,firstExclusion,secondExclusion\n")
 
-    val results = dao.getAllAnswers.groupBy(g => {dao.getAssetFileNameByQuestionId(g.questionId).get}).map(answersForSnippet => {
+    val results = dao.allAnswers.groupBy(g => {
+      dao.getAssetFileNameByQuestionId(g.questionId).get
+    }).map(answersForSnippet => {
 
       val hints = dao.getPermutationIdByQuestionId(answersForSnippet._2.head.questionId).get
       val allPermutationsDisabledByActualAnswer = dao.getAllPermutationsWithStateEquals(hints).filterNot(f => f.excluded_step == 0)
