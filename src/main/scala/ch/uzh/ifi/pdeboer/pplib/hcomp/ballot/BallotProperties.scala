@@ -12,7 +12,7 @@ class BallotProperties(
 						  val assets: List[Asset],
 						  val permutationId: Long,
 						  val propertiesForDecoratedPortal: HCompQueryProperties = new HCompQueryProperties()) extends HCompQueryProperties(0) {
-	override def paymentCents = propertiesForDecoratedPortal.paymentCents
+	override val paymentCents = propertiesForDecoratedPortal.paymentCents
 }
 
 case class Batch(allowedAnswersPerTurker: Int = 0, uuid: UUID = UUID.randomUUID())
