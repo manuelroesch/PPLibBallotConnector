@@ -1,4 +1,4 @@
-package ch.uzh.ifi.pdeboer.pplib.hcomp.ballot
+package ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.snippet
 
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.integrationtest.console.ConsoleIntegrationTest
 import ch.uzh.ifi.pdeboer.pplib.hcomp.{HCompAnswer, HCompQuery, HTMLQuery, HTMLQueryAnswer}
@@ -18,14 +18,14 @@ class SnippetHTMLQueryBuilder(ballotHtmlPage: NodeSeq) extends HCompQueryBuilder
 	override def parseAnswer[TARGET](queryKey: String, input: List[Patch], answer: HCompAnswer, base: ProcessStub[_, _])(implicit baseCls: ClassTag[TARGET]): Option[TARGET] = {
 		val ans = answer.is[HTMLQueryAnswer]
 		val ret = baseCls.runtimeClass match {
-			case x: Class[Option[Boolean]] =>
+			case x: Class[String] =>
 				val likert = ans.answers.get("confidence").get.toInt
 				if (likert >= ConsoleIntegrationTest.LIKERT_VALUE_CLEANED_ANSWERS) {
 					if (ans.answers.get("isRelated").get.equalsIgnoreCase("yes") && ans.answers.get("isCheckedBefore").get.equalsIgnoreCase("yes")) {
-						Some(true)
+						Some(SnippetHTMLQueryBuilder.POSITIVE)
 					}
 					else {
-						Some(false)
+						Some(SnippetHTMLQueryBuilder.NEGATIVE)
 					}
 				} else {
 					None
@@ -34,4 +34,9 @@ class SnippetHTMLQueryBuilder(ballotHtmlPage: NodeSeq) extends HCompQueryBuilder
 		}
 		ret.asInstanceOf[Option[TARGET]]
 	}
+}
+
+object SnippetHTMLQueryBuilder {
+	val POSITIVE = "yes"
+	val NEGATIVE = "no"
 }

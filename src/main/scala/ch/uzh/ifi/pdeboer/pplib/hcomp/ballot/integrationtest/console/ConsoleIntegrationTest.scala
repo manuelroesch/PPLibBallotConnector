@@ -8,6 +8,9 @@ import ch.uzh.ifi.pdeboer.pplib.hcomp._
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot._
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.dao.BallotDAO
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.persistence.{Answer, DBSettings, Permutation}
+import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.snippet.SnippetHTMLQueryBuilder
+import ch.uzh.ifi.pdeboer.pplib.process.entities.IndexedPatch
+import ch.uzh.ifi.pdeboer.pplib.process.stdlib.ContestWithBeatByKVotingProcess
 import ch.uzh.ifi.pdeboer.pplib.util.CollectionUtils._
 import ch.uzh.ifi.pdeboer.pplib.util.LazyLogger
 import com.typesafe.config.ConfigFactory
@@ -90,9 +93,19 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 		val properties = new BallotProperties(Batch(UUID.randomUUID()),
 			List(Asset(pdfBinary, contentType, pdfFile.getName)), 1, 50, permutationId)
 
-		val answers: List[HTMLQueryAnswer] = askQuestion(0, HTMLQuery(ballotHtmlPage), properties, List.empty[HTMLQueryAnswer])
+		import ContestWithBeatByKVotingProcess._
+		import ch.uzh.ifi.pdeboer.pplib.process.entities.DefaultParameters._
+		val process = new ContestWithBeatByKVotingProcess(Map(
+			K.key -> 2,
+			PORTAL_PARAMETER.key -> ballotPortalAdapter,
+			MAX_ITERATIONS.key -> 20,
+			QUESTION_PRICE.key -> properties,
+			QUERY_BUILDER_KEY -> new SnippetHTMLQueryBuilder(ballotHtmlPage)
+		))
 
-		answers.map(a => CsvAnswer(a.answers.get("isRelated"), a.answers.get("isCheckedBefore"), a.answers.get("confidence").get.toInt, a.answers.get("descriptionIsRelated").get))
+		val answer = process.process(IndexedPatch.from(List(SnippetHTMLQueryBuilder.POSITIVE, SnippetHTMLQueryBuilder.NEGATIVE)))
+
+		process.portal.queries.map(_.answer.get.is[HTMLQueryAnswer]).map(a => CsvAnswer(a.answers.get("isRelated"), a.answers.get("isCheckedBefore"), a.answers.get("confidence").get.toInt, a.answers.get("descriptionIsRelated").get))
 	}
 
 	def parseAnswer(answer: HTMLQueryAnswer): Option[Boolean] = {
