@@ -83,7 +83,7 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 
 		val base64Image = Utils.getBase64String(snippetFile)
 		val permutation = dao.getPermutationById(permutationId).get
-		val ballotHtmlPage: NodeSeq = createHtmlPage(base64Image, permutation.methodOnTop, permutation.relativeHeightTop, permutation.relativeHeightBottom)
+		val ballotHtmlPage: NodeSeq = createHtmlPage(base64Image, permutation.methodOnTop, config.getString("hcomp.ballot.baseURL"), permutation.relativeHeightTop, permutation.relativeHeightBottom)
 		val pdfInputStream: InputStream = new FileInputStream(pdfFile)
 		val pdfBinary = Stream.continually(pdfInputStream.read).takeWhile(-1 !=).map(_.toByte).toArray
 
@@ -177,7 +177,7 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 	case class CsvAnswer(q1: Option[String], q2: Option[String], likert: Int, feedback: String)
 
 
-	def createHtmlPage(imageBase64Format: String, isMethodOnTop: Boolean, relativeHeightTop: Double = 0, relativeHeightBottom: Double = 0): NodeSeq = {
+	def createHtmlPage(imageBase64Format: String, isMethodOnTop: Boolean, baseURL: String, relativeHeightTop: Double = 0, relativeHeightBottom: Double = 0): NodeSeq = {
 		<div ng-controller="QuestionCtrl">
 
 			<p>
@@ -253,7 +253,7 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 				</ul>
 			</div>
 
-			<form onsubmit="return checkFeedbackForm()">
+			<form action={baseURL + "storeAnswer"} method="GET" onsubmit="return checkFeedbackForm()">
 				<h3>
 					<label class="radio-inline">
 						<input type="radio" name="isRelated" ng-model="isRelated" id="yes" value="Yes" required="required"/>

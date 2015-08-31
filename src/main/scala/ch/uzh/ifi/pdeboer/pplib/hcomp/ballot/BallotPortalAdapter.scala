@@ -35,10 +35,16 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 			(actualProperties, batchIdFromDB)
 		}
 
-		val htmlToDisplayOnBallotPage: NodeSeq = query match {
-			case q: HTMLQuery => XML.loadString(q.html.toString().replaceAll("<form(.*)>", "<form action=\"" + baseURL + "storeAnswer\" method=\"get\" $1>"))
-			case _ => scala.xml.Unparsed(query.toString)
-		}
+    val htmlToDisplayOnBallotPage : NodeSeq = query match {
+      case q: HTMLQuery => q.html
+      case _ => scala.xml.PCData(query.toString)
+    }
+
+    /*val allForms = (ns \\ "form").map(n => XML.loadString(n.toString().replaceAll("<form(.*)>", "<form action=\"" + baseURL + "storeAnswer\" method=\"get\" $1>")))
+    val newBallotHTML : NodeSeq = ns(0).child.map(if())
+      ns.map(n => if(n.label.equalsIgnoreCase("form")){allForms(0)}else{n})
+    val htmlToDisplayOnBallotPage : NodeSeq = newBallotHTML
+    */
 
 		if ((htmlToDisplayOnBallotPage \\ "form").nonEmpty) {
 			if ((htmlToDisplayOnBallotPage \\ "form").exists(form =>
