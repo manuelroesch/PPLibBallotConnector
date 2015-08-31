@@ -13,7 +13,10 @@ class BallotProperties(
 						  val allowedAnswersPerTurker: Int,
 						  paymentCents: Int = 0,
 						  val permutationId: Long,
-						  val propertiesForDecoratedPortal: HCompQueryProperties = new HCompQueryProperties()) extends HCompQueryProperties(paymentCents) {}
+						  val propertiesForDecoratedPortal: HCompQueryProperties = new HCompQueryProperties()) extends HCompQueryProperties(paymentCents) {
+
+	assert(paymentCents <= 0 || paymentCents == propertiesForDecoratedPortal.paymentCents, "paymentCents of decorated properties will be used. Please set paymentCents of Ballot properties instance to 0")
+}
 
 case class Batch(uuid: UUID = UUID.randomUUID())
 
