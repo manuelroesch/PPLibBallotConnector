@@ -1,0 +1,34 @@
+# JDBC settings
+db.default.driver="com.mysql.jdbc.Driver"
+db.default.url="jdbc:mysql://127.0.0.1:3306/ballot?useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&failOverReadOnly=false&maxReconnects=10"
+db.default.host="127.0.0.1"
+db.default.user="root"
+db.default.password=""
+
+# Connection Pool settings
+db.default.poolInitialSize=10
+db.default.poolMaxSize=70
+db.default.connectionTimeoutMillis=3000
+db.default.poolValidationQuery="select 1 as one"
+
+# Global settings
+scalikejdbc.global.loggingSQLAndTime.enabled=true
+scalikejdbc.global.loggingSQLAndTime.singleLineMode = true
+scalikejdbc.global.loggingSQLAndTime.logLevel=DEBUG
+scalikejdbc.global.loggingSQLAndTime.warningEnabled=true
+scalikejdbc.global.loggingSQLAndTime.warningThresholdMillis=1000
+scalikejdbc.global.loggingSQLAndTime.warningLogLevel=warn
+
+play.modules.enabled += "scalikejdbc.PlayModule"
+# scalikejdbc.PlayModule doesn't depend on Play's DBModule
+play.modules.disabled += "play.api.db.DBModule"
+
+hcomp.consolePortal.active = "true"
+hcomp.mechanicalTurk.sandbox = "true"
+
+hcomp.ballot.order = "5"
+#hcomp.ballot.decoratedPortalKey = "mechanicalTurk"
+hcomp.ballot.decoratedPortalKey = "consolePortal"
+
+#hcomp.ballot.baseURL = "http://taliesin.ifi.uzh.ch/ballot/"
+hcomp.ballot.baseURL = "http://localhost:9000/"

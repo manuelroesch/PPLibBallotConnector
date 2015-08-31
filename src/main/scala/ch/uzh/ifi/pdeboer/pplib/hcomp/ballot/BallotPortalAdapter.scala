@@ -22,11 +22,10 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 
     val actualProperties: BallotProperties = properties match {
       case p: BallotProperties => p
-      case _ => {
+      case _ =>
         val uuid = UUID.randomUUID()
         val batchId = dao.createBatch(0, uuid)
-        new BallotProperties(Batch(uuid), List(Asset(Array.empty[Byte], "application/pdf", "empty filename")), 0, permutationId1 = 0)
-      }
+		  new BallotProperties(Batch(uuid), List(Asset(Array.empty[Byte], "application/pdf", "empty filename")), 0, permutationId = 0)
     }
 
     val htmlToDisplayOnBallotPage: NodeSeq = query match {
@@ -56,7 +55,7 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 							   Hey there. Thank you for being interested in this task! In the following <a href=\"$link\">URL</a> you'll find a Survey showing you a text snippet and asking you if two terms (highlighted in the text) do have a relationship of some sorts.<br/>
 							   Please accept the hit, fill in the survey and, once finished, enter the confirmation code below such that we can pay you. <br/>
 							   Please note that you will only be able to submit one assignment for this survey. In case you're unsure if you've already participated, click on the link and the system will tell you if you're not eligible.  <br /> If you did not accept the HIT prior to filling the survey, you may be presented with an error after submitting it, so please FIRST accept and THEN work :)
-							   <a href=\"$link\">$link</a>""".stripMargin, "", "Are these two words in the text related?"), actualProperties)
+							   <a href=\"$link\">$link</a>""".stripMargin, "", "Are these two words in the text related?"), actualProperties.propertiesForDecoratedPortal)
           .get.asInstanceOf[FreetextAnswer]
 
         val answerId = dao.getAnswerIdByOutputCode(answer.answer.trim)
