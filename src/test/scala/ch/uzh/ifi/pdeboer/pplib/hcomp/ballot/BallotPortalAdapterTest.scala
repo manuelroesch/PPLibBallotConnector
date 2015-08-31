@@ -84,7 +84,7 @@ class BallotPortalAdapterTest {
 					</p>
 				</form>
 			</div>
-		</div>), new BallotProperties(Batch(), List(Asset(Array.empty[Byte], "application/pdf", "empty filename")), 1, permutationId = 0))
+		</div>), new BallotProperties(Batch(), List(Asset(Array.empty[Byte], "application/pdf", "empty filename")), 1, 1))
 		Assert.assertEquals(ans, None)
 	}
 
@@ -93,7 +93,7 @@ class BallotPortalAdapterTest {
 		val b = new BallotPortalAdapter(new PortalAdapterTest(), new DAOTest(), "http://www.andreas.ifi.uzh.ch:9000/")
 		val ans = b.processQuery(HTMLQuery(<div>
 			<h1>test</h1> <form></form>
-		</div>), new BallotProperties(Batch(), List(Asset(Array.empty[Byte], "application/pdf", "empty filename")), 1, permutationId1 = 0))
+		</div>), new BallotProperties(Batch(), List(Asset(Array.empty[Byte], "application/pdf", "empty filename")), 1, 1))
 		Assert.assertEquals(ans, None)
 	}
 
