@@ -30,7 +30,7 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
     }
 
     val htmlToDisplayOnBallotPage: NodeSeq = query match {
-      case q: HTMLQuery => XML.loadString(q.html.toString().replaceAll("\\<form(.*)\\>", "<form action=\"" + baseURL + "storeAnswer\" method=\"get\" $1>"))
+      case q: HTMLQuery => XML.loadString(q.html.toString().replaceAll("\\<form(.+)\\>", "<form action=\"" + baseURL + "storeAnswer\" method=\"get\" $1>"))
       case _ => scala.xml.Unparsed(query.toString)
     }
 

@@ -95,6 +95,20 @@ object ConsoleIntegrationTest extends App with LazyLogger {
     answers.map(a => CsvAnswer(a.answers.get("isRelated"), a.answers.get("isCheckedBefore"), a.answers.get("confidence").get.toInt, a.answers.get("descriptionIsRelated").get))
   }
 
+  def parseAnswer(answer : HTMLQueryAnswer) : Option[Boolean] = {
+    val likert = answer.answers.get("confidence").get.toInt
+    if( likert >= LIKERT_VALUE_CLEANED_ANSWERS){
+      if(answer.answers.get("isRelated").get.equalsIgnoreCase("yes") && answer.answers.get("isCheckedBefore").get.equalsIgnoreCase("yes")) {
+        Some(true)
+      }
+      else {
+        Some(false)
+      }
+    }else {
+      None
+    }
+  }
+
   def askQuestion(it: Int, query: HTMLQuery, properties: BallotProperties, sofar: List[HTMLQueryAnswer]): List[HTMLQueryAnswer] = {
     if(it < ANSWERS_PER_QUERY) {
       try {

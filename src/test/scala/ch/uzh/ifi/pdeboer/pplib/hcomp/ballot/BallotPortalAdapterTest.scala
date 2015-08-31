@@ -20,7 +20,7 @@ class BallotPortalAdapterTest {
 	def testProcessQuery: Unit = {
 		val b = new BallotPortalAdapter(new PortalAdapterTest(), new DAOTest(), "http://www.andreas.ifi.uzh.ch:9000/")
 		val query = HTMLQuery(<div>
-			<h1>test</h1> <form action="http://www.andreas.ifi.uzh.ch:9000/storeAnswer" method="post">
+			<h1>test</h1> <form>
 				<input type="submit" name="answer" value="yes"/>
 			</form>
 		</div>)
