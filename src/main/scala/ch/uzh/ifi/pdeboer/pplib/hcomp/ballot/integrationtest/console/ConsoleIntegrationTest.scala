@@ -108,46 +108,6 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 		process.portal.queries.map(_.answer.get.is[HTMLQueryAnswer]).map(a => CsvAnswer(a.answers.get("isRelated"), a.answers.get("isCheckedBefore"), a.answers.get("confidence").get.toInt, a.answers.get("descriptionIsRelated").get))
 	}
 
-	def parseAnswer(answer: HTMLQueryAnswer): Option[Boolean] = {
-		val likert = answer.answers.get("confidence").get.toInt
-		if (likert >= LIKERT_VALUE_CLEANED_ANSWERS) {
-			if (answer.answers.get("isRelated").get.equalsIgnoreCase("yes") && answer.answers.get("isCheckedBefore").get.equalsIgnoreCase("yes")) {
-				Some(true)
-			}
-			else {
-				Some(false)
-			}
-		} else {
-			None
-		}
-	}
-
-	def askQuestion(it: Int, query: HTMLQuery, properties: BallotProperties, sofar: List[HTMLQueryAnswer]): List[HTMLQueryAnswer] = {
-		if (it < ANSWERS_PER_QUERY) {
-			try {
-				ballotPortalAdapter.processQuery(query, properties) match {
-					case ans: Option[HTMLQueryAnswer] => {
-						if (ans.isDefined) {
-							logger.info(s"Answer: ${ans.get.answers.mkString("\n- ")}")
-							askQuestion(it + 1, query, properties, sofar ::: List[HTMLQueryAnswer](ans.get))
-						} else {
-							logger.info("Error while getting the answer. The query may contain some errors.")
-							sofar
-						}
-					}
-				}
-			}
-			catch {
-				case e: Throwable => {
-					logger.error("There was a problem with the query engine", e)
-					List.empty[HTMLQueryAnswer]
-				}
-			}
-		} else {
-			sofar
-		}
-	}
-
 	def writeCSVReport() = {
 		val writer = new PrintWriter(new File(RESULT_CSV_FILENAME))
 
