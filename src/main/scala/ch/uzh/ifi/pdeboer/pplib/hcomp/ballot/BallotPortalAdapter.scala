@@ -25,7 +25,7 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
       case _ =>
         val uuid = UUID.randomUUID()
         val batchId = dao.createBatch(0, uuid)
-        new BallotProperties(Batch(uuid), List(Asset(Array.empty[Byte], "application/pdf", "empty filename")), 0, permutationId1 = 0)
+		  new BallotProperties(Batch(uuid), List(Asset(Array.empty[Byte], "application/pdf", "empty filename")), 0, permutationId = 0)
     }
 
     val htmlToDisplayOnBallotPage: NodeSeq = query match {

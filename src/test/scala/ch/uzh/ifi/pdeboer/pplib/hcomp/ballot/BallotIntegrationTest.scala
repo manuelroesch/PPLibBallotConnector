@@ -51,7 +51,7 @@ class BallotIntegrationTest {
       </div>
 
     val query = HTMLQuery(ballotHtmlPage)
-    val properties = new BallotProperties(Batch(), List(Asset(Array.empty[Byte], "application/pdf", "empty filename")), 1, permutationId1 = 0)
+    val properties = new BallotProperties(Batch(), List(Asset(Array.empty[Byte], "application/pdf", "empty filename")), 1, permutationId = 0)
 
     ballotPortalAdapter.processQuery(query, properties) match {
       case ans : Option[HTMLQueryAnswer] => {

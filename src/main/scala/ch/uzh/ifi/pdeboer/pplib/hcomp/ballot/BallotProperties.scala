@@ -7,22 +7,14 @@ import ch.uzh.ifi.pdeboer.pplib.hcomp.HCompQueryProperties
 /**
  * Created by mattia on 06.07.15.
  */
-private[ballot]
 class BallotProperties(
-                        batch1: Batch,
-                        asset1: List[Asset],
-                        allowedAnswersPerTurker1: Int,
-                        paymentCents: Int = 0,
-                        permutationId1: Long) extends HCompQueryProperties(paymentCents) {
+						  val batch: Batch,
+						  val assets: List[Asset],
+						  val allowedAnswersPerTurker: Int,
+						  paymentCents: Int = 0,
+						  val permutationId: Long,
+						  val propertiesForDecoratedPortal: HCompQueryProperties = new HCompQueryProperties()) extends HCompQueryProperties(paymentCents) {}
 
-  val batch = batch1
-  val assets = asset1
-  val allowedAnswersPerTurker = allowedAnswersPerTurker1
-  val permutationId = permutationId1
-}
-
-private[ballot]
 case class Batch(uuid: UUID = UUID.randomUUID())
 
-private[ballot]
 case class Asset(binary: Array[Byte], contentType: String, filename: String)
