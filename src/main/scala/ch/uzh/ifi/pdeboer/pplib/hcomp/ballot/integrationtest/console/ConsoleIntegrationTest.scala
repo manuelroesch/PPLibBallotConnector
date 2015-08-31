@@ -91,7 +91,7 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 		val contentType = new MimetypesFileTypeMap().getContentType(pdfFile.getName)
 
 		val properties = new BallotProperties(Batch(UUID.randomUUID()),
-			List(Asset(pdfBinary, contentType, pdfFile.getName)), 1, 50, permutationId)
+			List(Asset(pdfBinary, contentType, pdfFile.getName)), 1, 0, permutationId, propertiesForDecoratedPortal = new HCompQueryProperties(50, qualifications = Nil))
 
 		import ContestWithBeatByKVotingProcess._
 		import ch.uzh.ifi.pdeboer.pplib.process.entities.DefaultParameters._
