@@ -350,7 +350,10 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 
 
           $(document).ready( function() {
-            if($('#snippet').height() < $('#imgContainer').height()){
+		  	var snippetHeight = $('#snippet').height();
+	 		var containerHeight = $('#imgContainer').height();
+            //if($('#snippet').height() < $('#imgContainer').height()){
+			if(Math.min(snippetHeight, containerHeight) == snippetHeight) {
               $('#snippetButtons').hide();
             }else{
               $('#top').click();

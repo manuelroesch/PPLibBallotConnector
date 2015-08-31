@@ -15,6 +15,7 @@ dist
 /RUNNING_PID
 /src/test/scala/testttt.scala
 /.settings
+/result.csv
 
 src/main/resources/application.conf
 snippets
