@@ -20,22 +20,25 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 
 	override def processQuery(query: HCompQuery, properties: HCompQueryProperties): Option[HCompAnswer] = {
 
-		val actualProperties: BallotProperties = properties match {
-			case p: BallotProperties => p
-      case _ =>
-				val uuid = UUID.randomUUID()
-				val batchId = dao.createBatch(0, uuid)
-				new BallotProperties(Batch(0, uuid), List(Asset(Array.empty[Byte], "application/pdf", "empty filename")), 1)
+		val (actualProperties, batchIdFromDB) = this.synchronized {
+			val actualProperties: BallotProperties = properties match {
+				case p: BallotProperties => p
+				case _ =>
+					val uuid = UUID.randomUUID()
+					new BallotProperties(Batch(uuid), List(Asset(Array.empty[Byte], "application/pdf", "empty filename")), 0, permutationId = 0, properties)
+			}
+
+			val batchIdFromDB: Long =
+				dao.getBatchIdByUUID(actualProperties.batch.uuid).getOrElse(
+					dao.createBatch(actualProperties.allowedAnswersPerTurker, actualProperties.batch.uuid))
+
+			(actualProperties, batchIdFromDB)
 		}
 
 		val htmlToDisplayOnBallotPage: NodeSeq = query match {
 			case q: HTMLQuery => XML.loadString(q.html.toString().replaceAll("<form(.*)>", "<form action=\"" + baseURL + "storeAnswer\" method=\"get\" $1>"))
 			case _ => scala.xml.Unparsed(query.toString)
 		}
-
-		val batchIdFromDB: Long =
-			dao.getBatchIdByUUID(actualProperties.batch.uuid).getOrElse(
-				dao.createBatch(actualProperties.batch.allowedAnswersPerTurker, actualProperties.batch.uuid))
 
 		if ((htmlToDisplayOnBallotPage \\ "form").nonEmpty) {
 			if ((htmlToDisplayOnBallotPage \\ "form").exists(form =>
