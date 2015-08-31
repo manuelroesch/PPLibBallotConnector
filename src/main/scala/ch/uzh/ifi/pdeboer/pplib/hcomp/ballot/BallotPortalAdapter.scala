@@ -26,7 +26,7 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 				case _ =>
 					val uuid = UUID.randomUUID()
 					val batchId = dao.createBatch(0, uuid)
-					new BallotProperties(Batch(uuid), List(Asset(Array.empty[Byte], "application/pdf", "empty filename")), 0, permutationId = 0)
+					new BallotProperties(Batch(uuid), List(Asset(Array.empty[Byte], "application/pdf", "empty filename")), 0, permutationId = 0, decorated = properties)
 			}
 
 			val batchIdFromDB: Long =
