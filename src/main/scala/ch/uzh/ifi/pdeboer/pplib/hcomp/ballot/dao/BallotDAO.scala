@@ -67,7 +67,7 @@ class BallotDAO extends DAO{
 
   override def getQuestionUUID(questionId: Long): Option[String] = {
     DB readOnly { implicit session =>
-      sql"select uuid from answer where question_id = ${questionId}".map(rs => rs.string("uuid")).single().apply()
+      sql"select uuid from question where id = ${questionId}".map(rs => rs.string("uuid")).single().apply()
     }
   }
 
@@ -115,6 +115,16 @@ class BallotDAO extends DAO{
     }
 
     true
+  }
+
+  def createPermutation(permutation: Permutation) : Long = {
+    DB localTx { implicit session =>
+      sql"""insert into permutations(group_name, method_index, snippet_filename, pdf_path, method_on_top, relative_height_top, relative_height_bottom)
+      values (group_name = ${permutation.groupName}, method_index = ${permutation.methodIndex},
+      snippet_filename = ${permutation.snippetFilename}, pdf_path = ${permutation.pdfPath}, method_on_top = ${permutation.methodOnTop},
+      relative_height_top = ${permutation.relativeHeightTop}, relative_height_bottom = ${permutation.relativeHeightBottom})"""
+        .updateAndReturnGeneratedKey().apply()
+    }
   }
 
   def getAllPermutations() : List[Permutation] = {

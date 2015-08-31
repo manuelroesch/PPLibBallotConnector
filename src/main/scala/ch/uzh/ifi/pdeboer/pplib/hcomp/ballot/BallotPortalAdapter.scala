@@ -30,7 +30,7 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
     }
 
     val htmlToDisplayOnBallotPage: NodeSeq = query match {
-      case q: HTMLQuery => XML.loadString(q.html.toString().replaceAll("\\<form(.+)\\>", "<form action=\"" + baseURL + "storeAnswer\" method=\"get\" $1>"))
+      case q: HTMLQuery => XML.loadString(q.html.toString().replaceAll("<form(.*)>", "<form action=\"" + baseURL + "storeAnswer\" method=\"get\" $1>"))
       case _ => scala.xml.Unparsed(query.toString)
     }
 
@@ -40,12 +40,12 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 
     if ((htmlToDisplayOnBallotPage \\ "form").nonEmpty) {
       if ((htmlToDisplayOnBallotPage \\ "form").exists(form =>
-        hasFormInvalidInputElements(form))) {
+        !hasFormValidInputElements(form))) {
         logger.error("Form's content is not valid.")
         None
       } else {
         val questionUUID = UUID.randomUUID()
-        val questionId = dao.createQuestion(htmlToDisplayOnBallotPage.toString(), batchIdFromDB, questionUUID, hints = actualProperties.permutationId)
+        val questionId = dao.createQuestion(htmlToDisplayOnBallotPage.toString(), batchIdFromDB, questionUUID, permutationId = actualProperties.permutationId)
         val link = baseURL + "showQuestion/" + questionUUID
 
         actualProperties.assets.foreach(asset => dao.createAsset(asset.binary, asset.contentType, questionId, asset.filename))
@@ -56,7 +56,7 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 							   Hey there. Thank you for being interested in this task! In the following <a href=\"$link\">URL</a> you'll find a Survey showing you a text snippet and asking you if two terms (highlighted in the text) do have a relationship of some sorts.<br/>
 							   Please accept the hit, fill in the survey and, once finished, enter the confirmation code below such that we can pay you. <br/>
 							   Please note that you will only be able to submit one assignment for this survey. In case you're unsure if you've already participated, click on the link and the system will tell you if you're not eligible.  <br /> If you did not accept the HIT prior to filling the survey, you may be presented with an error after submitting it, so please FIRST accept and THEN work :)
-							   <a href=\"$link\">$link</a>""".stripMargin, "", "Are these two words in the text related?"), properties)
+							   <a href=\"$link\">$link</a>""".stripMargin, "", "Are these two words in the text related?"), actualProperties)
           .get.asInstanceOf[FreetextAnswer]
 
         val answerId = dao.getAnswerIdByOutputCode(answer.answer.trim)
@@ -95,7 +95,7 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 
   override def cancelQuery(query: HCompQuery): Unit = decorated.cancelQuery(query)
 
-  def hasFormInvalidInputElements(form: NodeSeq): Boolean = {
+  def hasFormValidInputElements(form: NodeSeq): Boolean = {
     val supportedFields = List[(String, Map[String, List[String]])](
       "input" -> Map("type" -> List[String]("submit", "radio")),
       "textarea" -> Map("name" -> List.empty[String]),

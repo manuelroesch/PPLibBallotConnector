@@ -2,15 +2,14 @@ package ch.uzh.ifi.pdeboer.pplib.hcomp.ballot
 
 
 import ch.uzh.ifi.pdeboer.pplib.hcomp._
-import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.dao.BallotDAO
-import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.persistence.DBSettings
+import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.dao.{BallotDAO, DAO}
+import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.persistence.{DBSettings, Permutation}
 import junit.framework.Assert
 import org.apache.http.NameValuePair
 import org.apache.http.client.entity.UrlEncodedFormEntity
 import org.apache.http.client.methods.{HttpGet, HttpPost}
 import org.apache.http.client.protocol.HttpClientContext
 import org.apache.http.impl.client.{BasicCookieStore, HttpClientBuilder}
-import org.apache.http.message.BasicNameValuePair
 import org.apache.http.protocol.BasicHttpContext
 import org.apache.http.util.EntityUtils
 import org.junit.Test
@@ -31,8 +30,10 @@ class BallotIntegrationTest {
     val countAnswers : Int = dao.countAllAnswers()
     val countBatches : Int = dao.countAllBatches()
 
-    val decoratedPortalAdapter = new IntegrationPortalAdapter()
-    val ballotPortalAdapter = new BallotPortalAdapter(decoratedPortalAdapter, dao, "http://localhost:9000/")
+    val permutationId = dao.createPermutation(Permutation(0, "group", "method", "snippetPath", "pdfPath", methodOnTop = true, 0, 0, 0.0, 100.0))
+
+    val decoratedPortalAdapter = new IntegrationPortalAdapter(dao)
+    val ballotPortalAdapter = new BallotPortalAdapter(decoratedPortalAdapter, dao, "http://localhost:8081/")
 
     val ballotHtmlPage: NodeSeq =
       <div>
@@ -51,7 +52,7 @@ class BallotIntegrationTest {
       </div>
 
     val query = HTMLQuery(ballotHtmlPage)
-    val properties = new BallotProperties(Batch(), List(Asset(Array.empty[Byte], "application/pdf", "empty filename")), 1, permutationId1 = 0)
+    val properties : BallotProperties = new BallotProperties(Batch(), List(Asset(Array.empty[Byte], "application/pdf", "empty filename")), 1, permutationId1 = permutationId)
 
     ballotPortalAdapter.processQuery(query, properties) match {
       case ans : Option[HTMLQueryAnswer] => {
@@ -66,48 +67,55 @@ class BallotIntegrationTest {
 
 }
 
-class IntegrationPortalAdapter extends HCompPortalAdapter with AnswerRejection {
+class IntegrationPortalAdapter(val dao: DAO = new BallotDAO()) extends HCompPortalAdapter with AnswerRejection {
+
+  val httpClient = HttpClientBuilder.create().build()
+  val httpContext = new BasicHttpContext()
+
   override def processQuery(query: HCompQuery, properties: HCompQueryProperties): Option[HCompAnswer] = {
 
     val freeTextQuery = query match {
       case p: FreetextQuery => p
       case _ => FreetextQuery(query.question)
     }
-    Some(FreetextAnswer(freeTextQuery, simulateClientRequestsOnFrontend(query)))
+
+    Some(FreetextAnswer(freeTextQuery, simulateClientRequestsOnFrontend(query, properties)))
+
   }
 
-  val httpClient = HttpClientBuilder.create().build()
-  val httpContext = new BasicHttpContext()
+  def simulateClientRequestsOnFrontend(freeTextQuery: HCompQuery, properties: HCompQueryProperties, baseURL : String = "http://localhost:8081/") : String = {
 
-  def simulateClientRequestsOnFrontend(query: HCompQuery): String = {
+    val actualProperties = properties match {
+      case p: BallotProperties => p
+      case _ => new BallotProperties(Batch(), List.empty[Asset], 1, permutationId1 = 1)
+    }
+
     val cookieStore = new BasicCookieStore()
     httpContext.setAttribute(HttpClientContext.COOKIE_STORE, cookieStore)
 
-    val questionURL = query.question.substring(0, query.question.indexOf("<br>"))
-    logger.debug("Question URL: " + questionURL)
+    val questionId = dao.getAllQuestions.filter(q => q.permutationId == actualProperties.permutationId).head.id
+    val questionUUID = dao.getQuestionUUID(questionId)
+    val link = baseURL + "showQuestion/" + questionUUID
+    logger.debug("Question URL: " + link)
+
 
     //1. login to initialize the session
-    val loginParams = new java.util.ArrayList[NameValuePair]()
-    loginParams.add(new BasicNameValuePair("TurkerID", "integrationTest"))
-    performAndConsumePostRequest("http://localhost:9000/login", loginParams)
+    performAndConsumeGetRequest("http://localhost:8081/login?TurkerID=integrationTest")
 
     //2. get question
-    val questionPage = performAndConsumeGetRequest(questionURL)
+    val questionPage = performAndConsumeGetRequest(link)
 
     //3. send answer
-    val questionId = questionPage.substring(questionPage.indexOf("name=\\\"questionId\\\" value=\\\"") + 28, questionPage.indexOf("\\\">"))
     logger.debug("Question id: " + questionId)
 
-    val answerParams = new java.util.ArrayList[NameValuePair]()
-    answerParams.add(new BasicNameValuePair("questionId", questionId))
-    answerParams.add(new BasicNameValuePair("answer", "Yes"))
-    val codePage = performAndConsumePostRequest("http://localhost:9000/storeAnswer", answerParams)
+    val codePage = performAndConsumeGetRequest(s"http://localhost:8081/storeAnswer?questionId=${questionId.toString}&answer=Yes")
 
     httpClient.close()
 
     //4. get code
     codePage.substring(codePage.indexOf("<h1>") + 4, codePage.indexOf("</h1>"))
   }
+
 
   def performAndConsumePostRequest(url: String, params: java.util.ArrayList[NameValuePair]): String = {
     val request = new HttpPost(url)
