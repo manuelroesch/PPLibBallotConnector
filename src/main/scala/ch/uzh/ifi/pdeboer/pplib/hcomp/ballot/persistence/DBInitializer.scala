@@ -57,7 +57,7 @@ object DBInitializer extends LazyLogger {
       catch {
         case e: java.sql.SQLException =>
           DB autoCommit { implicit s =>
-            sql"CREATE TABLE question (id BIGINT NOT NULL AUTO_INCREMENT, batch_id BIGINT NOT NULL, html LONGTEXT NOT NULL, create_time DATETIME NOT NULL, uuid VARCHAR(255) NOT NULL, hints BIGINT NOT NULL, PRIMARY KEY(id), FOREIGN KEY(batch_id) REFERENCES batch(id), FOREIGN KEY(hints) REFERENCES permutations(id));".execute().apply()
+            sql"CREATE TABLE question (id BIGINT NOT NULL AUTO_INCREMENT, batch_id BIGINT NOT NULL, html LONGTEXT NOT NULL, create_time DATETIME NOT NULL, uuid VARCHAR(255) NOT NULL, permutation BIGINT NOT NULL, PRIMARY KEY(id), FOREIGN KEY(batch_id) REFERENCES batch(id), FOREIGN KEY(permutation) REFERENCES permutations(id));".execute().apply()
             logger.debug("Table question created")
           }
       }

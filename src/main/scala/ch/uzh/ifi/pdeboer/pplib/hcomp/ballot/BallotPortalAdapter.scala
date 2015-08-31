@@ -34,7 +34,6 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
       case _ => scala.xml.Unparsed(query.toString)
     }
 
-
     val batchIdFromDB: Long =
       dao.getBatchIdByUUID(actualProperties.batch.uuid).getOrElse(
         dao.createBatch(actualProperties.allowedAnswersPerTurker, actualProperties.batch.uuid))
@@ -51,7 +50,7 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 
         actualProperties.assets.foreach(asset => dao.createAsset(asset.binary, asset.contentType, questionId, asset.filename))
 
-        val ans = decorated.sendQueryAndAwaitResult(
+        val answer = decorated.sendQueryAndAwaitResult(
           FreetextQuery(
             s"""
 							   Hey there. Thank you for being interested in this task! In the following <a href=\"$link\">URL</a> you'll find a Survey showing you a text snippet and asking you if two terms (highlighted in the text) do have a relationship of some sorts.<br/>
@@ -60,17 +59,17 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 							   <a href=\"$link\">$link</a>""".stripMargin, "", "Are these two words in the text related?"), properties)
           .get.asInstanceOf[FreetextAnswer]
 
-        val ansId = dao.getAnswerIdByOutputCode(ans.answer.trim)
+        val answerId = dao.getAnswerIdByOutputCode(answer.answer.trim)
 
-        if (ansId.isDefined) {
-          decorated.approveAndBonusAnswer(ans)
-          dao.updateAnswer(ansId.get, accepted = true)
-          logger.info(s"approving answer $ans of worker ${ans.responsibleWorkers.mkString(",")} to question $questionId")
+        if (answerId.isDefined) {
+          decorated.approveAndBonusAnswer(answer)
+          dao.updateAnswer(answerId.get, accepted = true)
+          logger.info(s"approving answer $answer of worker ${answer.responsibleWorkers.mkString(",")} to question $questionId")
           extractSingleAnswerFromDatabase(questionId, htmlToDisplayOnBallotPage)
         }
         else {
-          decorated.rejectAnswer(ans, "Invalid code")
-          logger.info(s"rejecting answer $ans of worker ${ans.responsibleWorkers.mkString(",")} to question $questionId")
+          decorated.rejectAnswer(answer, "Invalid code")
+          logger.info(s"rejecting answer $answer of worker ${answer.responsibleWorkers.mkString(",")} to question $questionId")
           if (numRetriesProcessQuery > 0) {
             numRetriesProcessQuery -= 1
             processQuery(query, actualProperties)
@@ -97,17 +96,17 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
   override def cancelQuery(query: HCompQuery): Unit = decorated.cancelQuery(query)
 
   def hasFormInvalidInputElements(form: NodeSeq): Boolean = {
-    val supportedFields = List[(String, Map[String, String])](
-      "input" -> Map("type" -> "submit"),
-      "textarea" -> Map("name" -> ""),
-      "button" -> Map("type" -> "submit"),
-      "select" -> Map("name" -> ""))
+    val supportedFields = List[(String, Map[String, List[String]])](
+      "input" -> Map("type" -> List[String]("submit", "radio")),
+      "textarea" -> Map("name" -> List.empty[String]),
+      "button" -> Map("type" -> List[String]("submit")),
+      "select" -> Map("name" -> List.empty[String]))
 
     val checkAttributesOfInputElements = supportedFields.map(formField => {
       if ((form \\ formField._1).nonEmpty) {
         (form \\ formField._1) -> formField._2
       }
-    }).collect {case valid: (NodeSeq,  Map[String, String]) => valid }
+    }).collect {case found: (NodeSeq,  Map[String, List[String]]) => found }
 
     if (checkAttributesOfInputElements.isEmpty) {
       logger.error("The form doesn't contain any input, select, textarea or button.")
@@ -117,12 +116,18 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
     }
   }
 
-  def hasInputElementAllNeededAttributes(inputElements: NodeSeq, attributesKeyValue: Map[String, String]): Boolean = {
-    attributesKeyValue.forall(a => {
-      inputElements.exists(element => element.attribute(a._1).exists(attribute => if (a._2.nonEmpty) {
-        attribute.text.equalsIgnoreCase(a._2)
-      } else {
-        attribute.text.nonEmpty
+  def hasInputElementAllNeededAttributes(inputElements: NodeSeq, attributesKeyValue: Map[String, List[String]]): Boolean = {
+    attributesKeyValue.exists(attribute => {
+      inputElements.exists(element => element.attribute(attribute._1).exists(attributeValue => {
+        if (attributeValue.text.nonEmpty) {
+          attribute._2.contains(attributeValue.text)
+        } else {
+          if(attribute._2.isEmpty){
+            true
+          }else {
+            false
+          }
+        }
       }))
     })
   }
