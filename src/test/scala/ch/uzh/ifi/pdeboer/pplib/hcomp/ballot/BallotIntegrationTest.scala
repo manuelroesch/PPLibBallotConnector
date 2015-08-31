@@ -52,7 +52,7 @@ class BallotIntegrationTest {
       </div>
 
     val query = HTMLQuery(ballotHtmlPage)
-    val properties : BallotProperties = new BallotProperties(Batch(), List(Asset(Array.empty[Byte], "application/pdf", "empty filename")), 1, permutationId)
+    val properties : BallotProperties = new BallotProperties(Batch(1), List(Asset(Array.empty[Byte], "application/pdf", "empty filename")), permutationId)
 
     ballotPortalAdapter.processQuery(query, properties) match {
       case ans : Option[HTMLQueryAnswer] => {
@@ -87,7 +87,7 @@ class IntegrationPortalAdapter(val dao: DAO = new BallotDAO()) extends HCompPort
 
     val actualProperties = properties match {
       case p: BallotProperties => p
-      case _ => new BallotProperties(Batch(), List.empty[Asset], 1, 1)
+      case _ => new BallotProperties(Batch(), List.empty[Asset], 1)
     }
 
     val cookieStore = new BasicCookieStore()

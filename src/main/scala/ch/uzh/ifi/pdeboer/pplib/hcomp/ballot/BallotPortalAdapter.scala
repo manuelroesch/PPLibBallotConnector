@@ -22,10 +22,10 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 
 		val actualProperties: BallotProperties = properties match {
 			case p: BallotProperties => p
-			case _ =>
+      case _ =>
 				val uuid = UUID.randomUUID()
 				val batchId = dao.createBatch(0, uuid)
-				new BallotProperties(Batch(uuid), List(Asset(Array.empty[Byte], "application/pdf", "empty filename")), 0, permutationId = 0)
+				new BallotProperties(Batch(0, uuid), List(Asset(Array.empty[Byte], "application/pdf", "empty filename")), 1)
 		}
 
 		val htmlToDisplayOnBallotPage: NodeSeq = query match {
@@ -35,7 +35,7 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 
 		val batchIdFromDB: Long =
 			dao.getBatchIdByUUID(actualProperties.batch.uuid).getOrElse(
-				dao.createBatch(actualProperties.allowedAnswersPerTurker, actualProperties.batch.uuid))
+				dao.createBatch(actualProperties.batch.allowedAnswersPerTurker, actualProperties.batch.uuid))
 
 		if ((htmlToDisplayOnBallotPage \\ "form").nonEmpty) {
 			if ((htmlToDisplayOnBallotPage \\ "form").exists(form =>
@@ -96,7 +96,7 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 
 	def hasFormValidInputElements(form: NodeSeq): Boolean = {
 		val supportedFields = List[(String, Map[String, List[String]])](
-			"input" -> Map("type" -> List[String]("submit", "radio")),
+			"input" -> Map("type" -> List[String]("submit", "radio", "hidden")),
 			"textarea" -> Map("name" -> List.empty[String]),
 			"button" -> Map("type" -> List[String]("submit")),
 			"select" -> Map("name" -> List.empty[String]))
@@ -119,7 +119,11 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 		attributesKeyValue.exists(attribute => {
 			inputElements.exists(element => element.attribute(attribute._1).exists(attributeValue => {
 				if (attributeValue.text.nonEmpty) {
-					attribute._2.contains(attributeValue.text)
+          if(attribute._2.isEmpty){
+            true
+          }else {
+					  attribute._2.contains(attributeValue.text)
+          }
 				} else {
 					if (attribute._2.isEmpty) {
 						true

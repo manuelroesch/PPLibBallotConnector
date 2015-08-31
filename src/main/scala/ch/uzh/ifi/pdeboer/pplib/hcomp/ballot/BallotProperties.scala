@@ -10,10 +10,9 @@ import ch.uzh.ifi.pdeboer.pplib.hcomp.HCompQueryProperties
 class BallotProperties(
 						  val batch: Batch,
 						  val assets: List[Asset],
-						  val allowedAnswersPerTurker: Int,
 						  val permutationId: Long,
 						  val propertiesForDecoratedPortal: HCompQueryProperties = new HCompQueryProperties()) extends HCompQueryProperties(0)
 
-case class Batch(uuid: UUID = UUID.randomUUID())
+case class Batch(allowedAnswersPerTurker: Int = 0, uuid: UUID = UUID.randomUUID())
 
 case class Asset(binary: Array[Byte], contentType: String, filename: String)

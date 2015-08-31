@@ -1,7 +1,6 @@
 package ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.integrationtest.console
 
 import java.io._
-import java.util.UUID
 import javax.activation.MimetypesFileTypeMap
 
 import ch.uzh.ifi.pdeboer.pplib.hcomp._
@@ -90,8 +89,8 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 
 		val contentType = new MimetypesFileTypeMap().getContentType(pdfFile.getName)
 
-		val properties = new BallotProperties(Batch(),
-			List(Asset(pdfBinary, contentType, pdfFile.getName)), 1, permutationId, propertiesForDecoratedPortal = new HCompQueryProperties(50, qualifications = Nil))
+		val properties = new BallotProperties(Batch(allowedAnswersPerTurker = 1),
+			List(Asset(pdfBinary, contentType, pdfFile.getName)), permutationId, propertiesForDecoratedPortal = new HCompQueryProperties(50, qualifications = Nil))
 
 		import ContestWithBeatByKVotingProcess._
 		import ch.uzh.ifi.pdeboer.pplib.process.entities.DefaultParameters._
