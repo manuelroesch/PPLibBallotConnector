@@ -6,8 +6,8 @@ db.default.user="root"
 db.default.password=""
 
 # Connection Pool settings
-db.default.poolInitialSize=10
-db.default.poolMaxSize=70
+db.default.poolInitialSize=20
+db.default.poolMaxSize=100
 db.default.connectionTimeoutMillis=3000
 db.default.poolValidationQuery="select 1 as one"
 
@@ -32,3 +32,7 @@ hcomp.ballot.decoratedPortalKey = "consolePortal"
 
 #hcomp.ballot.baseURL = "http://taliesin.ifi.uzh.ch/ballot/"
 hcomp.ballot.baseURL = "http://localhost:9000/"
+
+answersPerSnippet = 1
+resultFilename = "results.csv"
+likertCleanedAnswers = 5

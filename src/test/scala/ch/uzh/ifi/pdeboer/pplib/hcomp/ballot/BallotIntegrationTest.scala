@@ -12,7 +12,6 @@ import org.apache.http.client.protocol.HttpClientContext
 import org.apache.http.impl.client.{BasicCookieStore, HttpClientBuilder}
 import org.apache.http.protocol.BasicHttpContext
 import org.apache.http.util.EntityUtils
-import org.junit.Test
 
 import scala.xml.NodeSeq
 
@@ -20,8 +19,8 @@ import scala.xml.NodeSeq
  * Created by mattia on 10.07.15.
  */
 class BallotIntegrationTest {
-  
-  @Test
+
+  //@Test
   def test(): Unit ={
     DBSettings.initialize()
 
