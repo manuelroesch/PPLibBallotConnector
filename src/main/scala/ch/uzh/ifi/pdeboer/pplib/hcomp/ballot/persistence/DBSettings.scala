@@ -29,13 +29,9 @@ object DBSettings extends LazyLogger{
     }
   }
 
-  def resumeOrInitializeDB(init: Option[String], path: Option[String]): Unit = {
-    try {
-      if (init.get.equalsIgnoreCase("init")) {
-        dao.loadPermutationsCSV(path.get)
-      }
-    } catch {
-      case e: Exception => logger.debug("Resuming last run...")
+  def loadPermutations(init: String, path: String): Unit = {
+    if (init.equalsIgnoreCase("init")) {
+      dao.loadPermutationsCSV(path)
     }
   }
 
