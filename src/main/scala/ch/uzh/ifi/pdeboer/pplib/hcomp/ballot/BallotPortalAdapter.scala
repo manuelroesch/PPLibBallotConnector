@@ -93,7 +93,7 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 	}
 
 	def extractSingleAnswerFromDatabase(questionId: Long, html: NodeSeq): Option[HCompAnswer] = {
-		val result = Json.parse(dao.getAnswer(questionId).head).asInstanceOf[JsObject]
+		val result = Json.parse(dao.getAnswer(questionId).getOrElse("{}")).asInstanceOf[JsObject]
 		val answer = result.fieldSet.map(f => f._1 -> f._2.toString().replaceAll("\"", "")).toMap
 		Some(HTMLQueryAnswer(answer, HTMLQuery(html)))
 	}

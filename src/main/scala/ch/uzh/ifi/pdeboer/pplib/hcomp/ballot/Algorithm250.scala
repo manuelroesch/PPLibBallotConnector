@@ -66,11 +66,13 @@ case class Algorithm250(dao: BallotDAO, ballotPortalAdapter: HCompPortalAdapter)
 
     process.process(IndexedPatch.from(List(SnippetHTMLQueryBuilder.POSITIVE, SnippetHTMLQueryBuilder.NEGATIVE)))
 
-    process.portal.queries.map(_.answer.get.is[HTMLQueryAnswer]).map(a => ParsedAnswer(a.answers.get("isRelated"), a.answers.get("isCheckedBefore"), a.answers.get("confidence").get.toInt, a.answers.get("descriptionIsRelated").get))
+    ballotPortalAdapter.queries.map(_.answer.get.is[HTMLQueryAnswer]).map(a => {
+      ParsedAnswer(a.answers.get("isRelated"), a.answers.get("isCheckedBefore"), a.answers.get("confidence").get.toInt, a.answers.get("descriptionIsRelated").get)
+    })
   }
 
   def shouldOtherSnippetsBeDisabled(answers: List[ParsedAnswer]): Boolean = {
-    val cleanedAnswers = answers.filter(a => a.likert >= LIKERT_VALUE_CLEANED_ANSWERS)
+    val cleanedAnswers = answers.filter(_.likert >= LIKERT_VALUE_CLEANED_ANSWERS)
     val summary = SummarizedAnswersFormat.count(cleanedAnswers)
     summary.yesQ1 > summary.noQ1 && summary.yesQ2 > summary.noQ2
   }
