@@ -4,9 +4,8 @@ import java.io.{File, FileInputStream, InputStream}
 import javax.activation.MimetypesFileTypeMap
 
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.dao.BallotDAO
-import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.integrationtest.console.HTMLTemplate
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.persistence.Permutation
-import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.report.ParsedAnswer
+import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.report.{ParsedAnswer, SummarizedAnswersFormat}
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.snippet.SnippetHTMLQueryBuilder
 import ch.uzh.ifi.pdeboer.pplib.hcomp.{HCompPortalAdapter, HCompQueryProperties, HTMLQueryAnswer}
 import ch.uzh.ifi.pdeboer.pplib.process.entities.IndexedPatch
@@ -26,7 +25,7 @@ case class Algorithm250(dao: BallotDAO, ballotPortalAdapter: HCompPortalAdapter)
   val LIKERT_VALUE_CLEANED_ANSWERS = config.getInt("likertCleanedAnswers")
 
   def executePermutationWith250(p: Permutation) = {
-    val answers: List[ParsedAnswer] = buildAndAskQuestion(new File(p.pdfPath), new File(p.snippetFilename), p.id)
+    val answers: List[ParsedAnswer] = questionBuilder(new File(p.pdfPath), new File(p.snippetFilename), p.id)
 
     if (shouldOtherSnippetsBeDisabled(answers)) {
       dao.updateStateOfPermutationId(p.id, p.id)
@@ -42,7 +41,7 @@ case class Algorithm250(dao: BallotDAO, ballotPortalAdapter: HCompPortalAdapter)
     }
   }
 
-  def buildAndAskQuestion(pdfFile: File, snippetFile: File, permutationId: Long): List[ParsedAnswer] = {
+  def questionBuilder(pdfFile: File, snippetFile: File, permutationId: Long): List[ParsedAnswer] = {
 
     val base64Image = Utils.getBase64String(snippetFile)
     val permutation = dao.getPermutationById(permutationId).get
@@ -71,15 +70,9 @@ case class Algorithm250(dao: BallotDAO, ballotPortalAdapter: HCompPortalAdapter)
   }
 
   def shouldOtherSnippetsBeDisabled(answers: List[ParsedAnswer]): Boolean = {
-
     val cleanedAnswers = answers.filter(a => a.likert >= LIKERT_VALUE_CLEANED_ANSWERS)
-
-    val cleanedYesQ1 = cleanedAnswers.count(ans => ans.isPositive(ans.q1).get)
-    val cleanedYesQ2 = cleanedAnswers.count(ans => ans.isPositive(ans.q2).isDefined && ans.isPositive(ans.q2).get)
-    val cleanedNoQ1 = cleanedAnswers.count(ans => ans.isNegative(ans.q1).get)
-    val cleanedNoQ2 = cleanedAnswers.count(ans => ans.isNegative(ans.q2).isDefined && ans.isNegative(ans.q2).get)
-
-    cleanedYesQ1 > cleanedNoQ1 && cleanedYesQ2 > cleanedNoQ2
+    val summary = SummarizedAnswersFormat.count(cleanedAnswers)
+    summary.yesQ1 > summary.noQ1 && summary.yesQ2 > summary.noQ2
   }
 
 }

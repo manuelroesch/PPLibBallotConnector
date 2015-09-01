@@ -31,6 +31,7 @@ object DBSettings extends LazyLogger{
 
   def loadPermutations(init: String, path: String): Unit = {
     if (init.equalsIgnoreCase("init")) {
+      logger.info("Loading permutations...")
       dao.loadPermutationsCSV(path)
     }
   }

@@ -15,7 +15,8 @@ object Report {
 
   def writeCSVReport(dao: BallotDAO) = {
 
-    CSVWriter.init()
+    val csvWriter = CSVWriter
+    csvWriter.init()
 
     dao.allAnswers.groupBy(g => {
       dao.getAssetFileNameByQuestionId(g.questionId).get
@@ -26,43 +27,25 @@ object Report {
       val snippetName = answersForSnippet._1
       val allAnswerOfSnippet: List[Answer] = dao.getAllAnswersBySnippet(snippetName)
 
-      val cleanFormatAnswers: List[Map[String, String]] = allAnswerOfSnippet.map(singleAnswerOfSnippet => {
+      val cleanedFormatAnswers: List[Map[String, String]] = allAnswerOfSnippet.map(singleAnswerOfSnippet => {
         Json.parse(singleAnswerOfSnippet.answerJson).as[JsObject].fields.map(field => field._1 -> field._2.toString().replaceAll("\"", "")).toMap
       })
-      val answers: List[ParsedAnswer] = convertToCSVFormat(cleanFormatAnswers)
 
-      val yesQ1 = answers.count(ans => ans.isPositive(ans.q1).get).toString
-      val yesQ2 = answers.count(ans => ans.isPositive(ans.q2).isDefined && ans.isPositive(ans.q2).get).toString
-      val noQ1 = answers.count(ans => ans.isNegative(ans.q1).get).toString
-      val noQ2 = answers.count(ans => ans.isNegative(ans.q2).isDefined && ans.isNegative(ans.q2).get).toString
+      val allAnswers: List[ParsedAnswer] = AnswerParser.parseAnswers(cleanedFormatAnswers)
+      val overallSummary = SummarizedAnswersFormat.count(allAnswers)
 
-      val cleanedAnswers = answers.filter(_.likert >= LIKERT_VALUE_CLEANED_ANSWERS)
+      val cleanedAnswers = allAnswers.filter(_.likert >= LIKERT_VALUE_CLEANED_ANSWERS)
+      val cleanedSummary = SummarizedAnswersFormat.count(cleanedAnswers)
 
-      val cleanedYesQ1 = cleanedAnswers.count(ans => ans.isPositive(ans.q1).get).toString
-      val cleanedYesQ2 = cleanedAnswers.count(ans => ans.isPositive(ans.q2).isDefined && ans.isPositive(ans.q2).get).toString
-      val cleanedNoQ1 = cleanedAnswers.count(ans => ans.isNegative(ans.q1).get).toString
-      val cleanedNoQ2 = cleanedAnswers.count(ans => ans.isNegative(ans.q2).isDefined && ans.isNegative(ans.q2).get).toString
-
-      val feedbacks = answers.map(_.feedback).mkString(";")
+      val feedback = allAnswers.map(_.feedback).mkString(";")
 
       val firstExcluded = allPermutationsDisabledByActualAnswer.filter(f => f.excluded_step == 1).map(_.snippetFilename).mkString(";")
       val secondExcluded = allPermutationsDisabledByActualAnswer.filter(f => f.excluded_step == 2).map(_.snippetFilename).mkString(";")
 
-      CSVWriter.addResult(snippetName, yesQ1, noQ1, cleanedYesQ1, cleanedNoQ1, yesQ2, noQ2, cleanedYesQ2, cleanedNoQ2, feedbacks, firstExcluded, secondExcluded)
+      csvWriter.addResult(snippetName, overallSummary, cleanedSummary, feedback, firstExcluded, secondExcluded)
     })
 
-    CSVWriter.close()
+    csvWriter.close()
   }
 
-
-  def convertToCSVFormat(answers: List[Map[String, String]]): List[ParsedAnswer] = {
-    answers.map(ans => {
-      val isRelated = ans.get("isRelated")
-      val isCheckedBefore = ans.get("isCheckedBefore")
-      val likert = ans.get("confidence")
-      val descriptionIsRelated = ans.get("descriptionIsRelated")
-
-      ParsedAnswer(isRelated, isCheckedBefore, likert.get.toInt, descriptionIsRelated.get)
-    })
-  }
 }

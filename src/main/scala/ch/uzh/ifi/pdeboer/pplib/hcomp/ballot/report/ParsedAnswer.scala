@@ -5,8 +5,7 @@ import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.snippet.SnippetHTMLQueryBuilder
 /**
  * Created by mattia on 31.08.15.
  */
-case class ParsedAnswer(q1: Option[String], q2: Option[String], likert: Int, feedback: String) {
-
+object AnswerParser {
   def isPositive(toCheck: Option[String]): Option[Boolean] = {
     if(toCheck.isDefined){
       Some(toCheck.get.equalsIgnoreCase(SnippetHTMLQueryBuilder.POSITIVE))
@@ -23,5 +22,17 @@ case class ParsedAnswer(q1: Option[String], q2: Option[String], likert: Int, fee
     }
   }
 
+  def parseAnswers(answers: List[Map[String, String]]): List[ParsedAnswer] = {
+    answers.map(ans => {
+      val isRelated = ans.get("isRelated")
+      val isCheckedBefore = ans.get("isCheckedBefore")
+      val likert = ans.get("confidence")
+      val descriptionIsRelated = ans.get("descriptionIsRelated")
+
+      ParsedAnswer(isRelated, isCheckedBefore, likert.get.toInt, descriptionIsRelated.get)
+    })
+  }
 }
+
+case class ParsedAnswer(q1: Option[String], q2: Option[String], likert: Int, feedback: String)
 

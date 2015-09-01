@@ -14,10 +14,9 @@ import com.typesafe.config.ConfigFactory
  */
 object ConsoleIntegrationTest extends App with LazyLogger {
 
-	val config = ConfigFactory.load()
+	val conf = ConfigFactory.load()
 
-	val ANSWERS_PER_QUERY = config.getInt("answersPerSnippet")
-  val LIKERT_VALUE_CLEANED_ANSWERS = config.getInt("likertCleanedAnswers")
+  val LIKERT_VALUE_CLEANED_ANSWERS = conf.getInt("likertCleanedAnswers")
 
 	DBSettings.initialize()
 	val dao = new BallotDAO
