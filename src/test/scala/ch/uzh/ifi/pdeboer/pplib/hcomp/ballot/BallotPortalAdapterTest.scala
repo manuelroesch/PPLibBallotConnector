@@ -121,7 +121,7 @@ class DAOTest extends DAO with LazyLogger {
 		batches.size.toLong
 	}
 
-	override def getAnswer(questionId: Long): Option[String] = {
+	override def getAnswerByQuestionId(questionId: Long): Option[String] = {
 		answers.get(questionId)
 	}
 
@@ -189,4 +189,8 @@ class DAOTest extends DAO with LazyLogger {
   override def getAllQuestions: List[Question] = ???
 
   override def getAssetFileNameByQuestionId(qId: Long): Option[String] = ???
+
+  override def getAnswerById(id: Long): Option[Answer] = {
+      Some(Answer(id, 0, answers.get(id).getOrElse(""), true))
+  }
 }

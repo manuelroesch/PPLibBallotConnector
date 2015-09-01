@@ -35,7 +35,7 @@ class BallotDAO extends DAO{
     }
   }
 
-  override def getAnswer(questionId: Long): Option[String] = {
+  override def getAnswerByQuestionId(questionId: Long): Option[String] = {
     DB readOnly { implicit session =>
       sql"select answer_json from answer where question_id = ${questionId}".map(rs => rs.string("answer_json")).single.apply()
     }
@@ -44,6 +44,12 @@ class BallotDAO extends DAO{
   override def getAnswerIdByOutputCode(insertOutput: String): Option[Long] = {
     DB readOnly { implicit session =>
       sql"select id from answer where expected_output_code = ${insertOutput}".map(rs => rs.long("id")).single().apply()
+    }
+  }
+
+  override def getAnswerById(id: Long) : Option[Answer] = {
+    DB readOnly { implicit session =>
+      sql"select * from answer where id = ${id}".map(rs => Answer(rs.long("id"), rs.long("question_id"), rs.string("answer_json"), rs.boolean("accepted"))).single().apply()
     }
   }
 

@@ -71,8 +71,9 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 				if (answerId.isDefined) {
 					decorated.approveAndBonusAnswer(answer)
 					dao.updateAnswer(answerId.get, accepted = true)
-					logger.info(s"approving answer $answer of worker ${answer.responsibleWorkers.mkString(",")} to question $questionId")
-					extractSingleAnswerFromDatabase(questionId, htmlToDisplayOnBallotPage)
+          val ans = dao.getAnswerById(answerId.get)
+					logger.info(s"approving answer $answer of worker ${answer.responsibleWorkers.mkString(",")} to question ${ans.get.questionId}")
+					extractSingleAnswerFromDatabase(ans.get.answerJson, htmlToDisplayOnBallotPage)
 				}
 				else {
 					decorated.rejectAnswer(answer, "Invalid code")
@@ -92,8 +93,8 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 		}
 	}
 
-	def extractSingleAnswerFromDatabase(questionId: Long, html: NodeSeq): Option[HCompAnswer] = {
-		val result = Json.parse(dao.getAnswer(questionId).getOrElse("{}")).asInstanceOf[JsObject]
+	def extractSingleAnswerFromDatabase(answerJson: String, html: NodeSeq): Option[HCompAnswer] = {
+		val result = Json.parse(answerJson).asInstanceOf[JsObject]
 		val answer = result.fieldSet.map(f => f._1 -> f._2.toString().replaceAll("\"", "")).toMap
 		Some(HTMLQueryAnswer(answer, HTMLQuery(html)))
 	}
