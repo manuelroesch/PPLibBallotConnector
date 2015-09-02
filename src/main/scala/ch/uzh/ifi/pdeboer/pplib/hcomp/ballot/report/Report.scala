@@ -27,22 +27,21 @@ object Report {
       val snippetName = answersForSnippet._1
       val allAnswerOfSnippet: List[Answer] = dao.getAllAnswersBySnippet(snippetName)
 
-      val cleanedFormatAnswers: List[Map[String, String]] = allAnswerOfSnippet.map(singleAnswerOfSnippet => {
-        Json.parse(singleAnswerOfSnippet.answerJson).as[JsObject].fields.map(field => field._1 -> field._2.toString().replaceAll("\"", "")).toMap
-      })
+      val cleanedFormatAnswers: List[Map[String, String]] = allAnswerOfSnippet.map(singleAnswerOfSnippet =>
+        Json.parse(singleAnswerOfSnippet.answerJson).as[JsObject].fields.map(field => field._1 -> field._2.toString().replaceAll("\"", "")).toMap)
 
       val allAnswers: List[ParsedAnswer] = AnswerParser.parseAnswers(cleanedFormatAnswers)
-      val overallSummary = SummarizedAnswersFormat.count(allAnswers)
+      val overallSummary = SummarizedAnswersFormat.summarizeAnswers(allAnswers)
 
       val cleanedAnswers = allAnswers.filter(_.likert >= LIKERT_VALUE_CLEANED_ANSWERS)
-      val cleanedSummary = SummarizedAnswersFormat.count(cleanedAnswers)
+      val cleanedSummary = SummarizedAnswersFormat.summarizeAnswers(cleanedAnswers)
 
       val feedback = allAnswers.map(_.feedback).mkString(";")
 
       val firstExcluded = allPermutationsDisabledByActualAnswer.filter(f => f.excluded_step == 1).map(_.snippetFilename).mkString(";")
       val secondExcluded = allPermutationsDisabledByActualAnswer.filter(f => f.excluded_step == 2).map(_.snippetFilename).mkString(";")
 
-      csvWriter.addResult(snippetName, overallSummary, cleanedSummary, feedback, firstExcluded, secondExcluded)
+      csvWriter.appendResult(snippetName, overallSummary, cleanedSummary, feedback, firstExcluded, secondExcluded)
     })
 
     csvWriter.close()

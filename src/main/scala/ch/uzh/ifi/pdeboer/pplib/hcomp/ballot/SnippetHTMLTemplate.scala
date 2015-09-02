@@ -5,7 +5,7 @@ import scala.xml.NodeSeq
 /**
  * Created by mattia on 01.09.15.
  */
-object HTMLTemplate {
+object SnippetHTMLTemplate {
 
   def createPage(imageBase64Format: String, isMethodOnTop: Boolean, baseURL: String, relativeHeightTop: Double = 0, relativeHeightBottom: Double = 0): NodeSeq = {
     <div ng-controller="QuestionCtrl">

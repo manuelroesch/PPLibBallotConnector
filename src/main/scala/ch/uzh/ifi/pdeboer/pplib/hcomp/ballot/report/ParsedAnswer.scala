@@ -6,18 +6,13 @@ import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.snippet.SnippetHTMLQueryBuilder
  * Created by mattia on 31.08.15.
  */
 object AnswerParser {
-  def isPositive(toCheck: Option[String]): Option[Boolean] = {
-    if(toCheck.isDefined){
-      Some(toCheck.get.equalsIgnoreCase(SnippetHTMLQueryBuilder.POSITIVE))
-    }else {
-      None
-    }
-  }
-
-  def isNegative(toCheck: Option[String]): Option[Boolean] = {
-    if(toCheck.isDefined){
-      Some(toCheck.get.equalsIgnoreCase(SnippetHTMLQueryBuilder.NEGATIVE))
-    }else {
+  
+  def evaluateAnswer(toCheck: Option[String]): Option[Boolean] = {
+    if(toCheck.isDefined && toCheck.get.equalsIgnoreCase(SnippetHTMLQueryBuilder.POSITIVE)){
+      Some(true)
+    }else if(toCheck.isDefined && toCheck.get.equalsIgnoreCase(SnippetHTMLQueryBuilder.NEGATIVE)){
+      Some(false)
+    } else {
       None
     }
   }

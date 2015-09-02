@@ -31,12 +31,12 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 
   val algorithm250 = Algorithm250(dao, ballotPortalAdapter)
 
-	val groups = dao.getAllPermutations().groupBy(gr => gr.groupName.split("/").apply(4)).toSeq
+	val groups = dao.getAllPermutations().groupBy(gr => gr.groupName.split("/").apply(1)).toSeq
 	groups.mpar.foreach(group => {
 		group._2.foreach(permutation => {
 			val p = dao.getPermutationById(permutation.id)
 			if (p.isDefined && p.get.state == 0) {
-        algorithm250.executePermutationWith250(p.get)
+        algorithm250.executePermutation(p.get)
 			}
 		})
 	})
