@@ -42,7 +42,7 @@ class BallotPortalAdapterTest {
 		</div>),
 			new HCompQueryProperties())
 
-    Assert.assertEquals(ans.asInstanceOf[Option[HTMLQueryAnswer]].get.answers.get("answer").get, "yes")
+		Assert.assertEquals(ans.asInstanceOf[Option[HTMLQueryAnswer]].get.answers.get("answer").get, "yes")
 
 		Assert.assertEquals(daoTest.questions.size, 1)
 		Assert.assertEquals(daoTest.batches.size, 1)
@@ -110,7 +110,7 @@ class PortalAdapterTest() extends HCompPortalAdapter with AnswerRejection {
 
 class DAOTest extends DAO with LazyLogger {
 
-  val assets = new mutable.HashMap[Long, Long]
+	val assets = new mutable.HashMap[Long, Long]
 	val batches = new mutable.HashMap[Long, String]
 	val questions = new mutable.HashMap[Long, String]
 	val answers = new mutable.HashMap[Long, String]
@@ -145,52 +145,52 @@ class DAOTest extends DAO with LazyLogger {
 		questions.size.toLong
 	}
 
-  override def getAssetIdsByQuestionId(questionId: Long): List[Long] = {
-    var res = List.empty[Long]
-    assets.foreach(b => {
-      if (b._2  == questionId) {
-        logger.debug("Found assetId : " + b._1)
-        res ::= b._1
-      }
-    })
-    res
-  }
+	override def getAssetIdsByQuestionId(questionId: Long): List[Long] = {
+		var res = List.empty[Long]
+		assets.foreach(b => {
+			if (b._2 == questionId) {
+				logger.debug("Found assetId : " + b._1)
+				res ::= b._1
+			}
+		})
+		res
+	}
 
-  override def createAsset(binary: Array[Byte], contentType: String, questionId: Long, filename: String): Long = {
-    assets += ((assets.size + 1).toLong -> questionId)
-    assets.size.toLong
-  }
+	override def createAsset(binary: Array[Byte], contentType: String, questionId: Long, filename: String): Long = {
+		assets += ((assets.size + 1).toLong -> questionId)
+		assets.size.toLong
+	}
 
-  override def updateAnswer(answerId: Long, accepted: Boolean): Unit = {
-    true
-  }
+	override def updateAnswer(answerId: Long, accepted: Boolean): Unit = {
+		true
+	}
 
 
-  override def getAnswerIdByOutputCode(insertOutput: String): Option[Long] = {
-    Some(answers.head._1)
-  }
+	override def getAnswerIdByOutputCode(insertOutput: String): Option[Long] = {
+		Some(answers.head._1)
+	}
 
-  override def getExpectedOutputCodeFromAnswerId(ansId: Long): Option[Long] = {
-    Some(123)
-  }
+	override def getExpectedOutputCodeFromAnswerId(ansId: Long): Option[Long] = {
+		Some(123)
+	}
 
-  override def getQuestionIdByUUID(uuid: String): Option[Long] = {
-    Some(1)
-  }
+	override def getQuestionIdByUUID(uuid: String): Option[Long] = {
+		Some(1)
+	}
 
-  override def countAllAnswers(): Int = ???
+	override def countAllAnswers(): Int = ???
 
 	override def allAnswers(): List[Answer] = ???
 
-  override def countAllBatches(): Int = ???
+	override def countAllBatches(): Int = ???
 
-  override def countAllQuestions(): Int = ???
+	override def countAllQuestions(): Int = ???
 
-  override def getAllQuestions: List[Question] = ???
+	override def getAllQuestions: List[Question] = ???
 
-  override def getAssetFileNameByQuestionId(qId: Long): Option[String] = ???
+	override def getAssetFileNameByQuestionId(qId: Long): Option[String] = ???
 
-  override def getAnswerById(id: Long): Option[Answer] = {
-      Some(Answer(id, 0, answers.get(id).getOrElse(""), true))
-  }
+	override def getAnswerById(id: Long): Option[Answer] = {
+		Some(Answer(id, 0, answers.get(id).getOrElse(""), true))
+	}
 }

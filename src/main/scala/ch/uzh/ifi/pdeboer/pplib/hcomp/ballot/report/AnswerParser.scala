@@ -8,37 +8,37 @@ import play.api.libs.json.{JsObject, Json}
  * Created by mattia on 31.08.15.
  */
 object AnswerParser {
-  
-  def evaluateAnswer(toCheck: Option[String]): Option[Boolean] = {
-    if(toCheck.isDefined && toCheck.get.equalsIgnoreCase(SnippetHTMLQueryBuilder.POSITIVE)){
-      Some(true)
-    }else if(toCheck.isDefined && toCheck.get.equalsIgnoreCase(SnippetHTMLQueryBuilder.NEGATIVE)){
-      Some(false)
-    } else {
-      None
-    }
-  }
 
-  def parseJSONAnswers(answers: List[Answer]) : List[ParsedAnswer] = {
-    val ans = answers.map(answer => parseAnswerToMap(answer.answerJson))
-    parseAnswers(ans)
-  }
+	def evaluateAnswer(toCheck: Option[String]): Option[Boolean] = {
+		if (toCheck.isDefined && toCheck.get.equalsIgnoreCase(SnippetHTMLQueryBuilder.POSITIVE)) {
+			Some(true)
+		} else if (toCheck.isDefined && toCheck.get.equalsIgnoreCase(SnippetHTMLQueryBuilder.NEGATIVE)) {
+			Some(false)
+		} else {
+			None
+		}
+	}
 
-  private def parseAnswers(answers: List[Map[String, String]]): List[ParsedAnswer] = {
-    answers.map(ans => {
-      val isRelated = ans.get("isRelated")
-      val isCheckedBefore = ans.get("isCheckedBefore")
-      val likert = ans.get("confidence")
-      val descriptionIsRelated = ans.get("descriptionIsRelated")
+	def parseJSONAnswers(answers: List[Answer]): List[ParsedAnswer] = {
+		val ans = answers.map(answer => parseAnswerToMap(answer.answerJson))
+		parseAnswers(ans)
+	}
 
-      ParsedAnswer(isRelated, isCheckedBefore, likert.get.toInt, descriptionIsRelated.get)
-    })
-  }
+	private def parseAnswers(answers: List[Map[String, String]]): List[ParsedAnswer] = {
+		answers.map(ans => {
+			val isRelated = ans.get("isRelated")
+			val isCheckedBefore = ans.get("isCheckedBefore")
+			val likert = ans.get("confidence")
+			val descriptionIsRelated = ans.get("descriptionIsRelated")
 
-  def parseAnswerToMap(answerJson: String): Map[String, String] = {
-    val result = Json.parse(answerJson).asInstanceOf[JsObject]
-    result.fieldSet.map(field => field._1 -> field._2.toString().replaceAll("\"", "")).toMap
-  }
+			ParsedAnswer(isRelated, isCheckedBefore, likert.get.toInt, descriptionIsRelated.get)
+		})
+	}
+
+	def parseAnswerToMap(answerJson: String): Map[String, String] = {
+		val result = Json.parse(answerJson).asInstanceOf[JsObject]
+		result.fieldSet.map(field => field._1 -> field._2.toString().replaceAll("\"", "")).toMap
+	}
 }
 
 case class ParsedAnswer(q1: Option[String], q2: Option[String], likert: Int, feedback: String)

@@ -10,40 +10,40 @@ import org.joda.time.DateTime
  */
 trait DAO {
 
-  def getAssetIdsByQuestionId(questionId: Long) : List[Long]
+	def getAssetIdsByQuestionId(questionId: Long): List[Long]
 
-  def createAsset(binary: Array[Byte], contentType: String, questionId: Long, filename: String): Long
+	def createAsset(binary: Array[Byte], contentType: String, questionId: Long, filename: String): Long
 
-  def createBatch(allowedAnswerPerTurker: Int, uuid: UUID): Long
+	def createBatch(allowedAnswerPerTurker: Int, uuid: UUID): Long
 
-  def createQuestion(html: String, batchId: Long, uuid: UUID = UUID.randomUUID(), dateTime: DateTime = new DateTime(), permutationId: Long): Long
+	def createQuestion(html: String, batchId: Long, uuid: UUID = UUID.randomUUID(), dateTime: DateTime = new DateTime(), permutationId: Long): Long
 
-  def getAnswerByQuestionId(questionId: Long): Option[String]
+	def getAnswerByQuestionId(questionId: Long): Option[String]
 
-  def getQuestionUUID(questionId: Long): Option[String]
+	def getQuestionUUID(questionId: Long): Option[String]
 
-  def getBatchIdByUUID(uuid: UUID): Option[Long]
+	def getBatchIdByUUID(uuid: UUID): Option[Long]
 
-  def updateAnswer(answerId: Long, accepted: Boolean)
+	def updateAnswer(answerId: Long, accepted: Boolean)
 
-  def getAnswerById(id: Long) : Option[Answer]
+	def getAnswerById(id: Long): Option[Answer]
 
-  def getAnswerIdByOutputCode(insertOutput: String): Option[Long]
+	def getAnswerIdByOutputCode(insertOutput: String): Option[Long]
 
-  def getExpectedOutputCodeFromAnswerId(ansId: Long) : Option[Long]
+	def getExpectedOutputCodeFromAnswerId(ansId: Long): Option[Long]
 
-  def getQuestionIdByUUID(uuid: String) : Option[Long]
+	def getQuestionIdByUUID(uuid: String): Option[Long]
 
-  def countAllAnswers() : Int
+	def countAllAnswers(): Int
 
-  def countAllBatches() : Int
+	def countAllBatches(): Int
 
-  def countAllQuestions() : Int
+	def countAllQuestions(): Int
 
-  def getAllQuestions : List[Question]
+	def getAllQuestions: List[Question]
 
-  def getAssetFileNameByQuestionId(qId: Long) : Option[String]
+	def getAssetFileNameByQuestionId(qId: Long): Option[String]
 
-  def allAnswers(): List[Answer]
+	def allAnswers(): List[Answer]
 
 }

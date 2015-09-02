@@ -22,34 +22,34 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 	override def processQuery(query: HCompQuery, properties: HCompQueryProperties): Option[HCompAnswer] = {
 
 		val (actualProperties, batchIdFromDB) =
-      this.synchronized {
-        val actualProperties: BallotProperties = properties match {
-          case p: BallotProperties => p
-          case _ =>
-            new BallotProperties(Batch(0, UUID.randomUUID()), List(Asset(Array.empty[Byte], "application/pdf", "")), 0)
-        }
+			this.synchronized {
+				val actualProperties: BallotProperties = properties match {
+					case p: BallotProperties => p
+					case _ =>
+						new BallotProperties(Batch(0, UUID.randomUUID()), List(Asset(Array.empty[Byte], "application/pdf", "")), 0)
+				}
 
-        val batchIdFromDB: Long =
-          dao.getBatchIdByUUID(actualProperties.batch.uuid).getOrElse(
-            dao.createBatch(actualProperties.batch.allowedAnswersPerTurker, actualProperties.batch.uuid))
+				val batchIdFromDB: Long =
+					dao.getBatchIdByUUID(actualProperties.batch.uuid).getOrElse(
+						dao.createBatch(actualProperties.batch.allowedAnswersPerTurker, actualProperties.batch.uuid))
 
-        (actualProperties, batchIdFromDB)
-      }
+				(actualProperties, batchIdFromDB)
+			}
 
-    val htmlToDisplayOnBallotPage : NodeSeq = query match {
-      case q: HTMLQuery => q.html
-      case _ => scala.xml.PCData(query.toString)
-    }
+		val htmlToDisplayOnBallotPage: NodeSeq = query match {
+			case q: HTMLQuery => q.html
+			case _ => scala.xml.PCData(query.toString)
+		}
 
-    //SnippetHTMLValidator.checkAndFixHTML(htmlToDisplayOnBallotPage, baseURL)
+		//SnippetHTMLValidator.checkAndFixHTML(htmlToDisplayOnBallotPage, baseURL)
 
 		if ((htmlToDisplayOnBallotPage \\ "form").nonEmpty) {
 			val notValid = (htmlToDisplayOnBallotPage \\ "form").exists(form => !SnippetHTMLValidator.hasFormValidInputElements(form))
-      if (notValid) {
+			if (notValid) {
 				logger.error("Form's content is not valid.")
 				None
 			} else {
-        val (questionId: Long, link: String) = createQuestion(actualProperties, batchIdFromDB, htmlToDisplayOnBallotPage)
+				val (questionId: Long, link: String) = createQuestion(actualProperties, batchIdFromDB, htmlToDisplayOnBallotPage)
 
 				val answer = decorated.sendQueryAndAwaitResult(
 					FreetextQuery(
@@ -65,7 +65,7 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 				if (answerId.isDefined) {
 					decorated.approveAndBonusAnswer(answer)
 					dao.updateAnswer(answerId.get, accepted = true)
-          val ans = dao.getAnswerById(answerId.get)
+					val ans = dao.getAnswerById(answerId.get)
 					logger.info(s"approving answer $answer of worker ${answer.responsibleWorkers.mkString(",")} to question ${ans.get.questionId}")
 					extractSingleAnswerFromDatabase(ans.get.answerJson, htmlToDisplayOnBallotPage)
 				}
@@ -87,16 +87,16 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 		}
 	}
 
-  def createQuestion(actualProperties: BallotProperties, batchIdFromDB: Long, htmlToDisplayOnBallotPage: NodeSeq): (Long, String) = {
-    val questionUUID = UUID.randomUUID()
-    val questionId = dao.createQuestion(htmlToDisplayOnBallotPage.toString(), batchIdFromDB, questionUUID, permutationId = actualProperties.permutationId)
-    val link = baseURL + "showQuestion/" + questionUUID
+	def createQuestion(actualProperties: BallotProperties, batchIdFromDB: Long, htmlToDisplayOnBallotPage: NodeSeq): (Long, String) = {
+		val questionUUID = UUID.randomUUID()
+		val questionId = dao.createQuestion(htmlToDisplayOnBallotPage.toString(), batchIdFromDB, questionUUID, permutationId = actualProperties.permutationId)
+		val link = baseURL + "showQuestion/" + questionUUID
 
-    actualProperties.assets.foreach(asset => dao.createAsset(asset.binary, asset.contentType, questionId, asset.filename))
-    (questionId, link)
-  }
+		actualProperties.assets.foreach(asset => dao.createAsset(asset.binary, asset.contentType, questionId, asset.filename))
+		(questionId, link)
+	}
 
-  def extractSingleAnswerFromDatabase(answerJson: String, html: NodeSeq): Option[HCompAnswer] = {
+	def extractSingleAnswerFromDatabase(answerJson: String, html: NodeSeq): Option[HCompAnswer] = {
 		val answerMap = AnswerParser.parseAnswerToMap(answerJson)
 		Some(HTMLQueryAnswer(answerMap, HTMLQuery(html)))
 	}
@@ -104,7 +104,7 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 	override def getDefaultPortalKey: String = BallotPortalAdapter.PORTAL_KEY
 
 	override def cancelQuery(query: HCompQuery): Unit = decorated.cancelQuery(query)
-  
+
 }
 
 object BallotPortalAdapter {

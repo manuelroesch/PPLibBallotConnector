@@ -16,27 +16,27 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 
 	val conf = ConfigFactory.load()
 
-  val LIKERT_VALUE_CLEANED_ANSWERS = conf.getInt("likertCleanedAnswers")
+	val LIKERT_VALUE_CLEANED_ANSWERS = conf.getInt("likertCleanedAnswers")
 
 	DBSettings.initialize()
 	val dao = new BallotDAO
 
-  if(args.length>=1){
-	  DBSettings.loadPermutations(args(0), args(1))
-  }else{
-    logger.info("Resuming last run...")
-  }
+	if (args.length >= 1) {
+		DBSettings.loadPermutations(args(0), args(1))
+	} else {
+		logger.info("Resuming last run...")
+	}
 
-  val ballotPortalAdapter = HComp(BallotPortalAdapter.PORTAL_KEY)
+	val ballotPortalAdapter = HComp(BallotPortalAdapter.PORTAL_KEY)
 
-  val algorithm250 = Algorithm250(dao, ballotPortalAdapter)
+	val algorithm250 = Algorithm250(dao, ballotPortalAdapter)
 
 	val groups = dao.getAllPermutations().groupBy(gr => gr.groupName.split("/").apply(1)).toSeq
 	groups.mpar.foreach(group => {
 		group._2.foreach(permutation => {
 			val p = dao.getPermutationById(permutation.id)
 			if (p.isDefined && p.get.state == 0) {
-        algorithm250.executePermutation(p.get)
+				algorithm250.executePermutation(p.get)
 			}
 		})
 	})

@@ -10,30 +10,30 @@ import scalikejdbc._
 import scalikejdbc.config.DBs
 
 trait DBSettings {
-  DBSettings.initialize()
+	DBSettings.initialize()
 }
 
-object DBSettings extends LazyLogger{
+object DBSettings extends LazyLogger {
 
-  private var isInitialized = false
+	private var isInitialized = false
 
-  def initialize(): Unit = this.synchronized {
-    if (!isInitialized) {
-      DBs.setupAll()
+	def initialize(): Unit = this.synchronized {
+		if (!isInitialized) {
+			DBs.setupAll()
 
-      GlobalSettings.loggingSQLErrors = true
-      //GlobalSettings.sqlFormatter = SQLFormatterSettings("devteam.misc.HibernateSQLFormatter")
-      DBInitializer.run()
-      isInitialized = true
-      logger.debug("Database initializated")
-    }
-  }
+			GlobalSettings.loggingSQLErrors = true
+			//GlobalSettings.sqlFormatter = SQLFormatterSettings("devteam.misc.HibernateSQLFormatter")
+			DBInitializer.run()
+			isInitialized = true
+			logger.debug("Database initializated")
+		}
+	}
 
-  def loadPermutations(init: String, path: String): Unit = {
-    if (init.equalsIgnoreCase("init")) {
-      logger.info("Loading permutations...")
-      dao.loadPermutationsCSV(path)
-    }
-  }
+	def loadPermutations(init: String, path: String): Unit = {
+		if (init.equalsIgnoreCase("init")) {
+			logger.info("Loading permutations...")
+			dao.loadPermutationsCSV(path)
+		}
+	}
 
 }

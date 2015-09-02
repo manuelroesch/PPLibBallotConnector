@@ -9,11 +9,11 @@ import org.apache.commons.codec.binary.Base64
  */
 object Utils {
 
-  def getBase64String(image: File) = {
-    val imageInFile: FileInputStream = new FileInputStream(image)
-    val imageData = new Array[Byte](image.length().asInstanceOf[Int])
-    imageInFile.read(imageData)
-    "data:image/png;base64," + Base64.encodeBase64String(imageData)
-  }
+	def getBase64String(image: File) = {
+		val imageInFile: FileInputStream = new FileInputStream(image)
+		val imageData = new Array[Byte](image.length().asInstanceOf[Int])
+		imageInFile.read(imageData)
+		"data:image/png;base64," + Base64.encodeBase64String(imageData)
+	}
 
 }
