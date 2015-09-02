@@ -4,7 +4,8 @@ import java.util.UUID
 
 import ch.uzh.ifi.pdeboer.pplib.hcomp._
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.dao.{BallotDAO, DAO}
-import play.api.libs.json.{JsObject, Json}
+import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.report.AnswerParser
+import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.snippet.SnippetHTMLValidator
 
 import scala.xml._
 
@@ -20,42 +21,35 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 
 	override def processQuery(query: HCompQuery, properties: HCompQueryProperties): Option[HCompAnswer] = {
 
-		val (actualProperties, batchIdFromDB) = this.synchronized {
-			val actualProperties: BallotProperties = properties match {
-				case p: BallotProperties => p
-				case _ =>
-					new BallotProperties(Batch(0, UUID.randomUUID()), List(Asset(Array.empty[Byte], "application/pdf", "")), 0)
-			}
+		val (actualProperties, batchIdFromDB) =
+      this.synchronized {
+        val actualProperties: BallotProperties = properties match {
+          case p: BallotProperties => p
+          case _ =>
+            new BallotProperties(Batch(0, UUID.randomUUID()), List(Asset(Array.empty[Byte], "application/pdf", "")), 0)
+        }
 
-			val batchIdFromDB: Long =
-				dao.getBatchIdByUUID(actualProperties.batch.uuid).getOrElse(
-          dao.createBatch(actualProperties.batch.allowedAnswersPerTurker, actualProperties.batch.uuid))
+        val batchIdFromDB: Long =
+          dao.getBatchIdByUUID(actualProperties.batch.uuid).getOrElse(
+            dao.createBatch(actualProperties.batch.allowedAnswersPerTurker, actualProperties.batch.uuid))
 
-			(actualProperties, batchIdFromDB)
-		}
+        (actualProperties, batchIdFromDB)
+      }
 
     val htmlToDisplayOnBallotPage : NodeSeq = query match {
       case q: HTMLQuery => q.html
       case _ => scala.xml.PCData(query.toString)
     }
 
-    /*val allForms = (ns \\ "form").map(n => XML.loadString(n.toString().replaceAll("<form(.*)>", "<form action=\"" + baseURL + "storeAnswer\" method=\"get\" $1>")))
-    val newBallotHTML : NodeSeq = ns(0).child.map(if())
-      ns.map(n => if(n.label.equalsIgnoreCase("form")){allForms(0)}else{n})
-    val htmlToDisplayOnBallotPage : NodeSeq = newBallotHTML
-    */
+    //SnippetHTMLValidator.checkAndFixHTML(htmlToDisplayOnBallotPage, baseURL)
 
 		if ((htmlToDisplayOnBallotPage \\ "form").nonEmpty) {
-			if ((htmlToDisplayOnBallotPage \\ "form").exists(form =>
-				!hasFormValidInputElements(form))) {
+			val notValid = (htmlToDisplayOnBallotPage \\ "form").exists(form => !SnippetHTMLValidator.hasFormValidInputElements(form))
+      if (notValid) {
 				logger.error("Form's content is not valid.")
 				None
 			} else {
-				val questionUUID = UUID.randomUUID()
-				val questionId = dao.createQuestion(htmlToDisplayOnBallotPage.toString(), batchIdFromDB, questionUUID, permutationId = actualProperties.permutationId)
-				val link = baseURL + "showQuestion/" + questionUUID
-
-				actualProperties.assets.foreach(asset => dao.createAsset(asset.binary, asset.contentType, questionId, asset.filename))
+        val (questionId: Long, link: String) = createQuestion(actualProperties, batchIdFromDB, htmlToDisplayOnBallotPage)
 
 				val answer = decorated.sendQueryAndAwaitResult(
 					FreetextQuery(
@@ -93,56 +87,24 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 		}
 	}
 
-	def extractSingleAnswerFromDatabase(answerJson: String, html: NodeSeq): Option[HCompAnswer] = {
-		val result = Json.parse(answerJson).asInstanceOf[JsObject]
-		val answer = result.fieldSet.map(f => f._1 -> f._2.toString().replaceAll("\"", "")).toMap
-		Some(HTMLQueryAnswer(answer, HTMLQuery(html)))
+  def createQuestion(actualProperties: BallotProperties, batchIdFromDB: Long, htmlToDisplayOnBallotPage: NodeSeq): (Long, String) = {
+    val questionUUID = UUID.randomUUID()
+    val questionId = dao.createQuestion(htmlToDisplayOnBallotPage.toString(), batchIdFromDB, questionUUID, permutationId = actualProperties.permutationId)
+    val link = baseURL + "showQuestion/" + questionUUID
+
+    actualProperties.assets.foreach(asset => dao.createAsset(asset.binary, asset.contentType, questionId, asset.filename))
+    (questionId, link)
+  }
+
+  def extractSingleAnswerFromDatabase(answerJson: String, html: NodeSeq): Option[HCompAnswer] = {
+		val answerMap = AnswerParser.parseAnswerToMap(answerJson)
+		Some(HTMLQueryAnswer(answerMap, HTMLQuery(html)))
 	}
 
 	override def getDefaultPortalKey: String = BallotPortalAdapter.PORTAL_KEY
 
 	override def cancelQuery(query: HCompQuery): Unit = decorated.cancelQuery(query)
-
-	def hasFormValidInputElements(form: NodeSeq): Boolean = {
-		val supportedFields = List[(String, Map[String, List[String]])](
-			"input" -> Map("type" -> List[String]("submit", "radio", "hidden")),
-			"textarea" -> Map("name" -> List.empty[String]),
-			"button" -> Map("type" -> List[String]("submit")),
-			"select" -> Map("name" -> List.empty[String]))
-
-		val checkAttributesOfInputElements = supportedFields.map(formField => {
-			if ((form \\ formField._1).nonEmpty) {
-				(form \\ formField._1) -> formField._2
-			}
-		}).collect { case found: (NodeSeq, Map[String, List[String]]) => found }
-
-		if (checkAttributesOfInputElements.isEmpty) {
-			logger.error("The form doesn't contain any input, select, textarea or button.")
-			false
-		} else {
-			checkAttributesOfInputElements.forall(a => hasInputElementAllNeededAttributes(a._1, a._2))
-		}
-	}
-
-	def hasInputElementAllNeededAttributes(inputElements: NodeSeq, attributesKeyValue: Map[String, List[String]]): Boolean = {
-		attributesKeyValue.exists(attribute => {
-			inputElements.exists(element => element.attribute(attribute._1).exists(attributeValue => {
-				if (attributeValue.text.nonEmpty) {
-          if(attribute._2.isEmpty){
-            true
-          }else {
-					  attribute._2.contains(attributeValue.text)
-          }
-				} else {
-					if (attribute._2.isEmpty) {
-						true
-					} else {
-						false
-					}
-				}
-			}))
-		})
-	}
+  
 }
 
 object BallotPortalAdapter {

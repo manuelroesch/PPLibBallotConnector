@@ -6,7 +6,7 @@ import javax.activation.MimetypesFileTypeMap
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.dao.BallotDAO
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.persistence.Permutation
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.report.{ParsedAnswer, SummarizedAnswersFormat}
-import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.snippet.SnippetHTMLQueryBuilder
+import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.snippet.{SnippetHTMLQueryBuilder, SnippetHTMLTemplate}
 import ch.uzh.ifi.pdeboer.pplib.hcomp.{HCompPortalAdapter, HCompQueryProperties, HTMLQueryAnswer}
 import ch.uzh.ifi.pdeboer.pplib.process.entities.IndexedPatch
 import ch.uzh.ifi.pdeboer.pplib.process.stdlib.ContestWithBeatByKVotingProcess
@@ -34,7 +34,7 @@ case class Algorithm250(dao: BallotDAO, ballotPortalAdapter: HCompPortalAdapter)
       })
       val groupName = p.groupName.split("/")
       val secondExclusionMatches = groupName.slice(0, 2).mkString("/")
-      dao.getAllOpenGroupsStartingWith(secondExclusionMatches).filter(_.methodIndex == p.methodIndex).foreach(g => {
+      dao.getAllOpenGroupsStartingWith(secondExclusionMatches).filter(_.methodIndex.equalsIgnoreCase(p.methodIndex)).foreach(g => {
         dao.updateStateOfPermutationId(g.id, p.id, 2)
       })
     } else {
@@ -47,9 +47,11 @@ case class Algorithm250(dao: BallotDAO, ballotPortalAdapter: HCompPortalAdapter)
 
     val base64Image = Utils.getBase64String(snippetFile)
     val permutation = dao.getPermutationById(permutationId).get
-    val ballotHtmlPage: NodeSeq = SnippetHTMLTemplate.createPage(base64Image, permutation.methodOnTop, config.getString("hcomp.ballot.baseURL"), permutation.relativeHeightTop, permutation.relativeHeightBottom)
     val pdfInputStream: InputStream = new FileInputStream(pdfFile)
     val pdfBinary = Stream.continually(pdfInputStream.read).takeWhile(-1 !=).map(_.toByte).toArray
+
+    val ballotHtmlPage: NodeSeq =
+      SnippetHTMLTemplate.createPage(base64Image, permutation.methodOnTop, permutation.relativeHeightTop, permutation.relativeHeightBottom)
 
     val contentType = new MimetypesFileTypeMap().getContentType(pdfFile.getName)
 

@@ -1,6 +1,8 @@
 package ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.report
 
+import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.persistence.Answer
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.snippet.SnippetHTMLQueryBuilder
+import play.api.libs.json.{JsObject, Json}
 
 /**
  * Created by mattia on 31.08.15.
@@ -17,7 +19,12 @@ object AnswerParser {
     }
   }
 
-  def parseAnswers(answers: List[Map[String, String]]): List[ParsedAnswer] = {
+  def parseJSONAnswers(answers: List[Answer]) : List[ParsedAnswer] = {
+    val ans = answers.map(answer => parseAnswerToMap(answer.answerJson))
+    parseAnswers(ans)
+  }
+
+  private def parseAnswers(answers: List[Map[String, String]]): List[ParsedAnswer] = {
     answers.map(ans => {
       val isRelated = ans.get("isRelated")
       val isCheckedBefore = ans.get("isCheckedBefore")
@@ -26,6 +33,11 @@ object AnswerParser {
 
       ParsedAnswer(isRelated, isCheckedBefore, likert.get.toInt, descriptionIsRelated.get)
     })
+  }
+
+  def parseAnswerToMap(answerJson: String): Map[String, String] = {
+    val result = Json.parse(answerJson).asInstanceOf[JsObject]
+    result.fieldSet.map(field => field._1 -> field._2.toString().replaceAll("\"", "")).toMap
   }
 }
 
