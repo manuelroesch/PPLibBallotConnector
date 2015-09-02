@@ -12,6 +12,7 @@ object CSVWriter {
 	val config = ConfigFactory.load()
 	val RESULT_CSV_FILENAME = config.getString("resultFilename")
 
+	//TODO I recommend using a CSV writer for this. Then you don't need to worry about escaping etc
 	val writer = new PrintWriter(new File(RESULT_CSV_FILENAME))
 
 	def init() = {

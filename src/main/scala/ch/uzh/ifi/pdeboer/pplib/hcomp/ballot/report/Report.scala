@@ -13,7 +13,6 @@ object Report {
 	val LIKERT_VALUE_CLEANED_ANSWERS = config.getInt("likertCleanedAnswers")
 
 	def writeCSVReport(dao: BallotDAO) = {
-
 		val csvWriter = CSVWriter
 		csvWriter.init()
 

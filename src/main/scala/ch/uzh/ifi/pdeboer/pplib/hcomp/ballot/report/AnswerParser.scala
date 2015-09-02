@@ -8,20 +8,17 @@ import play.api.libs.json.{JsObject, Json}
  * Created by mattia on 31.08.15.
  */
 object AnswerParser {
-
 	def evaluateAnswer(toCheck: Option[String]): Option[Boolean] = {
-		if (toCheck.isDefined && toCheck.get.equalsIgnoreCase(SnippetHTMLQueryBuilder.POSITIVE)) {
-			Some(true)
-		} else if (toCheck.isDefined && toCheck.get.equalsIgnoreCase(SnippetHTMLQueryBuilder.NEGATIVE)) {
-			Some(false)
-		} else {
-			None
+		//TODO briefly check how this method could have been refactored below: (you used 3-cased if statement)
+		toCheck match {
+			case Some(x) => Option(x.equalsIgnoreCase(SnippetHTMLQueryBuilder.POSITIVE))
+			case _ => None
 		}
 	}
 
 	def parseJSONAnswers(answers: List[Answer]): List[ParsedAnswer] = {
-		val ans = answers.map(answer => parseAnswerToMap(answer.answerJson))
-		parseAnswers(ans)
+		val ans = answers.map(answer => parseAnswerToMap(answer.answerJson)) //TODO better name for parseAnswerToMap
+		parseAnswers(ans) //TODO (note that parseAnswerToMap and parseAnswers don't sound that different)
 	}
 
 	private def parseAnswers(answers: List[Map[String, String]]): List[ParsedAnswer] = {

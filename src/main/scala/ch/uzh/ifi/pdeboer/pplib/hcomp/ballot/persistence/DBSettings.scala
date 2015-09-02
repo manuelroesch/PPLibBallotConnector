@@ -22,10 +22,9 @@ object DBSettings extends LazyLogger {
 			DBs.setupAll()
 
 			GlobalSettings.loggingSQLErrors = true
-			//GlobalSettings.sqlFormatter = SQLFormatterSettings("devteam.misc.HibernateSQLFormatter")
 			DBInitializer.run()
 			isInitialized = true
-			logger.debug("Database initializated")
+			logger.debug("Database initialized")
 		}
 	}
 
