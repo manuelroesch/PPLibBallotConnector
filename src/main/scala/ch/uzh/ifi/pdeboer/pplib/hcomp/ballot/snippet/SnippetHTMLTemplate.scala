@@ -1,15 +1,11 @@
 package ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.snippet
 
-import com.typesafe.config.ConfigFactory
-
 import scala.xml.NodeSeq
 
 /**
  * Created by mattia on 01.09.15.
  */
 object SnippetHTMLTemplate {
-
-	val config = ConfigFactory.load()
 
 	def createPage(imageBase64Format: String, isMethodOnTop: Boolean, relativeHeightTop: Double = 0, relativeHeightBottom: Double = 0): NodeSeq = {
 		<div ng-controller="QuestionCtrl">
@@ -87,7 +83,7 @@ object SnippetHTMLTemplate {
 				</ul>
 			</div>
 
-			<form action={config.getString("hcomp.ballot.baseURL") + "storeAnswer"} method="GET" onsubmit="return checkFeedbackForm()">
+			<form onsubmit="return checkFeedbackForm()">
 				<h3>
 					<label class="radio-inline">
 						<input type="radio" name="isRelated" ng-model="isRelated" id="yes" value="Yes" required="required"/>

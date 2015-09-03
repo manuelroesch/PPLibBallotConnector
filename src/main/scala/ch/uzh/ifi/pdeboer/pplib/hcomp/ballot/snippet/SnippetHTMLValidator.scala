@@ -2,17 +2,28 @@ package ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.snippet
 
 import com.typesafe.scalalogging.LazyLogging
 
-import scala.xml.NodeSeq
+import scala.xml._
 
 /**
  * Created by mattia on 02.09.15.
  */
-object SnippetHTMLValidator extends LazyLogging {
+case class SnippetHTMLValidator(baseURL: String) extends LazyLogging {
 
-	def checkAndFixHTML(ns: NodeSeq, baseURL: String): NodeSeq = {
-		val htmlToDisplayOnBallotPage: NodeSeq = ns
-		htmlToDisplayOnBallotPage
+	def checkAndFixHTML(ns: NodeSeq): NodeSeq = {
+		val htmlToDisplayOnBallotPage: NodeSeq = ns(0).seq.map(updateForm(_))
+    htmlToDisplayOnBallotPage
 	}
+
+  def updateForm(node: Node): Node = node match {
+    case elem @ Elem(_, "form", _, _, child @ _*) => {
+      elem.asInstanceOf[Elem] % Attribute(None, "action", Text(baseURL+"storeAnswer"), Null) %
+        Attribute(None, "method", Text("get"), Null) copy(child = child map updateForm)
+    }
+    case elem @ Elem(_, _, _, _, child @ _*) => {
+      elem.asInstanceOf[Elem].copy(child = child map updateForm)
+    }
+    case other => other
+  }
 
 	def hasInvalidFormAction(form: NodeSeq): Boolean = {
 		val supportedFields = List[(String, Map[String, List[String]])](

@@ -20,7 +20,7 @@ class BallotPortalAdapterTest {
 	def testProcessQuery: Unit = {
 		val b = new BallotPortalAdapter(new PortalAdapterTest(), new DAOTest(), "http://www.andreas.ifi.uzh.ch:9000/")
 		val query = HTMLQuery(<div>
-			<h1>test</h1> <form>
+			<h1>test</h1> <form something="cool">
 				<input type="submit" name="answer" value="yes"/>
 			</form>
 		</div>)
@@ -29,6 +29,8 @@ class BallotPortalAdapterTest {
 		val ans = b.processQuery(query, prop)
 
 		Assert.assertEquals(ans.asInstanceOf[Option[HTMLQueryAnswer]].get.answers.get("answer").get, "yes")
+    Assert.assertTrue((ans.asInstanceOf[Option[HTMLQueryAnswer]].get.query.asInstanceOf[HTMLQuery].html \\ "form").toString contains "something=\"cool\"")
+    Assert.assertTrue((ans.asInstanceOf[Option[HTMLQueryAnswer]].get.query.asInstanceOf[HTMLQuery].html \\ "form").toString contains "action=\"http://www.andreas.ifi.uzh.ch:9000/storeAnswer\"")
 	}
 
 	@Test
@@ -88,14 +90,25 @@ class BallotPortalAdapterTest {
 	}
 
 	@Test
-	def testWithoutFormsInput: Unit = {
-		val b = new BallotPortalAdapter(new PortalAdapterTest(), new DAOTest(), "http://www.andreas.ifi.uzh.ch:9000/")
-		val ans = b.processQuery(HTMLQuery(<div>
-			<h1>test</h1> <form></form>
-		</div>), new BallotProperties(Batch(), List(Asset(Array.empty[Byte], "application/pdf", "empty filename")), 1))
-		Assert.assertEquals(ans, None)
-	}
+  def testWithoutFormsInput: Unit = {
+    val b = new BallotPortalAdapter(new PortalAdapterTest(), new DAOTest(), "http://www.andreas.ifi.uzh.ch:9000/")
+    val ans = b.processQuery(HTMLQuery(<div>
+      <h1>test</h1> <form></form>
+    </div>), new BallotProperties(Batch(), List(Asset(Array.empty[Byte], "application/pdf", "empty filename")), 1))
+    Assert.assertEquals(ans, None)
+  }
 
+  @Test
+  def testWithActionInput: Unit = {
+    val b = new BallotPortalAdapter(new PortalAdapterTest(), new DAOTest(), "http://www.andreas.ifi.uzh.ch:9000/")
+    val ans = b.processQuery(HTMLQuery(<div>
+      <h1>test</h1> <form action="http://www.google.com/">
+        <input type="submit" name="answer" value="yes"/>
+      </form>
+    </div>), new BallotProperties(Batch(), List(Asset(Array.empty[Byte], "application/pdf", "empty filename")), 1))
+    Assert.assertEquals(ans.asInstanceOf[Option[HTMLQueryAnswer]].get.answers.get("answer").get, "yes")
+    Assert.assertTrue((ans.asInstanceOf[Option[HTMLQueryAnswer]].get.query.asInstanceOf[HTMLQuery].html \\ "form").toString contains "action=\"http://www.andreas.ifi.uzh.ch:9000/storeAnswer\"")
+  }
 }
 
 class PortalAdapterTest() extends HCompPortalAdapter with AnswerRejection {

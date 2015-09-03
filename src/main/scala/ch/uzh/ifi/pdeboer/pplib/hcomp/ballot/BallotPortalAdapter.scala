@@ -36,15 +36,15 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 				(actualProperties, batchIdFromDB)
 			}
 
-		val htmlToDisplayOnBallotPage: NodeSeq = query match {
-			case q: HTMLQuery => q.html
-			case _ => scala.xml.PCData(query.toString)
-		}
+    val html = query match {
+      case q: HTMLQuery => q.html
+      case _ => scala.xml.PCData(query.toString)
+    }
 
-		//SnippetHTMLValidator.checkAndFixHTML(htmlToDisplayOnBallotPage, baseURL)
+		val htmlToDisplayOnBallotPage: NodeSeq = SnippetHTMLValidator(baseURL).checkAndFixHTML(html)
 
 		if ((htmlToDisplayOnBallotPage \\ "form").nonEmpty) {
-			val notValid = (htmlToDisplayOnBallotPage \\ "form").exists(form => SnippetHTMLValidator.hasInvalidFormAction(form))
+			val notValid = (htmlToDisplayOnBallotPage \\ "form").exists(form => SnippetHTMLValidator(baseURL).hasInvalidFormAction(form))
 			if (notValid) {
 				logger.error("Form's content is not valid.")
 				None
