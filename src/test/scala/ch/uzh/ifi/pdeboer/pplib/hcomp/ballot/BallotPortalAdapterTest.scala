@@ -75,7 +75,7 @@ class BallotPortalAdapterTest {
 	}
 
 	@Test
-	def testWithInvalidInput: Unit = {
+	def testWithInvalidInputAttribute: Unit = {
 		val b = new BallotPortalAdapter(new PortalAdapterTest(), new DAOTest(), "http://www.andreas.ifi.uzh.ch:9000/")
 		val ans = b.processQuery(HTMLQuery(<div>
 			<h1>test</h1> <div>

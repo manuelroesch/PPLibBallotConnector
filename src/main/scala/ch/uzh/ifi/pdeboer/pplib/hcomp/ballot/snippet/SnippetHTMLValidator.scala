@@ -9,7 +9,7 @@ import scala.xml._
  */
 case class SnippetHTMLValidator(baseURL: String) extends LazyLogging {
 
-	def checkAndFixHTML(ns: NodeSeq): NodeSeq = {
+	def fixFormAttributes(ns: NodeSeq): NodeSeq = {
 		val htmlToDisplayOnBallotPage: NodeSeq = ns(0).seq.map(updateForm(_))
     htmlToDisplayOnBallotPage
 	}
@@ -25,44 +25,36 @@ case class SnippetHTMLValidator(baseURL: String) extends LazyLogging {
     case other => other
   }
 
-	def hasInvalidFormAction(form: NodeSeq): Boolean = {
+	def hasInvalidInputElements(form: NodeSeq): Boolean = {
 		val supportedFields = List[(String, Map[String, List[String]])](
 			"input" -> Map("type" -> List[String]("submit", "radio", "hidden")),
 			"textarea" -> Map("name" -> List.empty[String]),
 			"button" -> Map("type" -> List[String]("submit")),
 			"select" -> Map("name" -> List.empty[String]))
 
-		val checkAttributesOfInputElements = supportedFields.map(formField => {
-			if ((form \\ formField._1).nonEmpty) {
-				(form \\ formField._1) -> formField._2
+		val definedSupportedFields = supportedFields.map(supportedField => {
+			if ((form \\ supportedField._1).nonEmpty) {
+				(form \\ supportedField._1) -> supportedField._2
 			}
-		}).collect { case found: (NodeSeq, Map[String, List[String]]) => found }
+		}).collect { case fieldAttributes: (NodeSeq, Map[String, List[String]]) => fieldAttributes }
 
-		if (checkAttributesOfInputElements.isEmpty) {
-			logger.error("The form doesn't contain any input, select, textarea or button.")
+		if (definedSupportedFields.isEmpty) {
+			logger.error("The form doesn't contain any input, select, textarea or button element.")
 			true
 		} else {
-			!checkAttributesOfInputElements.forall(a => hasValidAttributes(a._1, a._2))
+			definedSupportedFields.forall(htmlElement => !hasInvalidAttributes(htmlElement._1, htmlElement._2))
 		}
 	}
 
-	private def hasValidAttributes(inputElements: NodeSeq, attributesKeyValue: Map[String, List[String]]): Boolean = {
-		attributesKeyValue.exists(attribute => {
-			inputElements.exists(element =>
+	private def hasInvalidAttributes(inputElement: NodeSeq, possibleValidAttributes: Map[String, List[String]]): Boolean = {
+		possibleValidAttributes.exists(attribute => {
+			inputElement.exists(element =>
 				element.attribute(attribute._1).exists(attributeValue => {
-					if (attributeValue.text.nonEmpty) {
-						if (attribute._2.isEmpty) {
-							true
-						} else {
-							attribute._2.contains(attributeValue.text)
-						}
-					} else {
-						if (attribute._2.isEmpty) {
-							true
-						} else {
-							false
-						}
-					}
+					if (attribute._2.isEmpty) {
+            true
+          } else {
+            attribute._2.contains(attributeValue.text) || attribute._2.isEmpty
+          }
 				})
 			)
 		})
