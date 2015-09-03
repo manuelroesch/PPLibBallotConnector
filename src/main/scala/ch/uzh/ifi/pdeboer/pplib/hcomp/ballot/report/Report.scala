@@ -1,7 +1,10 @@
 package ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.report
 
+import java.io.File
+
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.dao.BallotDAO
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.persistence.Answer
+import com.github.tototoshi.csv.CSVWriter
 import com.typesafe.config.ConfigFactory
 
 /**
@@ -13,8 +16,8 @@ object Report {
 	val LIKERT_VALUE_CLEANED_ANSWERS = config.getInt("likertCleanedAnswers")
 
 	def writeCSVReport(dao: BallotDAO) = {
-		val csvWriter = CSVWriter
-		csvWriter.init()
+		val reportWriter = ReportWriter
+		reportWriter.init()
 
 		dao.allAnswers.groupBy(g => {
 			dao.getAssetFileNameByQuestionId(g.questionId).get
@@ -37,10 +40,32 @@ object Report {
 			val firstExclusion = allPermutationsDisabledByActualAnswer.filter(_.excluded_step == 1).map(_.snippetFilename).mkString(";")
 			val secondExclusion = allPermutationsDisabledByActualAnswer.filter(_.excluded_step == 2).map(_.snippetFilename).mkString(";")
 
-			csvWriter.appendResult(snippetName, overallSummary, cleanedSummary, feedback, firstExclusion, secondExclusion)
+			reportWriter.appendResult(snippetName, overallSummary, cleanedSummary, feedback, firstExclusion, secondExclusion)
 		})
 
-		csvWriter.close()
+		reportWriter.close()
 	}
 
+}
+
+object ReportWriter {
+  val config = ConfigFactory.load()
+  val RESULT_CSV_FILENAME = config.getString("resultFilename")
+
+  val writer = CSVWriter.open(new File(RESULT_CSV_FILENAME))
+
+  def init() = {
+    writer.writeRow("snippet,yes answers,no answers,cleaned yes,cleaned no,yes answers,no answers,cleaned yes,cleaned no,feedbacks,firstExclusion,secondExclusion")
+  }
+
+  def appendResult(snippetName: String, overallSummary: SummarizedAnswersFormat, cleanedSummary: SummarizedAnswersFormat,
+                   feedback: String, firstExcluded: String, secondExcluded: String) = {
+    writer.writeRow(snippetName + "," + overallSummary.yesQ1 + "," + overallSummary.noQ1 + "," + cleanedSummary.yesQ1 + "," +
+      cleanedSummary.noQ1 + "," + overallSummary.yesQ2 + "," + overallSummary.noQ2 + "," + cleanedSummary.yesQ2 + "," +
+      cleanedSummary.noQ2 + "," + feedback + "," + firstExcluded + "," + secondExcluded)
+  }
+
+  def close() = {
+    writer.close()
+  }
 }

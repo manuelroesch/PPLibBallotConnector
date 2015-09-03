@@ -44,7 +44,7 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 		//SnippetHTMLValidator.checkAndFixHTML(htmlToDisplayOnBallotPage, baseURL)
 
 		if ((htmlToDisplayOnBallotPage \\ "form").nonEmpty) {
-			val notValid = (htmlToDisplayOnBallotPage \\ "form").exists(form => !SnippetHTMLValidator.hasFormValidInputElements(form))
+			val notValid = (htmlToDisplayOnBallotPage \\ "form").exists(form => SnippetHTMLValidator.hasInvalidFormAction(form))
 			if (notValid) {
 				logger.error("Form's content is not valid.")
 				None
@@ -97,7 +97,7 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 	}
 
 	def extractSingleAnswerFromDatabase(answerJson: String, html: NodeSeq): Option[HCompAnswer] = {
-		val answerMap = AnswerParser.parseAnswerToMap(answerJson)
+		val answerMap = AnswerParser.buildAnswerMap(answerJson)
 		Some(HTMLQueryAnswer(answerMap, HTMLQuery(html)))
 	}
 

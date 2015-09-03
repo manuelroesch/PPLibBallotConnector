@@ -17,11 +17,11 @@ object AnswerParser {
 	}
 
 	def parseJSONAnswers(answers: List[Answer]): List[ParsedAnswer] = {
-		val ans = answers.map(answer => parseAnswerToMap(answer.answerJson)) //TODO better name for parseAnswerToMap
-		parseAnswers(ans) //TODO (note that parseAnswerToMap and parseAnswers don't sound that different)
+		val ans = answers.map(answer => buildAnswerMap(answer.answerJson))
+		createParsedAnswers(ans)
 	}
 
-	private def parseAnswers(answers: List[Map[String, String]]): List[ParsedAnswer] = {
+	private def createParsedAnswers(answers: List[Map[String, String]]): List[ParsedAnswer] = {
 		answers.map(ans => {
 			val isRelated = ans.get("isRelated")
 			val isCheckedBefore = ans.get("isCheckedBefore")
@@ -32,7 +32,7 @@ object AnswerParser {
 		})
 	}
 
-	def parseAnswerToMap(answerJson: String): Map[String, String] = {
+	def buildAnswerMap(answerJson: String): Map[String, String] = {
 		val result = Json.parse(answerJson).asInstanceOf[JsObject]
 		result.fieldSet.map(field => field._1 -> field._2.toString().replaceAll("\"", "")).toMap
 	}

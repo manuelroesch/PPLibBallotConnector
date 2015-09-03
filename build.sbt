@@ -15,7 +15,8 @@ libraryDependencies ++= Seq(
 	"org.scalikejdbc" %% "scalikejdbc" % "2.2.7",
 	"com.h2database" % "h2" % "1.4.184",
 	"org.scalikejdbc" %% "scalikejdbc-config" % "2.2.7",
-	"org.scalikejdbc" %% "scalikejdbc-play-initializer" % "2.4.0"
+	"org.scalikejdbc" %% "scalikejdbc-play-initializer" % "2.4.0",
+  "com.github.tototoshi" %% "scala-csv" % "1.2.2"
 )
 
 libraryDependencies += "pdeboer" %% "pplib" % "0.1-SNAPSHOT"

@@ -27,7 +27,7 @@ case class Algorithm250(dao: BallotDAO, ballotPortalAdapter: HCompPortalAdapter)
 	def executePermutation(p: Permutation) = {
 		val answers: List[ParsedAnswer] = buildAndExecuteQuestion(new File(p.pdfPath), new File(p.snippetFilename), p.id)
 
-		if (canDisableSnippets(answers)) {
+		if (answerIsYes(answers)) {
 			dao.updateStateOfPermutationId(p.id, p.id)
 			dao.getAllOpenByGroupName(p.groupName).foreach(g => {
 				dao.updateStateOfPermutationId(g.id, p.id, 1)
@@ -75,7 +75,7 @@ case class Algorithm250(dao: BallotDAO, ballotPortalAdapter: HCompPortalAdapter)
 		})
 	}
 
-	def canDisableSnippets(answers: List[ParsedAnswer]): Boolean = {
+	def answerIsYes(answers: List[ParsedAnswer]): Boolean = {
 		val cleanedAnswers = answers.filter(_.likert >= LIKERT_VALUE_CLEANED_ANSWERS)
 		val summary = SummarizedAnswersFormat.summarizeAnswers(cleanedAnswers)
 		(summary.yesQ1 > summary.noQ1) && (summary.yesQ2 > summary.noQ2)

@@ -29,19 +29,25 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 
 	val ballotPortalAdapter = HComp(BallotPortalAdapter.PORTAL_KEY)
 
-	val algorithm250 = Algorithm250(dao, ballotPortalAdapter) //TODO quickly describe what it does in a comment above
+  /**
+   * Algorithm 250:
+   * The algorithm250 allows to disable redundant questions (or permutations).
+   * First, all permutations with the same groupname are disabled since an assumption is assumed to be related only to a single method.
+   * Second, all the permutation with the same methodIndex, pdf filename and assumption name are disabled. This second step is performed
+   * because it is assumed that a method (or group of methods) is/are related to only one assumption type.
+   */
+	val algorithm250 = Algorithm250(dao, ballotPortalAdapter)
 
 	val groups = dao.getAllPermutations().groupBy(gr => {
-		val group: String = gr.groupName.split("/").apply(1) //TODO give this variable a good name
-		group
+		val pdfName: String = gr.groupName.split("/").apply(1)
+		pdfName
 	}).toSeq
+
 	groups.mpar.foreach(group => {
-		group._2.foreach(permutation => {
-			val permutation = dao.getPermutationById(permutation.id)
-			if (permutation.isDefined && permutation.get.state == 0) {
-				algorithm250.executePermutation(permutation.get)
-			}
-		})
+		group._2.filter(permutation => {
+      val perm = dao.getPermutationById(permutation.id)
+      perm.isDefined && perm.get.state == 0
+    }).foreach(algorithm250.executePermutation(_))
 	})
 
 	Report.writeCSVReport(dao) //TODO does this always export everything in the DB? I'd consider changing this such that .writeCSVReport gets a list of HCompAnswer's
