@@ -2,7 +2,6 @@ package ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.dao
 
 import java.util.UUID
 
-import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.Asset
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.persistence.{Answer, Permutation, Question}
 import org.joda.time.DateTime
 import scalikejdbc._
@@ -87,17 +86,39 @@ class BallotDAO extends DAO {
 	override def createAsset(binary: Array[Byte], contentType: String, questionId: Long, filename: String): Long = {
 		DB localTx { implicit session =>
       val hashCode = java.security.MessageDigest.getInstance("SHA1").digest(binary).mkString
-      val identified = getAssetsByHashCode(hashCode)
-			sql"INSERT INTO assets(hash_code, byte_array, content_type, question_id, filename) VALUES(${hashCode}, ${binary}, ${contentType}, ${questionId}, ${filename})"
-				.updateAndReturnGeneratedKey().apply()
-		}
+      val possibleMatch = findAssetsIdByHashCode(hashCode).map(id => id ->  getAssetsContentById(id))
+        .find(p => p._2.isDefined && p._2.get.equalsIgnoreCase(contentType))
+
+      if(possibleMatch.nonEmpty){
+        mapQuestionToAssets(questionId, possibleMatch.get._1)
+        possibleMatch.get._1
+      } else {
+        val id = sql"INSERT INTO assets(hash_code, byte_array, content_type, filename) VALUES(${hashCode}, ${binary}, ${contentType}, ${filename})"
+          .updateAndReturnGeneratedKey().apply()
+        mapQuestionToAssets(questionId, id)
+        id
+      }
+    }
 	}
 
-  def getAssetsByHashCode(hashcode: String) : List[Asset] = {
-    List.empty[Asset]
+  def mapQuestionToAssets(qId: Long, assetId: Long): Long = {
+    DB localTx { implicit session =>
+      sql"INSERT INTO question2assets(question_id, asset_id) VALUES(${qId}, ${assetId})".updateAndReturnGeneratedKey().apply()
+    }
   }
 
-  def findAssetsBy(field: String, value: String)
+  def getAssetsContentById(id: Long) : Option[String] = {
+    DB readOnly { implicit session =>
+      sql"SELECT content_type FROM assets WHERE id = ${id}".map(rs =>
+        rs.string("content_type")).single().apply()
+    }
+  }
+
+  def findAssetsIdByHashCode(hashCode: String) : List[Long] = {
+    DB readOnly { implicit session =>
+      sql"SELECT id FROM assets WHERE hash_code = ${hashCode}".map(rs => rs.long("id")).list().apply()
+    }
+  }
 
 	override def updateAnswer(answerId: Long, accepted: Boolean) = {
 		DB localTx { implicit session =>

@@ -17,4 +17,4 @@ class BallotProperties(
 
 case class Batch(allowedAnswersPerTurker: Int = 0, uuid: UUID = UUID.randomUUID())
 
-case class Asset(hash: String, binary: Array[Byte], contentType: String, filename: String)
+case class Asset(binary: Array[Byte], contentType: String, filename: String)

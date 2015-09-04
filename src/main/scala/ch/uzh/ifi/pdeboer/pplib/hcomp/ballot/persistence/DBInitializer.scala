@@ -70,10 +70,23 @@ object DBInitializer extends LazyLogger {
 			catch {
 				case e: java.sql.SQLException =>
 					DB autoCommit { implicit s =>
-						sql"CREATE TABLE assets (id BIGINT NOT NULL AUTO_INCREMENT, hash_code VARCHAR(255) NOT NULL, byte_array LONGBLOB NOT NULL, content_type VARCHAR(255) NOT NULL, question_id BIGINT NOT NULL, filename VARCHAR(300) NOT NULL, PRIMARY KEY(id), FOREIGN KEY(question_id) REFERENCES question(id));".execute().apply()
+						sql"CREATE TABLE assets (id BIGINT NOT NULL AUTO_INCREMENT, hash_code VARCHAR(255) NOT NULL, byte_array LONGBLOB NOT NULL, content_type VARCHAR(255) NOT NULL, filename VARCHAR(300) NOT NULL, PRIMARY KEY(id));".execute().apply()
 						logger.debug("Table assets created")
 					}
 			}
+
+      //question2assets TABLE
+      try {
+        sql"SELECT 1 FROM question2assets LIMIT 1".map(_.long(1)).single.apply()
+        logger.debug("Table question2assets already initialized")
+      }
+      catch {
+        case e: java.sql.SQLException =>
+          DB autoCommit { implicit s =>
+            sql"CREATE TABLE question2assets (id BIGINT NOT NULL AUTO_INCREMENT, question_id BIGINT NOT NULL, asset_id BIGINT NOT NULL, PRIMARY KEY(id), FOREIGN KEY(question_id) REFERENCES question(id), FOREIGN KEY(asset_id) REFERENCES assets(id));".execute().apply()
+            logger.debug("Table question2assets created")
+          }
+      }
 
 			//answer TABLE
 			try {
