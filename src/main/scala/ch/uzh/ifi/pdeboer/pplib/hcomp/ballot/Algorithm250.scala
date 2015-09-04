@@ -38,7 +38,7 @@ case class Algorithm250(dao: BallotDAO, ballotPortalAdapter: HCompPortalAdapter)
 			dao.getAllOpenGroupsStartingWith(secondExclusionMatches).filter(_.methodIndex.equalsIgnoreCase(p.methodIndex)).foreach(g => {
 				dao.updateStateOfPermutationId(g.id, p.id, 2)
 			})
-		} else if(answer.contains(false)){
+		} else if (answer.contains(false)) {
 			dao.updateStateOfPermutationId(p.id, -1)
 		}else {
       // Do nothing because the answers are not enough to make a decision.
@@ -64,7 +64,7 @@ case class Algorithm250(dao: BallotDAO, ballotPortalAdapter: HCompPortalAdapter)
 		import ContestWithBeatByKVotingProcess._
 		import ch.uzh.ifi.pdeboer.pplib.process.entities.DefaultParameters._
 		val process = new ContestWithBeatByKVotingProcess(Map(
-			K.key -> 1,
+			K.key -> 2,
 			PORTAL_PARAMETER.key -> ballotPortalAdapter,
 			MAX_ITERATIONS.key -> 20,
 			QUESTION_PRICE.key -> properties,
