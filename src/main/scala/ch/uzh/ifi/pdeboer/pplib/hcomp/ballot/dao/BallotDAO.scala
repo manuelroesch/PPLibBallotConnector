@@ -2,6 +2,7 @@ package ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.dao
 
 import java.util.UUID
 
+import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.Asset
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.persistence.{Answer, Permutation, Question}
 import org.joda.time.DateTime
 import scalikejdbc._
@@ -85,10 +86,18 @@ class BallotDAO extends DAO {
 
 	override def createAsset(binary: Array[Byte], contentType: String, questionId: Long, filename: String): Long = {
 		DB localTx { implicit session =>
-			sql"INSERT INTO assets(byte_array, content_type, question_id, filename) VALUES(${binary}, ${contentType}, ${questionId}, ${filename})"
+      val hashCode = java.security.MessageDigest.getInstance("SHA1").digest(binary).mkString
+      val identified = getAssetsByHashCode(hashCode)
+			sql"INSERT INTO assets(hash_code, byte_array, content_type, question_id, filename) VALUES(${hashCode}, ${binary}, ${contentType}, ${questionId}, ${filename})"
 				.updateAndReturnGeneratedKey().apply()
 		}
 	}
+
+  def getAssetsByHashCode(hashcode: String) : List[Asset] = {
+    List.empty[Asset]
+  }
+
+  def findAssetsBy(field: String, value: String)
 
 	override def updateAnswer(answerId: Long, accepted: Boolean) = {
 		DB localTx { implicit session =>
