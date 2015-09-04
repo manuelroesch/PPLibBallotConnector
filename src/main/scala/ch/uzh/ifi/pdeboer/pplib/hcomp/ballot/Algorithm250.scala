@@ -27,7 +27,7 @@ case class Algorithm250(dao: BallotDAO, ballotPortalAdapter: HCompPortalAdapter)
 	def executePermutation(p: Permutation) = {
 		val answers: List[ParsedAnswer] = buildAndExecuteQuestion(new File(p.pdfPath), new File(p.snippetFilename), p.id)
 
-    val answer = getAnswer(answers)
+		val answer = getAnswer(answers)
 		if (answer.isDefined && answer.get) {
 			dao.updateStateOfPermutationId(p.id, p.id)
 			dao.getAllOpenByGroupName(p.groupName).foreach(g => {
@@ -40,9 +40,9 @@ case class Algorithm250(dao: BallotDAO, ballotPortalAdapter: HCompPortalAdapter)
 			})
 		} else if (answer.contains(false)) {
 			dao.updateStateOfPermutationId(p.id, -1)
-		}else {
-      // Do nothing because the answers are not enough to make a decision.
-    }
+		} else {
+			// Do nothing because the answers are not enough to make a decision.
+		}
 	}
 
 
@@ -64,9 +64,9 @@ case class Algorithm250(dao: BallotDAO, ballotPortalAdapter: HCompPortalAdapter)
 		import ContestWithBeatByKVotingProcess._
 		import ch.uzh.ifi.pdeboer.pplib.process.entities.DefaultParameters._
 		val process = new ContestWithBeatByKVotingProcess(Map(
-			K.key -> 2,
+			K.key -> 4,
 			PORTAL_PARAMETER.key -> ballotPortalAdapter,
-			MAX_ITERATIONS.key -> 20,
+			MAX_ITERATIONS.key -> 30,
 			QUESTION_PRICE.key -> properties,
 			QUERY_BUILDER_KEY -> new SnippetHTMLQueryBuilder(ballotHtmlPage)
 		))
@@ -81,13 +81,13 @@ case class Algorithm250(dao: BallotDAO, ballotPortalAdapter: HCompPortalAdapter)
 	def getAnswer(answers: List[ParsedAnswer]): Option[Boolean] = {
 		val cleanedAnswers = answers.filter(_.likert >= LIKERT_VALUE_CLEANED_ANSWERS)
 		val summary = SummarizedAnswersFormat.summarizeAnswers(cleanedAnswers)
-		if((summary.yesQ1 > summary.noQ1) && (summary.yesQ2 > summary.noQ2)){
-      Some(true)
-    } else if(summary.yesQ1 < summary.noQ1 || summary.yesQ2 < summary.noQ2){
-      Some(false)
-    } else {
-      None
-    }
+		if ((summary.yesQ1 > summary.noQ1) && (summary.yesQ2 > summary.noQ2)) {
+			Some(true)
+		} else if (summary.yesQ1 < summary.noQ1 || summary.yesQ2 < summary.noQ2) {
+			Some(false)
+		} else {
+			None
+		}
 	}
 
 }
