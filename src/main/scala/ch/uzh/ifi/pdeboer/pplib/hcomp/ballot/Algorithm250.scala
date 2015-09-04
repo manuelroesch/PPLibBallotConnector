@@ -38,7 +38,7 @@ case class Algorithm250(dao: BallotDAO, ballotPortalAdapter: HCompPortalAdapter)
 			dao.getAllOpenGroupsStartingWith(secondExclusionMatches).filter(_.methodIndex.equalsIgnoreCase(p.methodIndex)).foreach(g => {
 				dao.updateStateOfPermutationId(g.id, p.id, 2)
 			})
-		} else if(answer == Some(false)){
+		} else if (answer.contains(false)) {
 			dao.updateStateOfPermutationId(p.id, -1)
 		}else {
       // Do nothing because the answers are not enough to make a decision.
