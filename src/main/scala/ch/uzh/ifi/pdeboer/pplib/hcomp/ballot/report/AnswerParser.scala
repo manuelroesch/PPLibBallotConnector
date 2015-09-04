@@ -9,7 +9,6 @@ import play.api.libs.json.{JsObject, Json}
  */
 object AnswerParser {
 	def evaluateAnswer(toCheck: Option[String]): Option[Boolean] = {
-		//TODO briefly check how this method could have been refactored below: (you used 3-cased if statement)
 		toCheck match {
 			case Some(x) => Option(x.equalsIgnoreCase(SnippetHTMLQueryBuilder.POSITIVE))
 			case _ => None
