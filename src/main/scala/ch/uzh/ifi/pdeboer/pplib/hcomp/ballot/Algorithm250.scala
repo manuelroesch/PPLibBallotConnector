@@ -27,8 +27,8 @@ case class Algorithm250(dao: BallotDAO, ballotPortalAdapter: HCompPortalAdapter)
 	def executePermutation(p: Permutation) = {
 		val answers: List[ParsedAnswer] = buildAndExecuteQuestion(new File(p.pdfPath), new File(p.snippetFilename), p.id)
 
-    val isAnswerYes = getAnswer(answers)
-		if (isAnswerYes.isDefined && isAnswerYes.get) {
+    val answer = getAnswer(answers)
+		if (answer.isDefined && answer.get) {
 			dao.updateStateOfPermutationId(p.id, p.id)
 			dao.getAllOpenByGroupName(p.groupName).foreach(g => {
 				dao.updateStateOfPermutationId(g.id, p.id, 1)
@@ -38,7 +38,7 @@ case class Algorithm250(dao: BallotDAO, ballotPortalAdapter: HCompPortalAdapter)
 			dao.getAllOpenGroupsStartingWith(secondExclusionMatches).filter(_.methodIndex.equalsIgnoreCase(p.methodIndex)).foreach(g => {
 				dao.updateStateOfPermutationId(g.id, p.id, 2)
 			})
-		} else if(isAnswerYes.isDefined && isAnswerYes.get == false){
+		} else if(answer == Some(false)){
 			dao.updateStateOfPermutationId(p.id, -1)
 		}else {
       // Do nothing because the answers are not enough to make a decision.
@@ -83,7 +83,7 @@ case class Algorithm250(dao: BallotDAO, ballotPortalAdapter: HCompPortalAdapter)
 		val summary = SummarizedAnswersFormat.summarizeAnswers(cleanedAnswers)
 		if((summary.yesQ1 > summary.noQ1) && (summary.yesQ2 > summary.noQ2)){
       Some(true)
-    }else if((summary.yesQ1 < summary.noQ1)){
+    } else if(summary.yesQ1 < summary.noQ1 || summary.yesQ2 < summary.noQ2){
       Some(false)
     } else {
       None

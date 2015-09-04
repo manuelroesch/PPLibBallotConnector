@@ -37,10 +37,10 @@ object Report {
 
 			val feedback = allAnswersParsed.map(_.feedback).mkString(";")
 
-			val firstExclusion = allPermutationsDisabledByActualAnswer.filter(_.excluded_step == 1).map(_.snippetFilename).mkString(";")
-			val secondExclusion = allPermutationsDisabledByActualAnswer.filter(_.excluded_step == 2).map(_.snippetFilename).mkString(";")
+			val firstTypeDisabledSnippets = allPermutationsDisabledByActualAnswer.filter(_.excluded_step == 1).map(_.snippetFilename).mkString(";")
+			val secondTypeDisabledSnippets = allPermutationsDisabledByActualAnswer.filter(_.excluded_step == 2).map(_.snippetFilename).mkString(";")
 
-			reportWriter.appendResult(snippetName, overallSummary, cleanedSummary, feedback, firstExclusion, secondExclusion)
+			reportWriter.appendResult(snippetName, overallSummary, cleanedSummary, feedback, firstTypeDisabledSnippets, secondTypeDisabledSnippets)
 		})
 
 		reportWriter.close()
@@ -55,14 +55,14 @@ object ReportWriter {
   val writer = CSVWriter.open(new File(RESULT_CSV_FILENAME))
 
   def init() = {
-    writer.writeRow(Seq("snippet","yes answers","no answers","cleaned yes","cleaned no","yes answers","no answers","cleaned yes","cleaned no","feedback","firstExclusion","secondExclusion"))
+    writer.writeRow(Seq("snippet","yes answers","no answers","cleaned yes","cleaned no","yes answers","no answers","cleaned yes","cleaned no","feedback","first type disabled snippets","second type disabled snippets"))
   }
 
   def appendResult(snippetName: String, overallSummary: SummarizedAnswersFormat, cleanedSummary: SummarizedAnswersFormat,
-                   feedback: String, firstExcluded: String, secondExcluded: String) = {
+                   feedback: String, firstTypeDisabledSnippets: String, secondTypeDisabledSnippets: String) = {
     writer.writeRow(Seq(snippetName, overallSummary.yesQ1, overallSummary.noQ1, cleanedSummary.yesQ1,
       cleanedSummary.noQ1, overallSummary.yesQ2, overallSummary.noQ2, cleanedSummary.yesQ2,
-      cleanedSummary.noQ2, feedback, firstExcluded, secondExcluded))
+      cleanedSummary.noQ2, feedback, firstTypeDisabledSnippets, secondTypeDisabledSnippets))
   }
 
   def close() = {
