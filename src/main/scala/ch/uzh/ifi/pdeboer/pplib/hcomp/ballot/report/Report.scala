@@ -55,14 +55,14 @@ object ReportWriter {
   val writer = CSVWriter.open(new File(RESULT_CSV_FILENAME))
 
   def init() = {
-    writer.writeRow("snippet,yes answers,no answers,cleaned yes,cleaned no,yes answers,no answers,cleaned yes,cleaned no,feedbacks,firstExclusion,secondExclusion")
+    writer.writeRow(Seq("snippet","yes answers","no answers","cleaned yes","cleaned no","yes answers","no answers","cleaned yes","cleaned no","feedback","firstExclusion","secondExclusion"))
   }
 
   def appendResult(snippetName: String, overallSummary: SummarizedAnswersFormat, cleanedSummary: SummarizedAnswersFormat,
                    feedback: String, firstExcluded: String, secondExcluded: String) = {
-    writer.writeRow(snippetName + "," + overallSummary.yesQ1 + "," + overallSummary.noQ1 + "," + cleanedSummary.yesQ1 + "," +
-      cleanedSummary.noQ1 + "," + overallSummary.yesQ2 + "," + overallSummary.noQ2 + "," + cleanedSummary.yesQ2 + "," +
-      cleanedSummary.noQ2 + "," + feedback + "," + firstExcluded + "," + secondExcluded)
+    writer.writeRow(Seq(snippetName, overallSummary.yesQ1, overallSummary.noQ1, cleanedSummary.yesQ1,
+      cleanedSummary.noQ1, overallSummary.yesQ2, overallSummary.noQ2, cleanedSummary.yesQ2,
+      cleanedSummary.noQ2, feedback, firstExcluded, secondExcluded))
   }
 
   def close() = {
