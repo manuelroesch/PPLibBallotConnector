@@ -64,9 +64,9 @@ case class Algorithm250(dao: BallotDAO, ballotPortalAdapter: HCompPortalAdapter)
 		import ContestWithBeatByKVotingProcess._
 		import ch.uzh.ifi.pdeboer.pplib.process.entities.DefaultParameters._
 		val process = new ContestWithBeatByKVotingProcess(Map(
-			K.key -> 2,
+			K.key -> 4,
 			PORTAL_PARAMETER.key -> ballotPortalAdapter,
-			MAX_ITERATIONS.key -> 20,
+			MAX_ITERATIONS.key -> 30,
 			QUESTION_PRICE.key -> properties,
 			QUERY_BUILDER_KEY -> new SnippetHTMLQueryBuilder(ballotHtmlPage)
 		))
