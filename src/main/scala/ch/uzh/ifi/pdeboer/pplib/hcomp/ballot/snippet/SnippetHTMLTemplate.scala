@@ -32,16 +32,16 @@ object SnippetHTMLTemplate {
 			</p>
 
 			<div class="row" style="display: table;">
-				<div class="col-md-2" style="float: none;display: table-cell;vertical-align: top;"></div>
-				<div class="col-md-8" style="float: none;display: table-cell;vertical-align: top;">
+				<div class="col-md-1" style="float: none;display: table-cell;vertical-align: top;"></div>
+				<div class="col-md-10" style="float: none;display: table-cell;vertical-align: top;">
 					<div id="imgContainer" style="width:100%; height:350px; border:1px solid black;overflow:auto;">
 						<img id="snippet" src={imageBase64Format} width="100%"></img>
 					</div>
 				</div>
-				<div class="col-md-2" style="float: none;display: table-cell;vertical-align: top;">
+				<div class="col-md-1" style="float: none;display: table-cell;vertical-align: top;">
 					<div id="snippetButtons">
 
-						<button type="button" id="top" class="btn btn-info" style="width:200px;" aria-hidden="true">
+						<button type="button" id="top" class="btn btn-info" style="width:170px;" aria-hidden="true">
 							<span class="glyphicon glyphicon-arrow-up"></span>{if (isMethodOnTop) {
 							"Scroll to Method"
 						} else {
@@ -50,7 +50,7 @@ object SnippetHTMLTemplate {
 						</button>
 						<br/>
 						<br/>
-						<button type="button" id="bottom" class="btn btn-info" style="width:200px;" aria-hidden="true">
+						<button type="button" id="bottom" class="btn btn-info" style="width:170px;" aria-hidden="true">
 							<span class="glyphicon glyphicon-arrow-down"></span>{if (isMethodOnTop) {
 							"Scroll to Prerequisite"
 						} else {
