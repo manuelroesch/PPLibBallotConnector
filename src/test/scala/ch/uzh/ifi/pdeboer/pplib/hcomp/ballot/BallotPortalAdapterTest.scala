@@ -1,15 +1,7 @@
 package ch.uzh.ifi.pdeboer.pplib.hcomp.ballot
 
-import java.util.UUID
-
 import ch.uzh.ifi.pdeboer.pplib.hcomp._
-import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.dao.DAO
-import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.persistence.{Answer, Question}
-import ch.uzh.ifi.pdeboer.pplib.util.LazyLogger
-import org.joda.time.DateTime
 import org.junit.{Assert, Test}
-
-import scala.collection.mutable
 
 /**
  * Created by mattia on 07.07.15.
@@ -121,89 +113,4 @@ class PortalAdapterTest() extends HCompPortalAdapter with AnswerRejection {
 	override def cancelQuery(query: HCompQuery): Unit = false
 }
 
-class DAOTest extends DAO with LazyLogger {
 
-	val assets = new mutable.HashMap[Long, Long]
-	val batches = new mutable.HashMap[Long, String]
-	val questions = new mutable.HashMap[Long, String]
-	val answers = new mutable.HashMap[Long, String]
-
-	override def createBatch(allowedAnswerPerTurker: Int, uuid: UUID): Long = {
-		logger.debug("Adding new Batch: " + uuid)
-		batches += ((batches.size + 1).toLong -> uuid.toString)
-		batches.size.toLong
-	}
-
-	override def getAnswerByQuestionId(questionId: Long): Option[String] = {
-		answers.get(questionId)
-	}
-
-	override def getBatchIdByUUID(uuid: UUID): Option[Long] = {
-		batches.foreach(b => {
-			if (b._2.equals(uuid)) {
-				logger.debug("Found batch by UUID: " + b._1)
-				return Some(b._1)
-			}
-		})
-		None
-	}
-
-	override def getQuestionUUID(questionId: Long): Option[String] = {
-		questions.get(questionId)
-	}
-
-	override def createQuestion(html: String, batchId: Long, uuid: UUID = UUID.randomUUID(), dateTime: DateTime = new DateTime(), hints: Long): Long = {
-		questions += ((questions.size + 1).toLong -> UUID.randomUUID().toString)
-		answers += ((questions.size).toLong -> "{\"answer\":\"yes\"}")
-		questions.size.toLong
-	}
-
-	override def getAssetIdsByQuestionId(questionId: Long): List[Long] = {
-		var res = List.empty[Long]
-		assets.foreach(b => {
-			if (b._2 == questionId) {
-				logger.debug("Found assetId : " + b._1)
-				res ::= b._1
-			}
-		})
-		res
-	}
-
-	override def createAsset(binary: Array[Byte], contentType: String, questionId: Long, filename: String): Long = {
-		assets += ((assets.size + 1).toLong -> questionId)
-		assets.size.toLong
-	}
-
-	override def updateAnswer(answerId: Long, accepted: Boolean): Unit = {
-		true
-	}
-
-
-	override def getAnswerIdByOutputCode(insertOutput: String): Option[Long] = {
-		Some(answers.head._1)
-	}
-
-	override def getExpectedOutputCodeFromAnswerId(ansId: Long): Option[Long] = {
-		Some(123)
-	}
-
-	override def getQuestionIdByUUID(uuid: String): Option[Long] = {
-		Some(1)
-	}
-
-	override def countAllAnswers(): Int = ???
-
-	override def allAnswers(): List[Answer] = ???
-
-	override def countAllBatches(): Int = ???
-
-	override def countAllQuestions(): Int = ???
-
-	override def getAllQuestions: List[Question] = ???
-
-	override def getAssetFileNameByQuestionId(qId: Long): Option[String] = ???
-
-	override def getAnswerById(id: Long): Option[Answer] = {
-		Some(Answer(id, 0, answers.get(id).getOrElse(""), true))
-	}
-}

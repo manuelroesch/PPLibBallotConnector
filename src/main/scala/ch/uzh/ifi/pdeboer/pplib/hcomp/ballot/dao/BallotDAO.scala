@@ -87,7 +87,8 @@ class BallotDAO extends DAO {
     val hashCode = java.security.MessageDigest.getInstance("SHA-1").digest(binary).map("%02x".format(_)).mkString
 
     val possibleMatch = findAssetsIdByHashCode(hashCode).map(id => id -> getAssetsContentById(id))
-      .find(p => p._2.isDefined && p._2.get.equalsIgnoreCase(contentType))
+      .find(p => p._2.equalsIgnoreCase(contentType))
+
     if (possibleMatch.nonEmpty) {
       mapQuestionToAssets(questionId, possibleMatch.get._1)
       possibleMatch.get._1
@@ -101,20 +102,20 @@ class BallotDAO extends DAO {
     }
   }
 
-  def mapQuestionToAssets(qId: Long, assetId: Long): Long = {
+  override def mapQuestionToAssets(qId: Long, assetId: Long): Long = {
     DB localTx { implicit session =>
       sql"INSERT INTO question2assets(question_id, asset_id) VALUES(${qId}, ${assetId})".updateAndReturnGeneratedKey().apply()
     }
   }
 
-  def getAssetsContentById(id: Long): Option[String] = {
+  override def getAssetsContentById(id: Long): String = {
     DB readOnly { implicit session =>
       sql"SELECT content_type FROM assets WHERE id = ${id}".map(rs =>
-        rs.string("content_type")).single().apply()
+        rs.string("content_type")).single().apply().get
     }
   }
 
-  def findAssetsIdByHashCode(hashCode: String): List[Long] = {
+  override def findAssetsIdByHashCode(hashCode: String): List[Long] = {
     DB readOnly { implicit session =>
       sql"SELECT id FROM assets WHERE hash_code = ${hashCode}".map(rs => rs.long("id")).list().apply()
     }
@@ -133,7 +134,7 @@ class BallotDAO extends DAO {
     }
   }
 
-  def loadPermutationsCSV(csv: String): Boolean = {
+  override def loadPermutationsCSV(csv: String): Boolean = {
     DB localTx { implicit session =>
 
       sql"SET FOREIGN_KEY_CHECKS = 0".update().apply()
@@ -153,7 +154,7 @@ class BallotDAO extends DAO {
     true
   }
 
-  def createPermutation(permutation: Permutation): Long = {
+  override def createPermutation(permutation: Permutation): Long = {
     DB localTx { implicit session =>
       sql"""INSERT INTO permutations(group_name, method_index, snippet_filename, pdf_path, method_on_top, relative_height_top, relative_height_bottom)
       VALUES (group_name = ${permutation.groupName}, method_index = ${permutation.methodIndex},
@@ -163,7 +164,7 @@ class BallotDAO extends DAO {
     }
   }
 
-  def getAllPermutations(): List[Permutation] = {
+  override def getAllPermutations(): List[Permutation] = {
     DB readOnly { implicit session =>
       sql"SELECT * FROM permutations".map(rs =>
         Permutation(rs.long("id"), rs.string("group_name"), rs.string("method_index"), rs.string("snippet_filename"), rs.string("pdf_path"), rs.boolean("method_on_top"), rs.long("state"), rs.int("excluded_step"), rs.double("relative_height_top"), rs.double("relative_height_bottom"))
@@ -171,7 +172,7 @@ class BallotDAO extends DAO {
     }
   }
 
-  def getPermutationById(id: Long): Option[Permutation] = {
+  override def getPermutationById(id: Long): Option[Permutation] = {
     DB readOnly { implicit session =>
       sql"SELECT * FROM permutations WHERE id = ${id}".map(rs =>
         Permutation(rs.long("id"), rs.string("group_name"), rs.string("method_index"), rs.string("snippet_filename"), rs.string("pdf_path"), rs.boolean("method_on_top"), rs.long("state"), rs.int("excluded_step"), rs.double("relative_height_top"), rs.double("relative_height_bottom"))
@@ -179,7 +180,7 @@ class BallotDAO extends DAO {
     }
   }
 
-  def getAllOpenByGroupName(groupName: String): List[Permutation] = {
+  override def getAllOpenByGroupName(groupName: String): List[Permutation] = {
     DB readOnly { implicit session =>
       sql"SELECT * FROM permutations WHERE group_name = ${groupName} AND state = 0".map(rs =>
         Permutation(rs.long("id"), rs.string("group_name"), rs.string("method_index"), rs.string("snippet_filename"), rs.string("pdf_path"), rs.boolean("method_on_top"), rs.long("state"), rs.int("excluded_step"), rs.double("relative_height_top"), rs.double("relative_height_bottom"))
@@ -187,14 +188,14 @@ class BallotDAO extends DAO {
     }
   }
 
-  def updateStateOfPermutationId(id: Long, becauseOfId: Long, excludedByStep: Int = 0) {
+  override def updateStateOfPermutationId(id: Long, becauseOfId: Long, excludedByStep: Int = 0) {
     DB localTx { implicit session =>
       sql"UPDATE permutations SET state = ${becauseOfId}, excluded_step = ${excludedByStep} WHERE id = ${id}"
         .update().apply()
     }
   }
 
-  def getAllOpenGroupsStartingWith(partialGroupName: String): List[Permutation] = {
+  override def getAllOpenGroupsStartingWith(partialGroupName: String): List[Permutation] = {
     val result: List[Permutation] = getAllPermutationsWithStateEquals(0)
     result.filter(r => r.groupName.startsWith(partialGroupName)).map(m => m)
   }
@@ -211,14 +212,14 @@ class BallotDAO extends DAO {
     }
   }
 
-  def getAllPermutationsWithStateEquals(state: Long): List[Permutation] = {
+  override def getAllPermutationsWithStateEquals(state: Long): List[Permutation] = {
     DB readOnly { implicit session =>
       sql"SELECT * FROM permutations WHERE state = ${state}".map(rs =>
         Permutation(rs.long("id"), rs.string("group_name"), rs.string("method_index"), rs.string("snippet_filename"), rs.string("pdf_path"), rs.boolean("method_on_top"), rs.long("state"), rs.int("excluded_step"), rs.double("relative_height_top"), rs.double("relative_height_bottom"))).list().apply()
     }
   }
 
-  override def allAnswers: List[Answer] = {
+  override def allAnswers(): List[Answer] = {
     DB readOnly { implicit session =>
       sql"SELECT * FROM answer WHERE accepted = 1".map(rs =>
         Answer(rs.long("id"), rs.long("question_id"), rs.string("answer_json"), rs.boolean("accepted"))
@@ -226,14 +227,14 @@ class BallotDAO extends DAO {
     }
   }
 
-  def getPermutationIdByQuestionId(qId: Long): Option[Long] = {
+  override def getPermutationIdByQuestionId(qId: Long): Option[Long] = {
     DB readOnly { implicit session =>
       sql"SELECT permutation FROM question WHERE id = ${qId}".map(rs =>
         rs.long("permutation")).single().apply()
     }
   }
 
-  def getAllAnswersBySnippet(fileName: String): List[Answer] = {
+  override def getAllAnswersBySnippet(fileName: String): List[Answer] = {
     allAnswers.filter(f => f.answerJson.contains(fileName))
   }
 
