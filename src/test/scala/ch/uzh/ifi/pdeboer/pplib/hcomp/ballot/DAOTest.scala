@@ -17,8 +17,10 @@ class DAOTest extends DAO with LazyLogger {
   val assets = new mutable.HashMap[Long, Long]
   val questionToPermutationId = new mutable.HashMap[Long, Long]
   val assetsIdWithFilename = new mutable.HashMap[Long, String]
+  val assetsHashCodeToassetId = new mutable.HashMap[String, Long]
   val batches = new mutable.HashMap[Long, String]
   val questions = new mutable.HashMap[Long, String]
+  val question2assets = new mutable.HashMap[Long, Long]
   val answers = new mutable.HashMap[Long, String]
   var permutations = List.empty[Permutation]
 
@@ -47,10 +49,12 @@ class DAOTest extends DAO with LazyLogger {
   }
 
   override def createQuestion(html: String, batchId: Long, uuid: UUID = UUID.randomUUID(), dateTime: DateTime = new DateTime(), permutationId: Long): Long = {
-    questions += ((questions.size + 1).toLong -> UUID.randomUUID().toString)
-    questionToPermutationId += (questions.size.toLong -> permutationId)
-    answers += (questions.size.toLong -> "{\"confidence\":\"7\", \"isRelated\":\"yes\", \"isCheckedBefore\":\"yes\", \"descriptionIsRelated\":\"test\", \"answer\":\"yes\"}")
-    questions.size.toLong
+    this.synchronized{
+      questions += ((questions.size + 1).toLong -> UUID.randomUUID().toString)
+      questionToPermutationId += (questions.size.toLong -> permutationId)
+      answers += (questions.size.toLong -> "{\"confidence\":\"7\", \"isRelated\":\"yes\", \"isCheckedBefore\":\"yes\", \"descriptionIsRelated\":\"test\", \"answer\":\"yes\"}")
+      questions.size.toLong
+    }
   }
 
   override def getAssetIdsByQuestionId(questionId: Long): List[Long] = {
@@ -67,7 +71,22 @@ class DAOTest extends DAO with LazyLogger {
   override def createAsset(binary: Array[Byte], contentType: String, questionId: Long, filename: String): Long = {
     assets += ((assets.size + 1).toLong -> questionId)
     assetsIdWithFilename += ((assetsIdWithFilename.size +1).toLong -> filename)
-    assets.size.toLong
+    val id = assets.size.toLong
+    val hashCode = java.security.MessageDigest.getInstance("SHA-1").digest(binary).map("%02x".format(_)).mkString
+    assetsHashCodeToassetId += (hashCode -> id)
+
+    val possibleMatch = findAssetsIdByHashCode(hashCode).map(id => id -> getAssetsContentById(id))
+      .find(p => p._2.equalsIgnoreCase(contentType))
+
+    val assetId = if (possibleMatch.nonEmpty) {
+      possibleMatch.get._1
+    } else {
+      assets += ((assets.size + 1).toLong -> questionId)
+      assetsIdWithFilename += ((assetsIdWithFilename.size +1).toLong -> filename)
+      assets.size.toLong
+    }
+    mapQuestionToAssets(questionId, assetId)
+    assetId
   }
 
   override def updateAnswer(answerId: Long, accepted: Boolean): Unit = {
@@ -89,10 +108,11 @@ class DAOTest extends DAO with LazyLogger {
 
   override def countAllAnswers(): Int = answers.size
 
-  override def allAnswers(): List[Answer] = answers.zipWithIndex.map(ans => {
-    val filename = getAssetFileNameByQuestionId(ans._1._1)
-    Answer(ans._2, ans._1._1, ans._1._2.substring(0,ans._1._2.length-1)+",\"pdfFileName\":\""+filename+"\"}", true)
-  }).toList
+  override def allAnswers(): List[Answer] = {
+    answers.zipWithIndex.map(ans => {
+      Answer(ans._2, ans._1._1, ans._1._2.substring(0, ans._1._2.length-1)+", \"pdfFileName\":\""+getAssetFileNameByQuestionId(ans._1._1).get+"\"}", true)
+    }).toList
+  }
 
   override def countAllBatches(): Int = batches.size
 
@@ -111,7 +131,10 @@ class DAOTest extends DAO with LazyLogger {
     Some(Answer(id, 0, answers.getOrElse(id, ""), true))
   }
 
-  override def mapQuestionToAssets(qId: Long, assetId: Long): Long = ???
+  override def mapQuestionToAssets(qId: Long, assetId: Long): Long = {
+    question2assets += (qId -> assetId)
+    assetId
+  }
 
   override def createPermutation(permutation: Permutation): Long = {
     permutations = permutations ::: List[Permutation](permutation)
@@ -136,7 +159,9 @@ class DAOTest extends DAO with LazyLogger {
 
   override def loadPermutationsCSV(csv: String): Boolean = true
 
-  override def findAssetsIdByHashCode(hashCode: String): List[Long] = List[Long](1)
+  override def findAssetsIdByHashCode(hashCode: String): List[Long] = {
+    assetsHashCodeToassetId.filter(_._1.equalsIgnoreCase(hashCode)).values.toList
+  }
 
   override def getPermutationIdByQuestionId(qId: Long): Option[Long] = questionToPermutationId.get(qId)
 

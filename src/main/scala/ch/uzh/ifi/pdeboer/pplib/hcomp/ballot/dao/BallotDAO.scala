@@ -89,17 +89,16 @@ class BallotDAO extends DAO {
     val possibleMatch = findAssetsIdByHashCode(hashCode).map(id => id -> getAssetsContentById(id))
       .find(p => p._2.equalsIgnoreCase(contentType))
 
-    if (possibleMatch.nonEmpty) {
-      mapQuestionToAssets(questionId, possibleMatch.get._1)
+    val id = if (possibleMatch.nonEmpty) {
       possibleMatch.get._1
     } else {
-      val id = DB localTx { implicit session =>
+      DB localTx { implicit session =>
         sql"INSERT INTO assets(hash_code, byte_array, content_type, filename) VALUES(${hashCode}, ${binary}, ${contentType}, ${filename})"
           .updateAndReturnGeneratedKey().apply()
       }
-      mapQuestionToAssets(questionId, id)
-      id
     }
+    mapQuestionToAssets(questionId, id)
+    id
   }
 
   override def mapQuestionToAssets(qId: Long, assetId: Long): Long = {

@@ -42,7 +42,7 @@ class ReportTest {
 
     alg.executePermutation(permutation4)
 
-    Thread.sleep(2000)
+    Assert.assertEquals(dao.allAnswers().size, 8)
 
     Report.writeCSVReport(dao)
 
