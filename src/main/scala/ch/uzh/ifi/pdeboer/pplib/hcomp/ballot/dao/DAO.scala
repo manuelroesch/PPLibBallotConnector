@@ -68,7 +68,6 @@ trait DAO {
 
   def getAllPermutationsWithStateEquals(state: Long): List[Permutation]
 
-
   def getPermutationIdByQuestionId(qId: Long): Option[Long]
 
   def getAllAnswersBySnippet(fileName: String): List[Answer]

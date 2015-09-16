@@ -2,7 +2,7 @@ package ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.report
 
 import java.io.File
 
-import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.dao.BallotDAO
+import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.dao.DAO
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.persistence.Answer
 import com.github.tototoshi.csv.CSVWriter
 import com.typesafe.config.ConfigFactory
@@ -15,13 +15,13 @@ object Report {
 	val config = ConfigFactory.load()
 	val LIKERT_VALUE_CLEANED_ANSWERS = config.getInt("likertCleanedAnswers")
 
-	def writeCSVReport(dao: BallotDAO) = {
+	def writeCSVReport(dao: DAO) = {
 		val reportWriter = ReportWriter
 		reportWriter.init()
 
-		dao.allAnswers.groupBy(g => {
+		dao.allAnswers().groupBy(g => {
 			dao.getAssetFileNameByQuestionId(g.questionId).get
-		}).map(answersForSnippet => {
+		}).foreach(answersForSnippet => {
 
 			val permutationId = dao.getPermutationIdByQuestionId(answersForSnippet._2.head.questionId).get
 			val allPermutationsDisabledByActualAnswer = dao.getAllPermutationsWithStateEquals(permutationId).filterNot(_.excluded_step == 0)
@@ -45,7 +45,6 @@ object Report {
 
 		reportWriter.close()
 	}
-
 }
 
 object ReportWriter {

@@ -15,6 +15,8 @@ import scala.collection.mutable
 class DAOTest extends DAO with LazyLogger {
 
   val assets = new mutable.HashMap[Long, Long]
+  val questionToPermutationId = new mutable.HashMap[Long, Long]
+  val assetsIdWithFilename = new mutable.HashMap[Long, String]
   val batches = new mutable.HashMap[Long, String]
   val questions = new mutable.HashMap[Long, String]
   val answers = new mutable.HashMap[Long, String]
@@ -44,8 +46,9 @@ class DAOTest extends DAO with LazyLogger {
     questions.get(questionId)
   }
 
-  override def createQuestion(html: String, batchId: Long, uuid: UUID = UUID.randomUUID(), dateTime: DateTime = new DateTime(), hints: Long): Long = {
+  override def createQuestion(html: String, batchId: Long, uuid: UUID = UUID.randomUUID(), dateTime: DateTime = new DateTime(), permutationId: Long): Long = {
     questions += ((questions.size + 1).toLong -> UUID.randomUUID().toString)
+    questionToPermutationId += (questions.size.toLong -> permutationId)
     answers += (questions.size.toLong -> "{\"confidence\":\"7\", \"isRelated\":\"yes\", \"isCheckedBefore\":\"yes\", \"descriptionIsRelated\":\"test\", \"answer\":\"yes\"}")
     questions.size.toLong
   }
@@ -63,6 +66,7 @@ class DAOTest extends DAO with LazyLogger {
 
   override def createAsset(binary: Array[Byte], contentType: String, questionId: Long, filename: String): Long = {
     assets += ((assets.size + 1).toLong -> questionId)
+    assetsIdWithFilename += ((assetsIdWithFilename.size +1).toLong -> filename)
     assets.size.toLong
   }
 
@@ -86,7 +90,8 @@ class DAOTest extends DAO with LazyLogger {
   override def countAllAnswers(): Int = answers.size
 
   override def allAnswers(): List[Answer] = answers.zipWithIndex.map(ans => {
-    Answer(ans._2, ans._1._1, ans._1._2, true)
+    val filename = getAssetFileNameByQuestionId(ans._1._1)
+    Answer(ans._2, ans._1._1, ans._1._2.substring(0,ans._1._2.length-1)+",\"pdfFileName\":\""+filename+"\"}", true)
   }).toList
 
   override def countAllBatches(): Int = batches.size
@@ -97,7 +102,10 @@ class DAOTest extends DAO with LazyLogger {
     Question(q._1, 1)
   }).toList
 
-  override def getAssetFileNameByQuestionId(qId: Long): Option[String] = Some("filename.pdf")
+  override def getAssetFileNameByQuestionId(qId: Long): Option[String] = {
+    val assetId = getAssetIdsByQuestionId(qId)
+    Some(assetsIdWithFilename.filter(id => assetId.contains(id._1) && id._2.endsWith(".pdf")).head._2)
+  }
 
   override def getAnswerById(id: Long): Option[Answer] = {
     Some(Answer(id, 0, answers.getOrElse(id, ""), true))
@@ -130,12 +138,12 @@ class DAOTest extends DAO with LazyLogger {
 
   override def findAssetsIdByHashCode(hashCode: String): List[Long] = List[Long](1)
 
-  override def getPermutationIdByQuestionId(qId: Long): Option[Long] = Some(1L)
+  override def getPermutationIdByQuestionId(qId: Long): Option[Long] = questionToPermutationId.get(qId)
 
   override def getAssetsContentById(id: Long): String = "application/test"
 
   override def getAllAnswersBySnippet(fileName: String): List[Answer] = {
-    allAnswers()
+    allAnswers().filter(_.answerJson.contains(fileName))
   }
 
   override def getAllPermutations(): List[Permutation] = {
