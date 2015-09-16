@@ -2,8 +2,9 @@ package ch.uzh.ifi.pdeboer.pplib.hcomp.ballot
 
 import java.io.{File, FileInputStream, InputStream}
 import javax.activation.MimetypesFileTypeMap
+import javax.imageio.ImageIO
 
-import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.dao.BallotDAO
+import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.dao.DAO
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.persistence.Permutation
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.report.{ParsedAnswer, SummarizedAnswersFormat}
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.snippet.{SnippetHTMLQueryBuilder, SnippetHTMLTemplate}
@@ -18,7 +19,7 @@ import scala.xml.NodeSeq
 /**
  * Created by mattia on 01.09.15.
  */
-case class Algorithm250(dao: BallotDAO, ballotPortalAdapter: HCompPortalAdapter) {
+case class Algorithm250(dao: DAO, ballotPortalAdapter: HCompPortalAdapter) {
 
 	val config = ConfigFactory.load()
 
@@ -48,18 +49,37 @@ case class Algorithm250(dao: BallotDAO, ballotPortalAdapter: HCompPortalAdapter)
 
 	def buildAndExecuteQuestion(pdfFile: File, snippetFile: File, permutationId: Long): List[ParsedAnswer] = {
 
-		val base64Image = Utils.getBase64String(snippetFile)
 		val permutation = dao.getPermutationById(permutationId).get
-		val pdfInputStream: InputStream = new FileInputStream(pdfFile)
+
+    val pdfInputStream: InputStream = new FileInputStream(pdfFile)
 		val pdfBinary = Stream.continually(pdfInputStream.read).takeWhile(-1 !=).map(_.toByte).toArray
+    pdfInputStream.close()
+
+    val snippetInputStream: InputStream = new FileInputStream(snippetFile)
+		val snippetByteArray = Stream.continually(snippetInputStream.read()).takeWhile(-1 !=).map(_.toByte).toArray
+    snippetInputStream.close()
+
+    val javascriptByteArray = if(permutation.methodOnTop){
+      SnippetHTMLTemplate.generateJavascript(permutation.relativeHeightTop, permutation.relativeHeightBottom).toString().map(_.toByte).toArray
+    } else {
+      SnippetHTMLTemplate.generateJavascript(permutation.relativeHeightBottom, permutation.relativeHeightTop).toString().map(_.toByte).toArray
+    }
+
+    val snippetImg = ImageIO.read(snippetFile)
+    val snippetHeight = snippetImg.getHeight
 
 		val ballotHtmlPage: NodeSeq =
-			SnippetHTMLTemplate.createPage(base64Image, permutation.methodOnTop, permutation.relativeHeightTop, permutation.relativeHeightBottom)
+			SnippetHTMLTemplate.generateHTMLPage(snippetHeight)
 
-		val contentType = new MimetypesFileTypeMap().getContentType(pdfFile.getName)
+		val pdfContentType = new MimetypesFileTypeMap().getContentType(pdfFile.getName)
+		val snippetContentType = new MimetypesFileTypeMap().getContentType(snippetFile.getName)
+		val javascriptContentType = "application/javascript"
 
-		val properties = new BallotProperties(Batch(allowedAnswersPerTurker = 1),
-			List(Asset(pdfBinary, contentType, pdfFile.getName)), permutationId, propertiesForDecoratedPortal = new HCompQueryProperties(50, qualifications = Nil))
+		val properties = new BallotProperties(Batch(allowedAnswersPerTurker = 1), List(
+      Asset(pdfBinary, pdfContentType, pdfFile.getName),
+      Asset(snippetByteArray, snippetContentType, snippetFile.getName),
+      Asset(javascriptByteArray, javascriptContentType, "script.js")),
+      permutationId, propertiesForDecoratedPortal = new HCompQueryProperties(50, qualifications = Nil))
 
 		import ContestWithBeatByKVotingProcess._
 		import ch.uzh.ifi.pdeboer.pplib.process.entities.DefaultParameters._

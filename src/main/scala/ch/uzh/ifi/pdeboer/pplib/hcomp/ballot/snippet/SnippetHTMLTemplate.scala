@@ -7,7 +7,15 @@ import scala.xml.NodeSeq
  */
 object SnippetHTMLTemplate {
 
-	def createPage(imageBase64Format: String, isMethodOnTop: Boolean, relativeHeightTop: Double = 0, relativeHeightBottom: Double = 0): NodeSeq = {
+	def generateHTMLPage(imgHeight: Int): NodeSeq = {
+    val height = if(imgHeight>900){
+      900
+    }else if(imgHeight>350 && imgHeight<900) {
+      imgHeight
+    } else {
+      350
+    }
+
 		<div ng-controller="QuestionCtrl">
 
 			<p>
@@ -31,35 +39,29 @@ object SnippetHTMLTemplate {
 				<span style="background-color:#00FF00;">prerequisite marked in green.</span>
 			</p>
 
-			<div class="row" style="display: table;">
-				<div class="col-md-1" style="float: none;display: table-cell;vertical-align: top;"></div>
-				<div class="col-md-10" style="float: none;display: table-cell;vertical-align: top;">
-					<div id="imgContainer" style="width:100%; height:350px; border:1px solid black;overflow:auto;">
-						<img id="snippet" src={imageBase64Format} width="100%"></img>
-					</div>
-				</div>
-				<div class="col-md-1" style="float: none;display: table-cell;vertical-align: top;">
-					<div id="snippetButtons">
+      <div class="row" d="snippetButtons">
+        <div class="col-md-6">
+          <button type="button" id="top" class="btn btn-info" style="width:200px;float:right;" aria-hidden="true">
+            Scroll to Method
+          </button>
+        </div>
+        <div class="col-md-6">
+          <button type="button" id="bottom" class="btn btn-info" style="width:200px;" aria-hidden="true">
+            Scroll to Prerequisite
+          </button>
+        </div>
+      </div>
 
-						<button type="button" id="top" class="btn btn-info" style="width:170px;" aria-hidden="true">
-							<span class="glyphicon glyphicon-arrow-up"></span>{if (isMethodOnTop) {
-							"Scroll to Method"
-						} else {
-							"Scroll to Prerequisite"
-						}}
-						</button>
-						<br/>
-						<br/>
-						<button type="button" id="bottom" class="btn btn-info" style="width:170px;" aria-hidden="true">
-							<span class="glyphicon glyphicon-arrow-down"></span>{if (isMethodOnTop) {
-							"Scroll to Prerequisite"
-						} else {
-							"Scroll to Method"
-						}}
-						</button>
+      <br />
+
+			<div class="row" style="display: table;">
+				<div class="col-md-12" style="float: none;display: table-cell;vertical-align: top;">
+					<div id="imgContainer" style={"width:100%; min-height:350px; max-height:900px;border:1px solid black;overflow:auto;height: "+height+"px;"}>
+						<img id="snippet" src="" width="100%"></img>
 					</div>
 				</div>
-			</div>
+      </div>
+
 			<br/>
 
 			<div id="assets">
@@ -152,29 +154,33 @@ object SnippetHTMLTemplate {
 			</form>
 			<br/>
 			<br/>
-			<script type="text/javascript">
-				{scala.xml.PCData(
-				"""$('#ex1').slider({
+		</div>
+	}
+  
+  def generateJavascript(relativeHeightMethod: Double, relativeHeightPrerequisite: Double) : NodeSeq = {
+    <script type="text/javascript">
+      {scala.xml.PCData(
+      """$('#ex1').slider({
                 tooltip: 'always',
                   formatter: function(value) {
                   return value;
                 }
               });
-				"""
-			)}
-			</script>
+      				"""
+    )}
+    </script>
 
-			<script type="text/javascript">
-				{scala.xml.PCData( """
+      <script type="text/javascript">
+        {scala.xml.PCData( """
           $('#top').click(function() {
             $('#imgContainer').animate({
-              scrollTop: $('#imgContainer')[0].scrollHeight*""" + (relativeHeightTop - 2.0) + """/100
+              scrollTop: $('#imgContainer')[0].scrollHeight*""" + (relativeHeightMethod - 2.0) + """/100
               }, 1000);
           });
 
           $('#bottom').click(function() {
             $('#imgContainer').animate({
-              scrollTop: $('#imgContainer')[0].scrollHeight*""" + (relativeHeightBottom - 2.0) + """/100
+              scrollTop: $('#imgContainer')[0].scrollHeight*""" + (relativeHeightPrerequisite - 2.0) + """/100
               }, 1000);
           });
 
@@ -199,10 +205,10 @@ object SnippetHTMLTemplate {
 						  return true;
 						}
           }; """
-			)}
-			</script>
-			<script type="text/javascript">
-				{scala.xml.PCData( """
+      )}
+      </script>
+      <script type="text/javascript">
+        {scala.xml.PCData( """
 
         $('#ex1').slider({
           tooltip: 'always',
@@ -249,9 +255,8 @@ object SnippetHTMLTemplate {
               }
             });
           }
-								   								   """)}
-			</script>
-		</div>
-	}
+      """)}
+      </script>
+  }
 
 }
