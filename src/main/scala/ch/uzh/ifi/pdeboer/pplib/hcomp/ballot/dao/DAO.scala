@@ -42,7 +42,7 @@ trait DAO {
 
 	def getAllQuestions: List[Question]
 
-	def getAssetFileNameByQuestionId(qId: Long): Option[String]
+	def getAssetPDFFileNameByQuestionId(qId: Long): Option[String]
 
 	def allAnswers(): List[Answer]
 

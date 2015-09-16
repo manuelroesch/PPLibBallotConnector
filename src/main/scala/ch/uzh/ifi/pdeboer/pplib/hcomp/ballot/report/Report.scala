@@ -20,7 +20,7 @@ object Report {
 		reportWriter.init()
 
 		dao.allAnswers().groupBy(g => {
-			dao.getAssetFileNameByQuestionId(g.questionId).get
+			dao.getAssetPDFFileNameByQuestionId(g.questionId).get
 		}).foreach(answersForSnippet => {
 
 			val permutationId = dao.getPermutationIdByQuestionId(answersForSnippet._2.head.questionId).get

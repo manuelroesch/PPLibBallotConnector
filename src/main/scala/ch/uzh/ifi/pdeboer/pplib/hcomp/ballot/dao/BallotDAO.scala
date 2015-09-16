@@ -114,9 +114,9 @@ class BallotDAO extends DAO {
     }
   }
 
-  override def findAssetsIdByHashCode(hashCode: String): List[Long] = {
+  override def findAssetsIdByHashCode(hc: String): List[Long] = {
     DB readOnly { implicit session =>
-      sql"SELECT id FROM assets WHERE hash_code = ${hashCode}".map(rs => rs.long("id")).list().apply()
+      sql"SELECT id FROM assets WHERE hash_code = ${hc}".map(rs => rs.long("id")).list().apply()
     }
   }
 
@@ -204,9 +204,13 @@ class BallotDAO extends DAO {
     }
   }
 
-  override def getAssetFileNameByQuestionId(qId: Long): Option[String] = {
+  override def getAssetPDFFileNameByQuestionId(qId: Long): Option[String] = {
+    val assetIds = getAssetIdsByQuestionId(qId)
     DB readOnly { implicit session =>
-      sql"SELECT filename FROM assets WHERE question_id = ${qId}".map(rs => rs.string("filename")).single().apply()
+      val assets = assetIds.map(a => {
+        sql"SELECT filename FROM assets WHERE id = ${a}".map(rs => rs.string("filename")).single().apply()
+      })
+      assets.find(_.get.endsWith(".pdf")).get
     }
   }
 

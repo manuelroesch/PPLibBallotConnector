@@ -70,6 +70,8 @@ class ReportTest {
     Assert.assertEquals(parsedResults.last.no2Cleaned.toInt, 0)
     Assert.assertEquals(parsedResults.last.feedback, "test;test;test;test")
 
+    Assert.assertEquals(dao.assets.size, 5)
+
   }
 
 }
