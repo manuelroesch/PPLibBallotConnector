@@ -84,10 +84,12 @@ class Algorithm250Test {
     val permutation1 = Permutation(1, "pdfFile/Assumption/15:555", "METHOD_15:9898", getClass.getResource("/pngFile.png").getPath, getClass.getResource("/pdfFile.pdf").getPath, false, 0, 0, 0.0, 0.0)
     val permutation2 = Permutation(2, "pdfFile/Assumption/7:123", "METHOD_15:9898", getClass.getResource("/pngFile.png").getPath, getClass.getResource("/pdfFile.pdf").getPath, false, 0, 0, 0.0, 0.0)
     val permutation3 = Permutation(3, "pdfFile/Assumption/15:555", "AnotherMethod_1:123123", getClass.getResource("/pngFile.png").getPath, getClass.getResource("/pdfFile.pdf").getPath, false, 0, 0, 0.0, 0.0)
+    val permutation4 = Permutation(4, "pdfFile/Different_assumption/15:555", "DifferentMethod_56:78", getClass.getResource("/pngFile.png").getPath, getClass.getResource("/pdfFile.pdf").getPath, false, 0, 0, 0.0, 0.0)
 
     dao.createPermutation(permutation1)
     dao.createPermutation(permutation2)
     dao.createPermutation(permutation3)
+    dao.createPermutation(permutation4)
 
     alg.executePermutation(permutation1)
     Assert.assertEquals(dao.getPermutationById(1).get.state, 1)
@@ -96,6 +98,9 @@ class Algorithm250Test {
     Assert.assertEquals(dao.getPermutationById(2).get.excluded_step, 2)
     Assert.assertEquals(dao.getPermutationById(3).get.state, 1)
     Assert.assertEquals(dao.getPermutationById(3).get.excluded_step, 1)
+
+    Assert.assertEquals(dao.getPermutationById(4).get.state, 0)
+    Assert.assertEquals(dao.getPermutationById(4).get.excluded_step, 0)
   }
 
 }

@@ -196,8 +196,7 @@ class BallotDAO extends DAO {
   }
 
   override def getAllOpenGroupsStartingWith(partialGroupName: String): List[Permutation] = {
-    val result: List[Permutation] = getAllPermutationsWithStateEquals(0)
-    result.filter(r => r.groupName.startsWith(partialGroupName)).map(m => m)
+    getAllPermutationsWithStateEquals(0).filter(r => r.groupName.startsWith(partialGroupName))
   }
 
   override def getAllQuestions: List[Question] = {

@@ -112,7 +112,7 @@ class DAOTest extends DAO with LazyLogger {
 
   override def getAllOpenGroupsStartingWith(partialGroupName: String): List[Permutation] = {
     permutations.filter(p => {
-      p.groupName.startsWith(partialGroupName)
+      p.groupName.startsWith(partialGroupName) && p.state==0
     })
   }
 
@@ -143,9 +143,9 @@ class DAOTest extends DAO with LazyLogger {
   }
 
   override def updateStateOfPermutationId(id: Long, becauseOfId: Long, excludedByStep: Int): Unit = {
-    println(s"Updating permutation: $id, becauseOf: $becauseOfId, exclusionStep: $excludedByStep")
+    println(s"Updating permutation: $id, state: $becauseOfId, excluded_step(0/1/2): $excludedByStep")
     permutations = permutations.map(p => {
-      if(p.id == id && p.state == 0){
+      if(p.id == id && p.state == 0 && p.excluded_step == 0){
         Permutation(p.id, p.groupName, p.methodIndex, p.snippetFilename, p.pdfPath, p.methodOnTop, becauseOfId, excludedByStep, p.relativeHeightTop, p.relativeHeightBottom)
       }else {
         Permutation(p.id, p.groupName, p.methodIndex, p.snippetFilename, p.pdfPath, p.methodOnTop, p.state, p.excluded_step, p.relativeHeightTop, p.relativeHeightBottom)
