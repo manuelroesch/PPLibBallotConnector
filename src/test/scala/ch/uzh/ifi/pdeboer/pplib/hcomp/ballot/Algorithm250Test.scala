@@ -102,5 +102,4 @@ class Algorithm250Test {
     Assert.assertEquals(dao.getPermutationById(4).get.state, 0)
     Assert.assertEquals(dao.getPermutationById(4).get.excluded_step, 0)
   }
-
 }

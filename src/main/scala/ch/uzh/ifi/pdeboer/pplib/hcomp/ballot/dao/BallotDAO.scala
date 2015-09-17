@@ -129,7 +129,7 @@ class BallotDAO extends DAO {
 
   override def getAssetIdsByQuestionId(questionId: Long): List[Long] = {
     DB readOnly { implicit session =>
-      sql"SELECT * FROM assets WHERE question_id = ${questionId}".map(rs => rs.long("id")).list().apply()
+      sql"SELECT * FROM question2assets WHERE question_id = ${questionId}".map(rs => rs.long("asset_id")).list().apply()
     }
   }
 
@@ -149,7 +149,6 @@ class BallotDAO extends DAO {
       IGNORE 1 LINES
         (group_name, method_index, snippet_filename, pdf_path, method_on_top ,relative_height_top, relative_height_bottom)""".update().apply()
     }
-
     true
   }
 

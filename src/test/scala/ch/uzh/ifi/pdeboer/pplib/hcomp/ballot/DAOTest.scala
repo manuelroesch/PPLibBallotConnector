@@ -7,27 +7,25 @@ import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.persistence.{Answer, Permutation, Q
 import ch.uzh.ifi.pdeboer.pplib.util.LazyLogger
 import org.joda.time.DateTime
 
-import scala.collection.mutable
-
 /**
  * Created by mattia on 15.09.15.
  */
 class DAOTest extends DAO with LazyLogger {
 
-  val assets = new mutable.HashMap[Long, Long]
-  val questionToPermutationId = new mutable.HashMap[Long, Long]
+  var assets = List.empty[(Long, Long)]
+  var questionToPermutationId = List.empty[(Long, Long)]
   var assetsIdWithFilename = List.empty[(Long, String)]
   var assetsIdWithContentType = List.empty[(Long, String)]
   var assetsHashCodeToassetId = List.empty[(String, Long)]
-  val batches = new mutable.HashMap[Long, String]
-  var questions = new mutable.HashMap[Long, String]
+  var batches = List.empty[(Long, String)]
+  var questions = List.empty[(Long, String)]
   var question2assets = List.empty[(Long, Long)]
   var answers = List.empty[(Long, String)]
   var permutations = List.empty[Permutation]
 
   override def createBatch(allowedAnswerPerTurker: Int, uuid: UUID): Long = {
     logger.debug("Adding new Batch: " + uuid)
-    batches += ((batches.size + 1).toLong -> uuid.toString)
+    batches = batches ::: List[(Long, String)]((batches.size + 1).toLong -> uuid.toString)
     batches.size.toLong
   }
 
@@ -46,16 +44,14 @@ class DAOTest extends DAO with LazyLogger {
   }
 
   override def getQuestionUUID(questionId: Long): Option[String] = {
-    questions.get(questionId)
+    Some(questions.find(q => q._1 == questionId).get._2)
   }
 
   override def createQuestion(html: String, batchId: Long, uuid: UUID = UUID.randomUUID(), dateTime: DateTime = new DateTime(), permutationId: Long): Long = {
-    this.synchronized{
-      questions += ((questions.size + 1).toLong -> UUID.randomUUID().toString)
-      questionToPermutationId += (questions.size.toLong -> permutationId)
-      answers = answers ::: List[(Long, String)]((questions.size.toLong -> "{\"confidence\":\"7\", \"isRelated\":\"yes\", \"isCheckedBefore\":\"yes\", \"descriptionIsRelated\":\"test\", \"answer\":\"yes\"}"))
-      questions.size.toLong
-    }
+    questions = questions ::: List[(Long, String)]((questions.size + 1).toLong -> UUID.randomUUID().toString)
+    questionToPermutationId = questionToPermutationId ::: List[(Long, Long)](questions.size.toLong -> permutationId)
+    answers = answers ::: List[(Long, String)]((questions.size.toLong -> "{\"confidence\":\"7\", \"isRelated\":\"yes\", \"isCheckedBefore\":\"yes\", \"descriptionIsRelated\":\"test\", \"answer\":\"yes\"}"))
+    questions.size.toLong
   }
 
   override def getAssetIdsByQuestionId(questionId: Long): List[Long] = {
@@ -63,31 +59,26 @@ class DAOTest extends DAO with LazyLogger {
   }
 
   override def createAsset(binary: Array[Byte], contentType: String, questionId: Long, filename: String): Long = {
+    val hashCode : String = java.security.MessageDigest.getInstance("SHA-1").digest(binary).map("%02x".format(_)).mkString
 
-    this.synchronized {
-      val hashCode : String = java.security.MessageDigest.getInstance("SHA-1").digest(binary).map("%02x".format(_)).mkString
+    val possibleMatch = findAssetsIdByHashCode(hashCode).map(id => id -> getAssetsContentById(id))
+      .find(p => p._2.equalsIgnoreCase(contentType))
 
-      val possibleMatch = findAssetsIdByHashCode(hashCode).map(id => id -> getAssetsContentById(id))
-        .find(p => p._2.equalsIgnoreCase(contentType))
-
-      val assetId = if (possibleMatch.nonEmpty) {
-        possibleMatch.get._1
-      } else {
-        assets += ((assets.size + 1).toLong -> questionId)
-        assetsIdWithFilename = assetsIdWithFilename ::: List[(Long, String)](assets.size.toLong -> filename)
-        assetsIdWithContentType = assetsIdWithContentType ::: List[(Long, String)](assets.size.toLong -> contentType)
-        assetsHashCodeToassetId = assetsHashCodeToassetId ::: List[(String, Long)](hashCode -> assets.size.toLong)
-        assets.size.toLong
-      }
-
-      mapQuestionToAssets(questionId, assetId)
-      assetId
+    val assetId = if (possibleMatch.nonEmpty) {
+      possibleMatch.get._1
+    } else {
+      assets = assets ::: List[(Long, Long)]((assets.size + 1).toLong -> questionId)
+      assetsIdWithFilename = assetsIdWithFilename ::: List[(Long, String)](assets.size.toLong -> filename)
+      assetsIdWithContentType = assetsIdWithContentType ::: List[(Long, String)](assets.size.toLong -> contentType)
+      assetsHashCodeToassetId = assetsHashCodeToassetId ::: List[(String, Long)](hashCode -> assets.size.toLong)
+      assets.size.toLong
     }
+
+    mapQuestionToAssets(questionId, assetId)
+    assetId
   }
 
-  override def updateAnswer(answerId: Long, accepted: Boolean): Unit = {
-    true
-  }
+  override def updateAnswer(answerId: Long, accepted: Boolean): Unit = true
 
 
   override def getAnswerIdByOutputCode(insertOutput: String): Option[Long] = {
@@ -160,7 +151,9 @@ class DAOTest extends DAO with LazyLogger {
     assetsHashCodeToassetId.filter(_._1.equalsIgnoreCase(hc)).map(_._2)
   }
 
-  override def getPermutationIdByQuestionId(qId: Long): Option[Long] = questionToPermutationId.get(qId)
+  override def getPermutationIdByQuestionId(qId: Long): Option[Long] = {
+    Some(questionToPermutationId.find(_._1 == qId).get._2)
+  }
 
   override def getAssetsContentById(id: Long): String = {
     val filename = assetsIdWithFilename.find(_._1 == id).map(_._2)

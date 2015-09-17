@@ -109,5 +109,4 @@ case class Algorithm250(dao: DAO, ballotPortalAdapter: HCompPortalAdapter) {
 			None
 		}
 	}
-
 }
