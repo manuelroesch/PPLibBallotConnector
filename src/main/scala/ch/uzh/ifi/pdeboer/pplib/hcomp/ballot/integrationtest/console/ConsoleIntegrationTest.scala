@@ -47,7 +47,7 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 		group._2.filter(permutation => {
       val perm = dao.getPermutationById(permutation.id)
       perm.isDefined && perm.get.state == 0
-    }).foreach(algorithm250.executePermutation(_))
+		}).foreach(algorithm250.executePermutation)
 	})
 
 	Report.writeCSVReport(dao) //TODO does this always export everything in the DB? I'd consider changing this such that .writeCSVReport gets a list of HCompAnswer's
