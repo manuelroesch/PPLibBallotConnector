@@ -21,7 +21,8 @@ class SnippetHTMLQueryBuilder(ballotHtmlPage: NodeSeq) extends HCompQueryBuilder
 			case x: Class[String] =>
 				val likert = ans.answers.get("confidence").get.toInt
 				if (likert >= ConsoleIntegrationTest.LIKERT_VALUE_CLEANED_ANSWERS) {
-					if (ans.answers.get("isRelated").get.equalsIgnoreCase("yes") && ans.answers.get("isCheckedBefore").get.equalsIgnoreCase("yes")) {
+					if (ans.answers.get("isRelated").get.equalsIgnoreCase(SnippetHTMLQueryBuilder.POSITIVE) &&
+            ans.answers.get("isCheckedBefore").get.equalsIgnoreCase(SnippetHTMLQueryBuilder.POSITIVE)) {
 						Some(SnippetHTMLQueryBuilder.POSITIVE)
 					}
 					else {

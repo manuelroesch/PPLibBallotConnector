@@ -91,8 +91,9 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 		val questionUUID = UUID.randomUUID()
 		val questionId = dao.createQuestion(htmlToDisplayOnBallotPage.toString(), batchIdFromDB, questionUUID, permutationId = actualProperties.permutationId)
 		val link = baseURL + "showQuestion/" + questionUUID
-
-		actualProperties.assets.foreach(asset => dao.createAsset(asset.binary, asset.contentType, questionId, asset.filename))
+    this.synchronized{
+		  actualProperties.assets.foreach(asset => dao.createAsset(asset.binary, asset.contentType, questionId, asset.filename))
+    }
 		(questionId, link)
 	}
 

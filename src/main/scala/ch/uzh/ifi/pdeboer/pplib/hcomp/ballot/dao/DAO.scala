@@ -2,7 +2,7 @@ package ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.dao
 
 import java.util.UUID
 
-import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.persistence.{Answer, Question}
+import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.persistence.{Answer, Permutation, Question}
 import org.joda.time.DateTime
 
 /**
@@ -42,8 +42,34 @@ trait DAO {
 
 	def getAllQuestions: List[Question]
 
-	def getAssetFileNameByQuestionId(qId: Long): Option[String]
+	def getAssetPDFFileNameByQuestionId(qId: Long): Option[String]
 
 	def allAnswers(): List[Answer]
+
+  def mapQuestionToAssets(qId: Long, assetId: Long): Long
+
+  def getAssetsContentById(id: Long): String
+
+  def findAssetsIdByHashCode(hashCode: String): List[Long]
+
+  def loadPermutationsCSV(csv: String): Boolean
+
+  def createPermutation(permutation: Permutation): Long
+
+  def getAllPermutations(): List[Permutation]
+
+  def getPermutationById(id: Long): Option[Permutation]
+
+  def getAllOpenByGroupName(groupName: String): List[Permutation]
+
+  def updateStateOfPermutationId(id: Long, becauseOfId: Long, excludedByStep: Int = 0)
+
+  def getAllOpenGroupsStartingWith(partialGroupName: String): List[Permutation]
+
+  def getAllPermutationsWithStateEquals(state: Long): List[Permutation]
+
+  def getPermutationIdByQuestionId(qId: Long): Option[Long]
+
+  def getAllAnswersBySnippet(fileName: String): List[Answer]
 
 }
