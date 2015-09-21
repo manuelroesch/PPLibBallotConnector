@@ -28,7 +28,7 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 				val actualProperties: BallotProperties = properties match {
 					case p: BallotProperties => p
 					case _ =>
-						new BallotProperties(Batch(0, UUID.randomUUID()), List(Asset(Array.empty[Byte], "application/pdf", "")), 0)
+						new BallotProperties(Batch(0, UUID.randomUUID()), List(Asset(Array.empty[Byte], "application/pdf", "")), 1)
 				}
 
 				val batchIdFromDB: Long =
@@ -55,10 +55,12 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
         val methodHeight = if(permutation.get.methodOnTop){permutation.get.relativeHeightTop}else {permutation.get.relativeHeightBottom}
         val prerequisiteHeight = if(permutation.get.methodOnTop){permutation.get.relativeHeightBottom}else {permutation.get.relativeHeightTop}
 
-        val snippetHeight = {
+        val snippetHeight = try {
           val inputImage = new ByteArrayInputStream(actualProperties.assets.find(_.contentType.equalsIgnoreCase("image/png")).get.binary)
           val reader = ImageIO.read(inputImage)
           reader.getHeight
+        } catch {
+          case e: Exception => 300
         }
 
 				val (questionId: Long, link: String) = createQuestion(actualProperties, batchIdFromDB, htmlToDisplayOnBallotPage, methodHeight, prerequisiteHeight, snippetHeight)

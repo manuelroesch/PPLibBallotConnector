@@ -67,6 +67,7 @@ class DAOTest extends DAO with LazyLogger {
     val assetId = if (possibleMatch.nonEmpty) {
       possibleMatch.get._1
     } else {
+      assets = assets ::: List[(Long, Long)](assets.size+1.toLong -> 0)
       assetsIdWithFilename = assetsIdWithFilename ::: List[(Long, String)](assets.size.toLong -> filename)
       assetsIdWithContentType = assetsIdWithContentType ::: List[(Long, String)](assets.size.toLong -> contentType)
       assetsHashCodeToassetId = assetsHashCodeToassetId ::: List[(String, Long)](hashCode -> assets.size.toLong)
@@ -117,7 +118,6 @@ class DAOTest extends DAO with LazyLogger {
   }
 
   override def mapQuestionToAssets(qId: Long, assetId: Long): Long = {
-    assets = assets ::: List[(Long, Long)](assetId -> qId)
     question2assets = question2assets ::: List[(Long, Long)](qId -> assetId)
     question2assets.size
   }
