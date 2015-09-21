@@ -13,6 +13,8 @@ import ch.uzh.ifi.pdeboer.pplib.process.entities.IndexedPatch
 import ch.uzh.ifi.pdeboer.pplib.process.stdlib.ContestWithBeatByKVotingProcess
 import com.typesafe.config.ConfigFactory
 
+import ContestWithBeatByKVotingProcess._
+import ch.uzh.ifi.pdeboer.pplib.process.entities.DefaultParameters._
 import scala.xml.NodeSeq
 
 
@@ -81,8 +83,6 @@ case class Algorithm250(dao: DAO, ballotPortalAdapter: HCompPortalAdapter) {
       Asset(javascriptByteArray, javascriptContentType, "script.js")),
       permutationId, propertiesForDecoratedPortal = new HCompQueryProperties(50, qualifications = Nil))
 
-		import ContestWithBeatByKVotingProcess._
-		import ch.uzh.ifi.pdeboer.pplib.process.entities.DefaultParameters._
 		val process = new ContestWithBeatByKVotingProcess(Map(
 			K.key -> 4,
 			PORTAL_PARAMETER.key -> ballotPortalAdapter,
