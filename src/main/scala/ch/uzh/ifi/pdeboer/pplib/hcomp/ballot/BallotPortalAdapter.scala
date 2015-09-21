@@ -1,6 +1,8 @@
 package ch.uzh.ifi.pdeboer.pplib.hcomp.ballot
 
+import java.io.ByteArrayInputStream
 import java.util.UUID
+import javax.imageio.ImageIO
 
 import ch.uzh.ifi.pdeboer.pplib.hcomp._
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.dao.{BallotDAO, DAO}
@@ -49,7 +51,17 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 				logger.error("Form's content is not valid.")
 				None
 			} else {
-				val (questionId: Long, link: String) = createQuestion(actualProperties, batchIdFromDB, htmlToDisplayOnBallotPage)
+        val permutation = dao.getPermutationById(actualProperties.permutationId)
+        val methodHeight = if(permutation.get.methodOnTop){permutation.get.relativeHeightTop}else {permutation.get.relativeHeightBottom}
+        val prerequisiteHeight = if(permutation.get.methodOnTop){permutation.get.relativeHeightBottom}else {permutation.get.relativeHeightTop}
+
+        val snippetHeight = {
+          val inputImage = new ByteArrayInputStream(actualProperties.assets.find(_.contentType.equalsIgnoreCase("image/png")).get.binary)
+          val reader = ImageIO.read(inputImage)
+          reader.getHeight
+        }
+
+				val (questionId: Long, link: String) = createQuestion(actualProperties, batchIdFromDB, htmlToDisplayOnBallotPage, methodHeight, prerequisiteHeight, snippetHeight)
 
 				val answer = decorated.sendQueryAndAwaitResult(
 					FreetextQuery(
@@ -87,14 +99,38 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 		}
 	}
 
-	def createQuestion(actualProperties: BallotProperties, batchIdFromDB: Long, htmlToDisplayOnBallotPage: NodeSeq): (Long, String) = {
-		val questionUUID = UUID.randomUUID()
-		val questionId = dao.createQuestion(htmlToDisplayOnBallotPage.toString(), batchIdFromDB, questionUUID, permutationId = actualProperties.permutationId)
-		val link = baseURL + "showQuestion/" + questionUUID
-    this.synchronized{
-		  actualProperties.assets.foreach(asset => dao.createAsset(asset.binary, asset.contentType, questionId, asset.filename))
+	def createQuestion(actualProperties: BallotProperties, batchIdFromDB: Long, htmlToDisplayOnBallotPage: NodeSeq, methodHeight: Double, prerequisiteHeight: Double, snippetHeight: Double): (Long, String) = {
+    this.synchronized {
+      val assetsId: Map[String, Long] =
+        actualProperties.assets.map(asset => {
+          asset.url -> dao.createAsset(asset.binary, asset.contentType, asset.filename)
+        }).toMap
+
+      val imageHeight = if(snippetHeight< 300) {
+        300
+      }else if(snippetHeight > 900) {
+        900
+      }else{
+        snippetHeight
+      }
+
+      val pdfFileName = actualProperties.assets.find(_.contentType.equalsIgnoreCase("application/pdf")).get.filename
+
+      val newJsPlaceholder : String = "jsPlaceholder\"> var relativeHeightMethod = "+methodHeight+";\n var relativeHeightPrerequisite = "+prerequisiteHeight+";\n var snippetHeight = \""+imageHeight+"px\";" +
+        "\n\\$(function() { \\$(\"form\").append(\'<input type=\\\"hidden\\\" name=\\\"pdfFileName\\\" value=\\\""+pdfFileName+"\\\">\') })"
+
+      var htmlWithValidLinks: String = htmlToDisplayOnBallotPage.toString().replaceAll("jsPlaceholder\">", newJsPlaceholder)
+
+      assetsId.foreach(asset => {
+        htmlWithValidLinks = htmlWithValidLinks.replaceAll(asset._1, "../assetsBallot/" + asset._2)
+      })
+
+      val questionUUID = UUID.randomUUID()
+      val questionId = dao.createQuestion(htmlWithValidLinks, batchIdFromDB, questionUUID, permutationId = actualProperties.permutationId)
+      val link = baseURL + "showQuestion/" + questionUUID
+      assetsId.foreach(assetId => dao.mapQuestionToAssets(questionId, assetId._2))
+      (questionId, link)
     }
-		(questionId, link)
 	}
 
 	def extractSingleAnswerFromDatabase(answerJson: String, html: NodeSeq): Option[HCompAnswer] = {

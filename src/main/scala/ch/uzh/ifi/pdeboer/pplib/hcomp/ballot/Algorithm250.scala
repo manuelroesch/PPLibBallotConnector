@@ -60,31 +60,32 @@ case class Algorithm250(dao: DAO, ballotPortalAdapter: HCompPortalAdapter) {
     snippetInputStream.close()
 
     val javascriptByteArray = if(permutation.methodOnTop){
-      SnippetHTMLTemplate.generateJavascript(permutation.relativeHeightTop, permutation.relativeHeightBottom).toString().map(_.toByte).toArray
+      SnippetHTMLTemplate.generateJavascript.toString().map(_.toByte).toArray
     } else {
-      SnippetHTMLTemplate.generateJavascript(permutation.relativeHeightBottom, permutation.relativeHeightTop).toString().map(_.toByte).toArray
+      SnippetHTMLTemplate.generateJavascript.toString().map(_.toByte).toArray
     }
 
     val snippetImg = ImageIO.read(snippetFile)
     val snippetHeight = snippetImg.getHeight
 
+    val pdfContentType = new MimetypesFileTypeMap().getContentType(pdfFile.getName)
+    val snippetContentType = new MimetypesFileTypeMap().getContentType(snippetFile.getName)
+    val javascriptContentType = "application/javascript"
+
+    val pdfAsset = Asset(pdfBinary, pdfContentType, pdfFile.getName)
+    val snippetAsset = Asset(snippetByteArray, snippetContentType, snippetFile.getName)
+    val jsAsset = Asset(javascriptByteArray, javascriptContentType, "script.js")
+
+    val properties = new BallotProperties(Batch(allowedAnswersPerTurker = 1), List(
+      pdfAsset, snippetAsset, jsAsset), permutationId, propertiesForDecoratedPortal = new HCompQueryProperties(50, qualifications = Nil))
+
 		val ballotHtmlPage: NodeSeq =
-			SnippetHTMLTemplate.generateHTMLPage(snippetHeight)
-
-		val pdfContentType = new MimetypesFileTypeMap().getContentType(pdfFile.getName)
-		val snippetContentType = new MimetypesFileTypeMap().getContentType(snippetFile.getName)
-		val javascriptContentType = "application/javascript"
-
-		val properties = new BallotProperties(Batch(allowedAnswersPerTurker = 1), List(
-      Asset(pdfBinary, pdfContentType, pdfFile.getName),
-      Asset(snippetByteArray, snippetContentType, snippetFile.getName),
-      Asset(javascriptByteArray, javascriptContentType, "script.js")),
-      permutationId, propertiesForDecoratedPortal = new HCompQueryProperties(50, qualifications = Nil))
+			SnippetHTMLTemplate.generateHTMLPage(snippetAsset.url, pdfAsset.url, jsAsset.url)
 
 		import ContestWithBeatByKVotingProcess._
 		import ch.uzh.ifi.pdeboer.pplib.process.entities.DefaultParameters._
 		val process = new ContestWithBeatByKVotingProcess(Map(
-			K.key -> 4,
+			K.key -> 1,
 			PORTAL_PARAMETER.key -> ballotPortalAdapter,
 			MAX_ITERATIONS.key -> 30,
 			QUESTION_PRICE.key -> properties,

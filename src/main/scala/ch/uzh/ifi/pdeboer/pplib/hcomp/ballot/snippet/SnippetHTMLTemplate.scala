@@ -7,14 +7,7 @@ import scala.xml.NodeSeq
  */
 object SnippetHTMLTemplate {
 
-	def generateHTMLPage(imgHeight: Int): NodeSeq = {
-    val height = if(imgHeight>900){
-      900
-    }else if(imgHeight>350 && imgHeight<900) {
-      imgHeight
-    } else {
-      350
-    }
+	def generateHTMLPage(imgAssetUrl: String, pdfAssetUrl: String, jsAssetUrl: String): NodeSeq = {
 
 		<div ng-controller="QuestionCtrl">
 
@@ -56,8 +49,8 @@ object SnippetHTMLTemplate {
 
 			<div class="row" style="display: table;">
 				<div class="col-md-12" style="float: none;display: table-cell;vertical-align: top;">
-					<div id="imgContainer" style={"width:100%; min-height:350px; max-height:900px;border:1px solid black;overflow:auto;height: "+height+"px;"}>
-						<img id="snippet" src="" width="100%"></img>
+					<div id="imgContainer" style="width:100%; min-height:350px; max-height:900px;border:1px solid black;overflow:auto;">
+            <img id="snippet" src={imgAssetUrl} width="100%"></img>")
 					</div>
 				</div>
       </div>
@@ -66,7 +59,7 @@ object SnippetHTMLTemplate {
 
 			<div id="assets">
 				If you would like to read more context in order to give better and more accurate answers, you can browse the PDF file by clicking
-				<img src="http://www.santacroceopera.it/Images/Pages/PDF.png"></img>
+				<a target="_blank" href={pdfAssetUrl}><img src="http://www.santacroceopera.it/Images/Pages/PDF.png"></img> here.</a>
 			</div>
 
 			<br/>
@@ -150,39 +143,40 @@ object SnippetHTMLTemplate {
 
 				<hr style="width:100%"/>
 				<input type="submit" class="btn btn-large btn-primary" style="width:150px;float:right;" value="Submit Answer"/>
+      </form>
+			<br/>
+			<br/>
 
-			</form>
-			<br/>
-			<br/>
-		</div>
+      <script id="jsPlaceholder"></script>
+      <script type="text/javascript" src ={jsAssetUrl}></script>
+
+    </div>
 	}
   
-  def generateJavascript(relativeHeightMethod: Double, relativeHeightPrerequisite: Double) : NodeSeq = {
-    <script type="text/javascript">
-      {scala.xml.PCData(
+  def generateJavascript : String = {
+
       """$('#ex1').slider({
                 tooltip: 'always',
                   formatter: function(value) {
                   return value;
                 }
               });
-      				"""
-    )}
-    </script>
 
-      <script type="text/javascript">
-        {scala.xml.PCData( """
           $('#top').click(function() {
             $('#imgContainer').animate({
-              scrollTop: $('#imgContainer')[0].scrollHeight*""" + (relativeHeightMethod - 2.0) + """/100
+              scrollTop: $('#imgContainer')[0].scrollHeight*(relativeHeightMethod-2.0)/100
               }, 1000);
           });
 
           $('#bottom').click(function() {
             $('#imgContainer').animate({
-              scrollTop: $('#imgContainer')[0].scrollHeight*""" + (relativeHeightPrerequisite - 2.0) + """/100
+              scrollTop: $('#imgContainer')[0].scrollHeight*(relativeHeightPrerequisite-2.0)/100
               }, 1000);
           });
+
+          $(document).ready( function() {
+            $('#imgContainer').css({"width":"100%","min-height":"350px","max-height":"900px","border":"1px solid black","overflow":"auto", "height":snippetHeight})
+          })
 
 
           $(document).ready( function() {
@@ -204,11 +198,7 @@ object SnippetHTMLTemplate {
             } else {
 						  return true;
 						}
-          }; """
-      )}
-      </script>
-      <script type="text/javascript">
-        {scala.xml.PCData( """
+          };
 
         $('#ex1').slider({
           tooltip: 'always',
@@ -216,47 +206,7 @@ object SnippetHTMLTemplate {
             return value;
           }
         });
-
-        var step = 10;
-          var scrolling = false;
-
-          $('#up').bind('click', function(event) {
-            event.preventDefault();
-            $('#imgContainer').animate({
-              scrollTop: '-=' + step + 'px'
-            });
-          }).bind('mouseover', function(event) {
-            scrolling = true;
-            scrollContent('up');
-          }).bind('mouseout', function(event) {
-            scrolling = false;
-          });
-
-
-          $('#down').bind('click', function(event) {
-            event.preventDefault();
-            $('#imgContainer').animate({
-              scrollTop: '+=' + step + 'px'
-            });
-          }).bind('mouseover', function(event) {
-            scrolling = true;
-            scrollContent('down');
-          }).bind('mouseout', function(event) {
-            scrolling = false;
-          });
-
-          function scrollContent(direction) {
-            var amount = (direction === 'up' ? '-=1px' : '+=1px');
-            $('#imgContainer').animate({
-              scrollTop: amount
-            }, 10, function() {
-              if (scrolling) {
-                scrollContent(direction);
-              }
-            });
-          }
-      """)}
-      </script>
+      """
   }
 
 }
