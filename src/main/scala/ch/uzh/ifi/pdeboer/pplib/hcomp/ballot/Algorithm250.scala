@@ -58,9 +58,9 @@ case class Algorithm250(dao: DAO, ballotPortalAdapter: HCompPortalAdapter) {
 		snippetInputStream.close()
 
 		val javascriptByteArray = if (permutation.methodOnTop) {
-			SnippetHTMLTemplate.generateJavascript.toString().map(_.toByte).toArray
+			SnippetHTMLTemplate.generateJavascript.toString.map(_.toByte).toArray
 		} else {
-			SnippetHTMLTemplate.generateJavascript.toString().map(_.toByte).toArray
+			SnippetHTMLTemplate.generateJavascript.toString.map(_.toByte).toArray
 		}
 
 		val snippetImg = ImageIO.read(snippetFile)
