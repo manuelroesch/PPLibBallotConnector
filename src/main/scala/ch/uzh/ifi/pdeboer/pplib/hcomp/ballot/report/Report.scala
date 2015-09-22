@@ -48,7 +48,9 @@ object ReportWriter {
 	val config = ConfigFactory.load()
 	val RESULT_CSV_FILENAME = config.getString("resultFilename")
 
-	val writer = CSVWriter.open(new File(RESULT_CSV_FILENAME))
+  val basedir = System.getProperty("user.dir")
+
+	val writer = CSVWriter.open(new File(basedir, RESULT_CSV_FILENAME))
 
 	def init() = {
 		writer.writeRow(Seq("snippet", "yes answers", "no answers", "cleaned yes", "cleaned no", "yes answers", "no answers", "cleaned yes", "cleaned no", "feedback", "first type disabled snippets", "second type disabled snippets"))

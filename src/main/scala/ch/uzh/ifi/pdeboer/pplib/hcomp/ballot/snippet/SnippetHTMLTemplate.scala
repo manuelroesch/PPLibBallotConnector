@@ -51,7 +51,6 @@ object SnippetHTMLTemplate {
 				<div class="col-md-12" style="float: none;display: table-cell;vertical-align: top;">
 					<div id="imgContainer" style="width:100%; min-height:350px; max-height:900px;border:1px solid black;overflow:auto;">
 						<img id="snippet" src={imgAssetUrl} width="100%"></img>
-						")
 					</div>
 				</div>
 			</div>

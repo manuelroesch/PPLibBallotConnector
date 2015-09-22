@@ -49,7 +49,7 @@ class ReportTest {
     val config = ConfigFactory.load()
     val RESULT_CSV_FILENAME = config.getString("resultFilename")
 
-    val result = new File("../../.idea/modules/"+RESULT_CSV_FILENAME)
+    val result = new File(System.getProperty("user.dir"), RESULT_CSV_FILENAME)
     Assert.assertTrue(result.exists())
 
     val src = Source.fromFile(result)
