@@ -51,17 +51,25 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 				logger.error("Form's content is not valid.")
 				None
 			} else {
-        val permutation = dao.getPermutationById(actualProperties.permutationId)
-        val methodHeight = if(permutation.get.methodOnTop){permutation.get.relativeHeightTop}else {permutation.get.relativeHeightBottom}
-        val prerequisiteHeight = if(permutation.get.methodOnTop){permutation.get.relativeHeightBottom}else {permutation.get.relativeHeightTop}
+				val permutation = dao.getPermutationById(actualProperties.permutationId)
+				val methodHeight = if (permutation.get.methodOnTop) {
+					permutation.get.relativeHeightTop
+				} else {
+					permutation.get.relativeHeightBottom
+				}
+				val prerequisiteHeight = if (permutation.get.methodOnTop) {
+					permutation.get.relativeHeightBottom
+				} else {
+					permutation.get.relativeHeightTop
+				}
 
-        val snippetHeight = try {
-          val inputImage = new ByteArrayInputStream(actualProperties.assets.find(_.contentType.equalsIgnoreCase("image/png")).get.binary)
-          val reader = ImageIO.read(inputImage)
-          reader.getHeight
-        } catch {
-          case e: Exception => 300
-        }
+				val snippetHeight = try {
+					val inputImage = new ByteArrayInputStream(actualProperties.assets.find(_.contentType.equalsIgnoreCase("image/png")).get.binary)
+					val reader = ImageIO.read(inputImage)
+					reader.getHeight
+				} catch {
+					case e: Exception => 300
+				}
 
 				val (questionId: Long, link: String) = createQuestion(actualProperties, batchIdFromDB, htmlToDisplayOnBallotPage, methodHeight, prerequisiteHeight, snippetHeight)
 
@@ -102,37 +110,37 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 	}
 
 	def createQuestion(actualProperties: BallotProperties, batchIdFromDB: Long, htmlToDisplayOnBallotPage: NodeSeq, methodHeight: Double, prerequisiteHeight: Double, snippetHeight: Double): (Long, String) = {
-    this.synchronized {
-      val assetsId: Map[String, Long] =
-        actualProperties.assets.map(asset => {
-          asset.url -> dao.createAsset(asset.binary, asset.contentType, asset.filename)
-        }).toMap
+		this.synchronized {
+			val assetsId: Map[String, Long] =
+				actualProperties.assets.map(asset => {
+					asset.url -> dao.createAsset(asset.binary, asset.contentType, asset.filename)
+				}).toMap
 
-      val imageHeight = if(snippetHeight< 300) {
-        300
-      }else if(snippetHeight > 900) {
-        900
-      }else{
-        snippetHeight
-      }
+			val imageHeight = if (snippetHeight < 300) {
+				300
+			} else if (snippetHeight > 900) {
+				900
+			} else {
+				snippetHeight
+			}
 
-      val pdfFileName = actualProperties.assets.find(_.contentType.equalsIgnoreCase("application/pdf")).get.filename
+			val pdfFileName = actualProperties.assets.find(_.contentType.equalsIgnoreCase("application/pdf")).get.filename
 
-      val newJsPlaceholder : String = "jsPlaceholder\"> var relativeHeightMethod = "+methodHeight+";\n var relativeHeightPrerequisite = "+prerequisiteHeight+";\n var snippetHeight = \""+imageHeight+"px\";" +
-        "\n\\$(function() { \\$(\"form\").append(\'<input type=\\\"hidden\\\" name=\\\"pdfFileName\\\" value=\\\""+pdfFileName+"\\\">\') })"
+			val newJsPlaceholder: String = "jsPlaceholder\"> var relativeHeightMethod = " + methodHeight + ";\n var relativeHeightPrerequisite = " + prerequisiteHeight + ";\n var snippetHeight = \"" + imageHeight + "px\";" +
+				"\n\\$(function() { \\$(\"form\").append(\'<input type=\\\"hidden\\\" name=\\\"pdfFileName\\\" value=\\\"" + pdfFileName + "\\\">\') })"
 
-      var htmlWithValidLinks: String = htmlToDisplayOnBallotPage.toString().replaceAll("jsPlaceholder\">", newJsPlaceholder)
+			var htmlWithValidLinks: String = htmlToDisplayOnBallotPage.toString().replaceAll("jsPlaceholder\">", newJsPlaceholder)
 
-      assetsId.foreach(asset => {
-        htmlWithValidLinks = htmlWithValidLinks.replaceAll(asset._1, "../assetsBallot/" + asset._2)
-      })
+			assetsId.foreach(asset => {
+				htmlWithValidLinks = htmlWithValidLinks.replaceAll(asset._1, "../assetsBallot/" + asset._2)
+			})
 
-      val questionUUID = UUID.randomUUID()
-      val questionId = dao.createQuestion(htmlWithValidLinks, batchIdFromDB, questionUUID, permutationId = actualProperties.permutationId)
-      val link = baseURL + "showQuestion/" + questionUUID
-      assetsId.foreach(assetId => dao.mapQuestionToAssets(questionId, assetId._2))
-      (questionId, link)
-    }
+			val questionUUID = UUID.randomUUID()
+			val questionId = dao.createQuestion(htmlWithValidLinks, batchIdFromDB, questionUUID, permutationId = actualProperties.permutationId)
+			val link = baseURL + "showQuestion/" + questionUUID
+			assetsId.foreach(assetId => dao.mapQuestionToAssets(questionId, assetId._2))
+			(questionId, link)
+		}
 	}
 
 	def extractSingleAnswerFromDatabase(answerJson: String, html: NodeSeq): Option[HCompAnswer] = {

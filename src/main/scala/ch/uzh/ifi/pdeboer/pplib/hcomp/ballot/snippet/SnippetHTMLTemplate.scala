@@ -32,34 +32,37 @@ object SnippetHTMLTemplate {
 				<span style="background-color:#00FF00;">prerequisite marked in green.</span>
 			</p>
 
-      <div class="row" d="snippetButtons">
-        <div class="col-md-6">
-          <button type="button" id="top" class="btn btn-info" style="width:200px;float:right;" aria-hidden="true">
-            Scroll to Method
-          </button>
-        </div>
-        <div class="col-md-6">
-          <button type="button" id="bottom" class="btn btn-info" style="width:200px;" aria-hidden="true">
-            Scroll to Prerequisite
-          </button>
-        </div>
-      </div>
+			<div class="row" d="snippetButtons">
+				<div class="col-md-6">
+					<button type="button" id="top" class="btn btn-info" style="width:200px;float:right;" aria-hidden="true">
+						Scroll to Method
+					</button>
+				</div>
+				<div class="col-md-6">
+					<button type="button" id="bottom" class="btn btn-info" style="width:200px;" aria-hidden="true">
+						Scroll to Prerequisite
+					</button>
+				</div>
+			</div>
 
-      <br />
+			<br/>
 
 			<div class="row" style="display: table;">
 				<div class="col-md-12" style="float: none;display: table-cell;vertical-align: top;">
 					<div id="imgContainer" style="width:100%; min-height:350px; max-height:900px;border:1px solid black;overflow:auto;">
-            <img id="snippet" src={imgAssetUrl} width="100%"></img>")
+						<img id="snippet" src={imgAssetUrl} width="100%"></img>
+						")
 					</div>
 				</div>
-      </div>
+			</div>
 
 			<br/>
 
 			<div id="assets">
 				If you would like to read more context in order to give better and more accurate answers, you can browse the PDF file by clicking
-				<a target="_blank" href={pdfAssetUrl}><img src="http://www.santacroceopera.it/Images/Pages/PDF.png"></img> here.</a>
+				<a target="_blank" href={pdfAssetUrl}>
+					<img src="http://www.santacroceopera.it/Images/Pages/PDF.png"></img>
+					here.</a>
 			</div>
 
 			<br/>
@@ -143,19 +146,19 @@ object SnippetHTMLTemplate {
 
 				<hr style="width:100%"/>
 				<input type="submit" class="btn btn-large btn-primary" style="width:150px;float:right;" value="Submit Answer"/>
-      </form>
+			</form>
 			<br/>
 			<br/>
 
-      <script id="jsPlaceholder"></script>
-      <script type="text/javascript" src ={jsAssetUrl}></script>
+			<script id="jsPlaceholder"></script>
+			<script type="text/javascript" src={jsAssetUrl}></script>
 
-    </div>
+		</div>
 	}
-  
-  def generateJavascript : String = {
 
-      """$('#ex1').slider({
+	def generateJavascript: String = {
+
+		"""$('#ex1').slider({
                 tooltip: 'always',
                   formatter: function(value) {
                   return value;
@@ -206,7 +209,7 @@ object SnippetHTMLTemplate {
             return value;
           }
         });
-      """
-  }
+		"""
+	}
 
 }
