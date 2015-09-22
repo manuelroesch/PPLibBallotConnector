@@ -75,7 +75,7 @@ case class Algorithm250(dao: DAO, ballotPortalAdapter: HCompPortalAdapter) {
 		val jsAsset = Asset(javascriptByteArray, javascriptContentType, "script.js")
 
 		val properties = new BallotProperties(Batch(allowedAnswersPerTurker = 1), List(
-			pdfAsset, snippetAsset, jsAsset), permutationId, propertiesForDecoratedPortal = new HCompQueryProperties(50, qualifications = Nil))
+			pdfAsset, snippetAsset, jsAsset), permutationId, propertiesForDecoratedPortal = new HCompQueryProperties(50))
 
 		val ballotHtmlPage: NodeSeq =
 			SnippetHTMLTemplate.generateHTMLPage(snippetAsset.url, pdfAsset.url, jsAsset.url)
