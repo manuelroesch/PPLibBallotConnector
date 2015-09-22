@@ -5,16 +5,16 @@ import javax.activation.MimetypesFileTypeMap
 import javax.imageio.ImageIO
 
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.dao.DAO
+import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.integrationtest.console.Constants
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.persistence.Permutation
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.report.{ParsedAnswer, SummarizedAnswersFormat}
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.snippet.{SnippetHTMLQueryBuilder, SnippetHTMLTemplate}
 import ch.uzh.ifi.pdeboer.pplib.hcomp.{HCompPortalAdapter, HCompQueryProperties, HTMLQueryAnswer}
+import ch.uzh.ifi.pdeboer.pplib.process.entities.DefaultParameters._
 import ch.uzh.ifi.pdeboer.pplib.process.entities.IndexedPatch
 import ch.uzh.ifi.pdeboer.pplib.process.stdlib.ContestWithBeatByKVotingProcess
-import com.typesafe.config.ConfigFactory
+import ch.uzh.ifi.pdeboer.pplib.process.stdlib.ContestWithBeatByKVotingProcess._
 
-import ContestWithBeatByKVotingProcess._
-import ch.uzh.ifi.pdeboer.pplib.process.entities.DefaultParameters._
 import scala.xml.NodeSeq
 
 
@@ -22,11 +22,6 @@ import scala.xml.NodeSeq
  * Created by mattia on 01.09.15.
  */
 case class Algorithm250(dao: DAO, ballotPortalAdapter: HCompPortalAdapter) {
-
-	val config = ConfigFactory.load()
-
-	val LIKERT_VALUE_CLEANED_ANSWERS = config.getInt("likertCleanedAnswers")
-
 	def executePermutation(p: Permutation) = {
 		val answers: List[ParsedAnswer] = buildAndExecuteQuestion(new File(p.pdfPath), new File(p.snippetFilename), p.id)
 
@@ -53,22 +48,22 @@ case class Algorithm250(dao: DAO, ballotPortalAdapter: HCompPortalAdapter) {
 
 		val permutation = dao.getPermutationById(permutationId).get
 
-    val pdfInputStream: InputStream = new FileInputStream(pdfFile)
+		val pdfInputStream: InputStream = new FileInputStream(pdfFile)
 		val pdfBinary = Stream.continually(pdfInputStream.read).takeWhile(-1 !=).map(_.toByte).toArray
-    pdfInputStream.close()
+		pdfInputStream.close()
 
-    val snippetInputStream: InputStream = new FileInputStream(snippetFile)
+		val snippetInputStream: InputStream = new FileInputStream(snippetFile)
 		val snippetByteArray = Stream.continually(snippetInputStream.read()).takeWhile(-1 !=).map(_.toByte).toArray
-    snippetInputStream.close()
+		snippetInputStream.close()
 
-    val javascriptByteArray = if(permutation.methodOnTop){
-      SnippetHTMLTemplate.generateJavascript(permutation.relativeHeightTop, permutation.relativeHeightBottom).toString().map(_.toByte).toArray
-    } else {
-      SnippetHTMLTemplate.generateJavascript(permutation.relativeHeightBottom, permutation.relativeHeightTop).toString().map(_.toByte).toArray
-    }
+		val javascriptByteArray = if (permutation.methodOnTop) {
+			SnippetHTMLTemplate.generateJavascript(permutation.relativeHeightTop, permutation.relativeHeightBottom).toString().map(_.toByte).toArray
+		} else {
+			SnippetHTMLTemplate.generateJavascript(permutation.relativeHeightBottom, permutation.relativeHeightTop).toString().map(_.toByte).toArray
+		}
 
-    val snippetImg = ImageIO.read(snippetFile)
-    val snippetHeight = snippetImg.getHeight
+		val snippetImg = ImageIO.read(snippetFile)
+		val snippetHeight = snippetImg.getHeight
 
 		val ballotHtmlPage: NodeSeq =
 			SnippetHTMLTemplate.generateHTMLPage(snippetHeight)
@@ -78,17 +73,18 @@ case class Algorithm250(dao: DAO, ballotPortalAdapter: HCompPortalAdapter) {
 		val javascriptContentType = "application/javascript"
 
 		val properties = new BallotProperties(Batch(allowedAnswersPerTurker = 1), List(
-      Asset(pdfBinary, pdfContentType, pdfFile.getName),
-      Asset(snippetByteArray, snippetContentType, snippetFile.getName),
-      Asset(javascriptByteArray, javascriptContentType, "script.js")),
-      permutationId, propertiesForDecoratedPortal = new HCompQueryProperties(50, qualifications = Nil))
+			Asset(pdfBinary, pdfContentType, pdfFile.getName),
+			Asset(snippetByteArray, snippetContentType, snippetFile.getName),
+			Asset(javascriptByteArray, javascriptContentType, "script.js")),
+			permutationId, propertiesForDecoratedPortal = new HCompQueryProperties(50, qualifications = Nil))
 
 		val process = new ContestWithBeatByKVotingProcess(Map(
 			K.key -> 4,
 			PORTAL_PARAMETER.key -> ballotPortalAdapter,
 			MAX_ITERATIONS.key -> 30,
 			QUESTION_PRICE.key -> properties,
-			QUERY_BUILDER_KEY -> new SnippetHTMLQueryBuilder(ballotHtmlPage)
+			QUERY_BUILDER_KEY -> new SnippetHTMLQueryBuilder(ballotHtmlPage),
+			RETURN_LEADER_IF_MAX_ITERATIONS_REACHED.key -> false
 		))
 
 		process.process(IndexedPatch.from(List(SnippetHTMLQueryBuilder.POSITIVE, SnippetHTMLQueryBuilder.NEGATIVE)))
@@ -99,7 +95,7 @@ case class Algorithm250(dao: DAO, ballotPortalAdapter: HCompPortalAdapter) {
 	}
 
 	def getAnswer(answers: List[ParsedAnswer]): Option[Boolean] = {
-		val cleanedAnswers = answers.filter(_.likert >= LIKERT_VALUE_CLEANED_ANSWERS)
+		val cleanedAnswers = answers.filter(_.likert >= Constants.LIKERT_VALUE_CLEANED_ANSWERS)
 		val summary = SummarizedAnswersFormat.summarizeAnswers(cleanedAnswers)
 		if ((summary.yesQ1 > summary.noQ1) && (summary.yesQ2 > summary.noQ2)) {
 			Some(true)

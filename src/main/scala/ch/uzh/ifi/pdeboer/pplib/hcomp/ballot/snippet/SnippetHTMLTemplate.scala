@@ -8,13 +8,13 @@ import scala.xml.NodeSeq
 object SnippetHTMLTemplate {
 
 	def generateHTMLPage(imgHeight: Int): NodeSeq = {
-    val height = if(imgHeight>900){
-      900
-    }else if(imgHeight>350 && imgHeight<900) {
-      imgHeight
-    } else {
-      350
-    }
+		val height = if (imgHeight > 900) {
+			900
+		} else if (imgHeight > 350 && imgHeight < 900) {
+			imgHeight
+		} else {
+			350
+		}
 
 		<div ng-controller="QuestionCtrl">
 
@@ -39,28 +39,28 @@ object SnippetHTMLTemplate {
 				<span style="background-color:#00FF00;">prerequisite marked in green.</span>
 			</p>
 
-      <div class="row" d="snippetButtons">
-        <div class="col-md-6">
-          <button type="button" id="top" class="btn btn-info" style="width:200px;float:right;" aria-hidden="true">
-            Scroll to Method
-          </button>
-        </div>
-        <div class="col-md-6">
-          <button type="button" id="bottom" class="btn btn-info" style="width:200px;" aria-hidden="true">
-            Scroll to Prerequisite
-          </button>
-        </div>
-      </div>
+			<div class="row" d="snippetButtons">
+				<div class="col-md-6">
+					<button type="button" id="top" class="btn btn-info" style="width:200px;float:right;" aria-hidden="true">
+						Scroll to Method
+					</button>
+				</div>
+				<div class="col-md-6">
+					<button type="button" id="bottom" class="btn btn-info" style="width:200px;" aria-hidden="true">
+						Scroll to Prerequisite
+					</button>
+				</div>
+			</div>
 
-      <br />
+			<br/>
 
 			<div class="row" style="display: table;">
 				<div class="col-md-12" style="float: none;display: table-cell;vertical-align: top;">
-					<div id="imgContainer" style={"width:100%; min-height:350px; max-height:900px;border:1px solid black;overflow:auto;height: "+height+"px;"}>
-						<img id="snippet" src="" width="100%"></img>
+					<div id="imgContainer" style={"width:100%; min-height:350px; max-height:900px;border:1px solid black;overflow:auto;height: " + height + "px;"}>
+						<img id="snippet" src=" " width="100%"></img>
 					</div>
 				</div>
-      </div>
+			</div>
 
 			<br/>
 
@@ -156,22 +156,22 @@ object SnippetHTMLTemplate {
 			<br/>
 		</div>
 	}
-  
-  def generateJavascript(relativeHeightMethod: Double, relativeHeightPrerequisite: Double) : NodeSeq = {
-    <script type="text/javascript">
-      {scala.xml.PCData(
-      """$('#ex1').slider({
+
+	def generateJavascript(relativeHeightMethod: Double, relativeHeightPrerequisite: Double): NodeSeq = {
+		<script type="text/javascript">
+			{scala.xml.PCData(
+			"""$('#ex1').slider({
                 tooltip: 'always',
                   formatter: function(value) {
                   return value;
                 }
               });
-      				"""
-    )}
-    </script>
+			"""
+		)}
+		</script>
 
-      <script type="text/javascript">
-        {scala.xml.PCData( """
+			<script type="text/javascript">
+				{scala.xml.PCData( """
           $('#top').click(function() {
             $('#imgContainer').animate({
               scrollTop: $('#imgContainer')[0].scrollHeight*""" + (relativeHeightMethod - 2.0) + """/100
@@ -205,10 +205,10 @@ object SnippetHTMLTemplate {
 						  return true;
 						}
           }; """
-      )}
-      </script>
-      <script type="text/javascript">
-        {scala.xml.PCData( """
+			)}
+			</script>
+			<script type="text/javascript">
+				{scala.xml.PCData( """
 
         $('#ex1').slider({
           tooltip: 'always',
@@ -255,8 +255,8 @@ object SnippetHTMLTemplate {
               }
             });
           }
-      """)}
-      </script>
-  }
+								   """)}
+			</script>
+	}
 
 }

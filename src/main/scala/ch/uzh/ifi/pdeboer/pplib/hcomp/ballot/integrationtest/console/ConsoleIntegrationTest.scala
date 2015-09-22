@@ -7,17 +7,11 @@ import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.persistence.DBSettings
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.report.Report
 import ch.uzh.ifi.pdeboer.pplib.util.CollectionUtils._
 import ch.uzh.ifi.pdeboer.pplib.util.LazyLogger
-import com.typesafe.config.ConfigFactory
 
 /**
  * Created by mattia on 07.07.15.
  */
 object ConsoleIntegrationTest extends App with LazyLogger {
-
-	val conf = ConfigFactory.load()
-
-	val LIKERT_VALUE_CLEANED_ANSWERS = conf.getInt("likertCleanedAnswers")
-
 	DBSettings.initialize()
 	val dao = new BallotDAO
 

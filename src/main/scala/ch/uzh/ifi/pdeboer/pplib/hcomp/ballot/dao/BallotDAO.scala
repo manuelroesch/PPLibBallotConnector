@@ -87,14 +87,14 @@ class BallotDAO extends DAO {
     val hashCode = java.security.MessageDigest.getInstance("SHA-1").digest(binary).map("%02x".format(_)).mkString
 
     val possibleMatch = findAssetsIdByHashCode(hashCode).map(id => id -> getAssetsContentById(id))
-      .find(p => p._2.equalsIgnoreCase(contentType))
+        .find(p => p._2.equalsIgnoreCase(contentType))
 
     val id = if (possibleMatch.nonEmpty) {
       possibleMatch.get._1
     } else {
       DB localTx { implicit session =>
         sql"INSERT INTO assets(hash_code, byte_array, content_type, filename) VALUES(${hashCode}, ${binary}, ${contentType}, ${filename})"
-          .updateAndReturnGeneratedKey().apply()
+            .updateAndReturnGeneratedKey().apply()
       }
     }
     mapQuestionToAssets(questionId, id)
@@ -123,7 +123,7 @@ class BallotDAO extends DAO {
   override def updateAnswer(answerId: Long, accepted: Boolean) = {
     DB localTx { implicit session =>
       sql"UPDATE answer SET accepted = ${accepted} WHERE id = ${answerId}"
-        .update().apply()
+          .update().apply()
     }
   }
 
@@ -158,7 +158,7 @@ class BallotDAO extends DAO {
       VALUES (group_name = ${permutation.groupName}, method_index = ${permutation.methodIndex},
       snippet_filename = ${permutation.snippetFilename}, pdf_path = ${permutation.pdfPath}, method_on_top = ${permutation.methodOnTop},
       relative_height_top = ${permutation.relativeHeightTop}, relative_height_bottom = ${permutation.relativeHeightBottom})"""
-        .updateAndReturnGeneratedKey().apply()
+          .updateAndReturnGeneratedKey().apply()
     }
   }
 
@@ -189,7 +189,7 @@ class BallotDAO extends DAO {
   override def updateStateOfPermutationId(id: Long, becauseOfId: Long, excludedByStep: Int = 0) {
     DB localTx { implicit session =>
       sql"UPDATE permutations SET state = ${becauseOfId}, excluded_step = ${excludedByStep} WHERE id = ${id}"
-        .update().apply()
+          .update().apply()
     }
   }
 

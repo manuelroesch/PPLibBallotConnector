@@ -36,10 +36,10 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 				(actualProperties, batchIdFromDB)
 			}
 
-    val html = query match {
-      case q: HTMLQuery => q.html
-      case _ => scala.xml.PCData(query.toString)
-    }
+		val html = query match {
+			case q: HTMLQuery => q.html
+			case _ => scala.xml.PCData(query.toString)
+		}
 
 		val htmlToDisplayOnBallotPage: NodeSeq = SnippetHTMLValidator(baseURL).fixFormAttributes(html)
 
@@ -91,9 +91,9 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 		val questionUUID = UUID.randomUUID()
 		val questionId = dao.createQuestion(htmlToDisplayOnBallotPage.toString(), batchIdFromDB, questionUUID, permutationId = actualProperties.permutationId)
 		val link = baseURL + "showQuestion/" + questionUUID
-    this.synchronized{
-		  actualProperties.assets.foreach(asset => dao.createAsset(asset.binary, asset.contentType, questionId, asset.filename))
-    }
+		this.synchronized {
+			actualProperties.assets.foreach(asset => dao.createAsset(asset.binary, asset.contentType, questionId, asset.filename))
+		}
 		(questionId, link)
 	}
 

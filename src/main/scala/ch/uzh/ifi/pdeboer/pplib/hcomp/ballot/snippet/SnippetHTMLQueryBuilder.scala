@@ -1,7 +1,7 @@
 package ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.snippet
 
-import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.integrationtest.console.ConsoleIntegrationTest
-import ch.uzh.ifi.pdeboer.pplib.hcomp.{HCompAnswer, HCompQuery, HTMLQuery, HTMLQueryAnswer}
+import ch.uzh.ifi.pdeboer.pplib.hcomp._
+import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.integrationtest.console.Constants
 import ch.uzh.ifi.pdeboer.pplib.process.entities.{HCompQueryBuilder, Patch, ProcessStub}
 
 import scala.reflect.ClassTag
@@ -20,9 +20,9 @@ class SnippetHTMLQueryBuilder(ballotHtmlPage: NodeSeq) extends HCompQueryBuilder
 		val ret = baseCls.runtimeClass match {
 			case x: Class[String] =>
 				val likert = ans.answers.get("confidence").get.toInt
-				if (likert >= ConsoleIntegrationTest.LIKERT_VALUE_CLEANED_ANSWERS) {
+				if (likert >= Constants.LIKERT_VALUE_CLEANED_ANSWERS) {
 					if (ans.answers.get("isRelated").get.equalsIgnoreCase(SnippetHTMLQueryBuilder.POSITIVE) &&
-            ans.answers.get("isCheckedBefore").get.equalsIgnoreCase(SnippetHTMLQueryBuilder.POSITIVE)) {
+						ans.answers.get("isCheckedBefore").get.equalsIgnoreCase(SnippetHTMLQueryBuilder.POSITIVE)) {
 						Some(SnippetHTMLQueryBuilder.POSITIVE)
 					}
 					else {

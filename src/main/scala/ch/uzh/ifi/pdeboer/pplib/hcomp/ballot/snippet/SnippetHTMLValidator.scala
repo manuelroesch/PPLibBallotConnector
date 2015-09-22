@@ -11,19 +11,19 @@ case class SnippetHTMLValidator(baseURL: String) extends LazyLogging {
 
 	def fixFormAttributes(ns: NodeSeq): NodeSeq = {
 		val htmlToDisplayOnBallotPage: NodeSeq = ns(0).seq.map(updateForm(_))
-    htmlToDisplayOnBallotPage
+		htmlToDisplayOnBallotPage
 	}
 
-  def updateForm(node: Node): Node = node match {
-    case elem @ Elem(_, "form", _, _, child @ _*) => {
-      elem.asInstanceOf[Elem] % Attribute(None, "action", Text(baseURL+"storeAnswer"), Null) %
-        Attribute(None, "method", Text("get"), Null) copy(child = child map updateForm)
-    }
-    case elem @ Elem(_, _, _, _, child @ _*) => {
-      elem.asInstanceOf[Elem].copy(child = child map updateForm)
-    }
-    case other => other
-  }
+	def updateForm(node: Node): Node = node match {
+		case elem@Elem(_, "form", _, _, child@_*) => {
+			elem.asInstanceOf[Elem] % Attribute(None, "action", Text(baseURL + "storeAnswer"), Null) %
+				Attribute(None, "method", Text("get"), Null) copy (child = child map updateForm)
+		}
+		case elem@Elem(_, _, _, _, child@_*) => {
+			elem.asInstanceOf[Elem].copy(child = child map updateForm)
+		}
+		case other => other
+	}
 
 	def hasInvalidInputElements(form: NodeSeq): Boolean = {
 		val supportedFields = List[(String, Map[String, List[String]])](
@@ -51,10 +51,10 @@ case class SnippetHTMLValidator(baseURL: String) extends LazyLogging {
 			inputElement.exists(element =>
 				element.attribute(attribute._1).exists(attributeValue => {
 					if (attribute._2.isEmpty) {
-            true
-          } else {
-            attribute._2.contains(attributeValue.text) || attribute._2.isEmpty
-          }
+						true
+					} else {
+						attribute._2.contains(attributeValue.text) || attribute._2.isEmpty
+					}
 				})
 			)
 		})

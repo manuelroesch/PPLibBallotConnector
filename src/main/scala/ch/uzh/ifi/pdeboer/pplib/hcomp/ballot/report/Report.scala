@@ -3,6 +3,7 @@ package ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.report
 import java.io.File
 
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.dao.DAO
+import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.integrationtest.console.Constants
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.persistence.Answer
 import com.github.tototoshi.csv.CSVWriter
 import com.typesafe.config.ConfigFactory
@@ -11,10 +12,6 @@ import com.typesafe.config.ConfigFactory
  * Created by mattia on 31.08.15.
  */
 object Report {
-
-	val config = ConfigFactory.load()
-	val LIKERT_VALUE_CLEANED_ANSWERS = config.getInt("likertCleanedAnswers")
-
 	def writeCSVReport(dao: DAO) = {
 		val reportWriter = ReportWriter
 		reportWriter.init()
@@ -32,7 +29,7 @@ object Report {
 
 			val overallSummary = SummarizedAnswersFormat.summarizeAnswers(allAnswersParsed)
 
-			val cleanedAnswers = allAnswersParsed.filter(_.likert >= LIKERT_VALUE_CLEANED_ANSWERS)
+			val cleanedAnswers = allAnswersParsed.filter(_.likert >= Constants.LIKERT_VALUE_CLEANED_ANSWERS)
 			val cleanedSummary = SummarizedAnswersFormat.summarizeAnswers(cleanedAnswers)
 
 			val feedback = allAnswersParsed.map(_.feedback).mkString(";")
@@ -48,23 +45,23 @@ object Report {
 }
 
 object ReportWriter {
-  val config = ConfigFactory.load()
-  val RESULT_CSV_FILENAME = config.getString("resultFilename")
+	val config = ConfigFactory.load()
+	val RESULT_CSV_FILENAME = config.getString("resultFilename")
 
-  val writer = CSVWriter.open(new File(RESULT_CSV_FILENAME))
+	val writer = CSVWriter.open(new File(RESULT_CSV_FILENAME))
 
-  def init() = {
-    writer.writeRow(Seq("snippet","yes answers","no answers","cleaned yes","cleaned no","yes answers","no answers","cleaned yes","cleaned no","feedback","first type disabled snippets","second type disabled snippets"))
-  }
+	def init() = {
+		writer.writeRow(Seq("snippet", "yes answers", "no answers", "cleaned yes", "cleaned no", "yes answers", "no answers", "cleaned yes", "cleaned no", "feedback", "first type disabled snippets", "second type disabled snippets"))
+	}
 
-  def appendResult(snippetName: String, overallSummary: SummarizedAnswersFormat, cleanedSummary: SummarizedAnswersFormat,
-                   feedback: String, firstTypeDisabledSnippets: String, secondTypeDisabledSnippets: String) = {
-    writer.writeRow(Seq(snippetName, overallSummary.yesQ1, overallSummary.noQ1, cleanedSummary.yesQ1,
-      cleanedSummary.noQ1, overallSummary.yesQ2, overallSummary.noQ2, cleanedSummary.yesQ2,
-      cleanedSummary.noQ2, feedback, firstTypeDisabledSnippets, secondTypeDisabledSnippets))
-  }
+	def appendResult(snippetName: String, overallSummary: SummarizedAnswersFormat, cleanedSummary: SummarizedAnswersFormat,
+					 feedback: String, firstTypeDisabledSnippets: String, secondTypeDisabledSnippets: String) = {
+		writer.writeRow(Seq(snippetName, overallSummary.yesQ1, overallSummary.noQ1, cleanedSummary.yesQ1,
+			cleanedSummary.noQ1, overallSummary.yesQ2, overallSummary.noQ2, cleanedSummary.yesQ2,
+			cleanedSummary.noQ2, feedback, firstTypeDisabledSnippets, secondTypeDisabledSnippets))
+	}
 
-  def close() = {
-    writer.close()
-  }
+	def close() = {
+		writer.close()
+	}
 }

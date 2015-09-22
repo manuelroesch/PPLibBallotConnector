@@ -46,30 +46,30 @@ trait DAO {
 
 	def allAnswers(): List[Answer]
 
-  def mapQuestionToAssets(qId: Long, assetId: Long): Long
+	def mapQuestionToAssets(qId: Long, assetId: Long): Long
 
-  def getAssetsContentById(id: Long): String
+	def getAssetsContentById(id: Long): String
 
-  def findAssetsIdByHashCode(hashCode: String): List[Long]
+	def findAssetsIdByHashCode(hashCode: String): List[Long]
 
-  def loadPermutationsCSV(csv: String): Boolean
+	def loadPermutationsCSV(csv: String): Boolean
 
-  def createPermutation(permutation: Permutation): Long
+	def createPermutation(permutation: Permutation): Long
 
-  def getAllPermutations(): List[Permutation]
+	def getAllPermutations(): List[Permutation]
 
-  def getPermutationById(id: Long): Option[Permutation]
+	def getPermutationById(id: Long): Option[Permutation]
 
-  def getAllOpenByGroupName(groupName: String): List[Permutation]
+	def getAllOpenByGroupName(groupName: String): List[Permutation]
 
-  def updateStateOfPermutationId(id: Long, becauseOfId: Long, excludedByStep: Int = 0)
+	def updateStateOfPermutationId(id: Long, becauseOfId: Long, excludedByStep: Int = 0)
 
-  def getAllOpenGroupsStartingWith(partialGroupName: String): List[Permutation]
+	def getAllOpenGroupsStartingWith(partialGroupName: String): List[Permutation]
 
-  def getAllPermutationsWithStateEquals(state: Long): List[Permutation]
+	def getAllPermutationsWithStateEquals(state: Long): List[Permutation]
 
-  def getPermutationIdByQuestionId(qId: Long): Option[Long]
+	def getPermutationIdByQuestionId(qId: Long): Option[Long]
 
-  def getAllAnswersBySnippet(fileName: String): List[Answer]
+	def getAllAnswersBySnippet(fileName: String): List[Answer]
 
 }
