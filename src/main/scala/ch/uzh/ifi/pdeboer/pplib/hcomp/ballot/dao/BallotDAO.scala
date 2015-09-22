@@ -83,7 +83,7 @@ class BallotDAO extends DAO {
     }
   }
 
-  override def createAsset(binary: Array[Byte], contentType: String, questionId: Long, filename: String): Long = {
+  override def createAsset(binary: Array[Byte], contentType: String, filename: String): Long = {
     val hashCode = java.security.MessageDigest.getInstance("SHA-1").digest(binary).map("%02x".format(_)).mkString
 
     val possibleMatch = findAssetsIdByHashCode(hashCode).map(id => id -> getAssetsContentById(id))
@@ -97,7 +97,6 @@ class BallotDAO extends DAO {
             .updateAndReturnGeneratedKey().apply()
       }
     }
-    mapQuestionToAssets(questionId, id)
     id
   }
 

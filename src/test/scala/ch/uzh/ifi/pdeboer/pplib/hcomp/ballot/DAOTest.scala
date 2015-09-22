@@ -58,7 +58,7 @@ class DAOTest extends DAO with LazyLogger {
     question2assets.filter(b => b._1 == questionId).map(_._2)
   }
 
-  override def createAsset(binary: Array[Byte], contentType: String, questionId: Long, filename: String): Long = {
+  override def createAsset(binary: Array[Byte], contentType: String, filename: String): Long = {
     val hashCode : String = java.security.MessageDigest.getInstance("SHA-1").digest(binary).map("%02x".format(_)).mkString
 
     val possibleMatch = findAssetsIdByHashCode(hashCode).map(id => id -> getAssetsContentById(id))
@@ -67,14 +67,12 @@ class DAOTest extends DAO with LazyLogger {
     val assetId = if (possibleMatch.nonEmpty) {
       possibleMatch.get._1
     } else {
-      assets = assets ::: List[(Long, Long)]((assets.size + 1).toLong -> questionId)
+      assets = assets ::: List[(Long, Long)](assets.size+1.toLong -> 0)
       assetsIdWithFilename = assetsIdWithFilename ::: List[(Long, String)](assets.size.toLong -> filename)
       assetsIdWithContentType = assetsIdWithContentType ::: List[(Long, String)](assets.size.toLong -> contentType)
       assetsHashCodeToassetId = assetsHashCodeToassetId ::: List[(String, Long)](hashCode -> assets.size.toLong)
       assets.size.toLong
     }
-
-    mapQuestionToAssets(questionId, assetId)
     assetId
   }
 
