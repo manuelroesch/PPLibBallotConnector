@@ -49,7 +49,7 @@ class BallotDAO extends DAO {
 
   override def getAnswerById(id: Long): Option[Answer] = {
     DB readOnly { implicit session =>
-      sql"SELECT * FROM answer WHERE id = ${id}".map(rs => Answer(rs.long("id"), rs.long("question_id"), rs.string("answer_json"), rs.boolean("accepted"))).single().apply()
+      sql"SELECT * FROM answer WHERE id = ${id}".map(rs => Answer(rs.long("id"), rs.jodaDateTime("time"), rs.long("question_id"), rs.string("answer_json"), rs.boolean("accepted"))).single().apply()
     }
   }
 
@@ -220,7 +220,7 @@ class BallotDAO extends DAO {
   override def allAnswers(): List[Answer] = {
     DB readOnly { implicit session =>
       sql"SELECT * FROM answer WHERE accepted = 1".map(rs =>
-        Answer(rs.long("id"), rs.long("question_id"), rs.string("answer_json"), rs.boolean("accepted"))
+        Answer(rs.long("id"), rs.jodaDateTime("time"), rs.long("question_id"), rs.string("answer_json"), rs.boolean("accepted"))
       ).list().apply()
     }
   }

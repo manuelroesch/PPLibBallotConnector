@@ -45,4 +45,5 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 	})
 
 	Report.writeCSVReport(dao) //TODO does this always export everything in the DB? I'd consider changing this such that .writeCSVReport gets a list of HCompAnswer's
+  Report.writeCSVReportAllAnswers(dao)
 }

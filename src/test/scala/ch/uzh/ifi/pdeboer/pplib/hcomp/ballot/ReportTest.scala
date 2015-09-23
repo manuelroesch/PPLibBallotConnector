@@ -71,6 +71,11 @@ class ReportTest {
     Assert.assertEquals(parsedResults.last.feedback, "test;test;test;test")
 
     Assert.assertEquals(dao.assets.size, 5)
+
+
+    Report.writeCSVReportAllAnswers(dao)
+    val resultDetails = new File(System.getProperty("user.dir"), RESULT_CSV_FILENAME.substring(0, RESULT_CSV_FILENAME.length-4)+"_DETAILS.csv")
+    Assert.assertTrue(resultDetails.exists())
   }
 
 }

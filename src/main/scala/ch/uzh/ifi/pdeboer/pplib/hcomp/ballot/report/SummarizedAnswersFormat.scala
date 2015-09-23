@@ -15,6 +15,4 @@ object SummarizedAnswersFormat {
 		val noQ2 = answers.count(ans => AnswerParser.evaluateAnswer(ans.q2).contains(false))
 		SummarizedAnswersFormat(yesQ1, noQ1, yesQ2, noQ2)
 	}
-
-
 }

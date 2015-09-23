@@ -95,7 +95,7 @@ class DAOTest extends DAO with LazyLogger {
 
   override def allAnswers(): List[Answer] = {
     answers.map(ans => {
-      Answer(ans._1, ans._1, ans._2.substring(0, ans._2.length-1)+", \"pdfFileName\":\""+getAssetPDFFileNameByQuestionId(ans._1).get+"\"}", true)
+      Answer(ans._1, new DateTime(), ans._1, ans._2.substring(0, ans._2.length-1)+", \"pdfFileName\":\""+getAssetPDFFileNameByQuestionId(ans._1).get+"\"}", true)
     })
   }
 
@@ -114,7 +114,7 @@ class DAOTest extends DAO with LazyLogger {
   }
 
   override def getAnswerById(id: Long): Option[Answer] = {
-    Some(Answer(id, 0, answers.find(_._1==id).get._2, true))
+    Some(Answer(id, new DateTime(), 0, answers.find(_._1==id).get._2, true))
   }
 
   override def mapQuestionToAssets(qId: Long, assetId: Long): Long = {
