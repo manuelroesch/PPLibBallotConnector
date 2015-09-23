@@ -135,10 +135,6 @@ class BallotDAO extends DAO {
   override def loadPermutationsCSV(csv: String): Boolean = {
     DB localTx { implicit session =>
 
-      sql"SET FOREIGN_KEY_CHECKS = 0".update().apply()
-      sql"TRUNCATE TABLE permutations".update().apply()
-      sql"SET FOREIGN_KEY_CHECKS = 1".update().apply()
-
       sql"""LOAD DATA LOCAL INFILE ${csv}
       INTO TABLE permutations
       COLUMNS TERMINATED BY ','
