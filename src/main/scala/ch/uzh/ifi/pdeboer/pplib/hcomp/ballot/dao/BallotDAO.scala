@@ -135,6 +135,7 @@ class BallotDAO extends DAO {
   override def loadPermutationsCSV(csv: String): Boolean = {
     DB localTx { implicit session =>
 
+      val time = new DateTime()
       sql"""LOAD DATA LOCAL INFILE ${csv}
       INTO TABLE permutations
       COLUMNS TERMINATED BY ','
@@ -142,7 +143,8 @@ class BallotDAO extends DAO {
       ESCAPED BY '"'
       LINES TERMINATED BY '\n'
       IGNORE 1 LINES
-        (group_name, method_index, snippet_filename, pdf_path, method_on_top ,relative_height_top, relative_height_bottom)""".update().apply()
+        (group_name, method_index, snippet_filename, pdf_path, method_on_top ,relative_height_top, relative_height_bottom)
+        SET create_time = $time""".update().apply()
     }
     true
   }
