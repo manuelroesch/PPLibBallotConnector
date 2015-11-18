@@ -81,7 +81,7 @@ case class Algorithm250(dao: DAO, ballotPortalAdapter: HCompPortalAdapter) {
 			PORTAL_PARAMETER.key -> ballotPortalAdapter,
 			MAX_ITERATIONS.key -> 30,
 			QUESTION_PRICE.key -> properties,
-			QUERY_BUILDER_KEY -> new SnippetHTMLQueryBuilder(ballotHtmlPage)
+			QUERY_BUILDER_KEY -> new SnippetHTMLQueryBuilder(ballotHtmlPage, "Can you grasp some of the main concepts in the field of statistics without necessary prior knowledge in the field - just by basic text understanding? ")
 		))
 
 		process.process(IndexedPatch.from(List(SnippetHTMLQueryBuilder.POSITIVE, SnippetHTMLQueryBuilder.NEGATIVE)))

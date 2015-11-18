@@ -38,7 +38,7 @@ private[snippet] object SnippetHTMLTest extends App {
 		PORTAL_PARAMETER.key -> new TestPortal(),
 		MAX_ITERATIONS.key -> 30,
 		QUESTION_PRICE.key -> new HCompQueryProperties(),
-		QUERY_BUILDER_KEY -> new SnippetHTMLQueryBuilder(<div>This is a test</div>)
+		QUERY_BUILDER_KEY -> new SnippetHTMLQueryBuilder(<div>This is a test</div>, "testquestion")
 	))
 
 	process.process(IndexedPatch.from(List(SnippetHTMLQueryBuilder.POSITIVE, SnippetHTMLQueryBuilder.NEGATIVE)))

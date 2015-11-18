@@ -10,9 +10,9 @@ import scala.xml.NodeSeq
 /**
  * Created by pdeboer on 30/08/15.
  */
-class SnippetHTMLQueryBuilder(ballotHtmlPage: NodeSeq) extends HCompQueryBuilder[List[Patch]] {
+class SnippetHTMLQueryBuilder(ballotHtmlPage: NodeSeq, questionDescription: String) extends HCompQueryBuilder[List[Patch]] {
 	override def buildQuery(queryKey: String, input: List[Patch], base: ProcessStub[_, _]): HCompQuery = {
-		HTMLQuery(ballotHtmlPage)
+		HTMLQuery(ballotHtmlPage, questionPreviewOverride = questionDescription)
 	}
 
 	override def parseAnswer[TARGET](queryKey: String, input: List[Patch], answer: HCompAnswer, base: ProcessStub[_, _])(implicit baseCls: ClassTag[TARGET]): Option[TARGET] = {
