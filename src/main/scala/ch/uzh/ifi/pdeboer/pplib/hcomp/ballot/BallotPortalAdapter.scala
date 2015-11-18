@@ -131,12 +131,13 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 
 			var htmlWithValidLinks: String = htmlToDisplayOnBallotPage.toString().replaceAll("jsPlaceholder\">", newJsPlaceholder)
 
+			val secret = Utils.generateSecret()
+
 			assetsId.foreach(asset => {
-				htmlWithValidLinks = htmlWithValidLinks.replaceAll(asset._1, "../assetsBallot/" + asset._2)
+				htmlWithValidLinks = htmlWithValidLinks.replaceAll(asset._1, "../assetsBallot/" + asset._2 + "/" + secret)
 			})
 
 			val questionUUID = UUID.randomUUID()
-			val secret = Utils.generateSecret()
 			val questionId = dao.createQuestion(htmlWithValidLinks, batchIdFromDB, questionUUID, permutationId = actualProperties.permutationId, secret = secret)
 			val link = s"$baseURL/showSecretQuestion/$questionUUID/$secret"
 			assetsId.foreach(assetId => dao.mapQuestionToAssets(questionId, assetId._2))

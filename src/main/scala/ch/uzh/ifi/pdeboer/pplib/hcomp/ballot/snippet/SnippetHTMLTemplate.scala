@@ -57,13 +57,6 @@ object SnippetHTMLTemplate {
 
 			<br/>
 
-			<div id="assets">
-				If you would like to read more context in order to give better and more accurate answers, you can browse the PDF file by clicking
-				<a target="_blank" href={pdfAssetUrl}>
-					<img src="http://www.santacroceopera.it/Images/Pages/PDF.png"></img>
-					here.</a>
-			</div>
-
 			<br/>
 			<hr style="width:100%"/>
 			<div>
