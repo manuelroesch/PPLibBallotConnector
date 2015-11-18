@@ -17,7 +17,7 @@ object Utils {
 		"data:image/png;base64," + Base64.encodeBase64String(imageData)
 	}
 
-	def generateSecret(size: Int = 256): String = {
+	def generateSecret(size: Int = 32): String = {
 		val b = new Array[Byte](size)
 		new SecureRandom().nextBytes(b)
 		Base64.encodeBase64URLSafeString(b)
