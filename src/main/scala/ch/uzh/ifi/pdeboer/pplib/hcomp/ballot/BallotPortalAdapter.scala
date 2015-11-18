@@ -12,8 +12,8 @@ import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.snippet.SnippetHTMLValidator
 import scala.xml._
 
 /**
- * Created by mattia on 06.07.15.
- */
+  * Created by mattia on 06.07.15.
+  */
 @HCompPortal(builder = classOf[BallotPortalBuilder], autoInit = true)
 class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection, val dao: DAO = new BallotDAO(),
 						  val baseURL: String) extends HCompPortalAdapter {
@@ -136,8 +136,9 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 			})
 
 			val questionUUID = UUID.randomUUID()
-			val questionId = dao.createQuestion(htmlWithValidLinks, batchIdFromDB, questionUUID, permutationId = actualProperties.permutationId)
-			val link = baseURL + "showQuestion/" + questionUUID
+			val secret = Utils.generateSecret()
+			val questionId = dao.createQuestion(htmlWithValidLinks, batchIdFromDB, questionUUID, permutationId = actualProperties.permutationId, secret = secret)
+			val link = s"$baseURL/showSecretQuestion/$questionUUID/$secret"
 			assetsId.foreach(assetId => dao.mapQuestionToAssets(questionId, assetId._2))
 			(questionId, link)
 		}

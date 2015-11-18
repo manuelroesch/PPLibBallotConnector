@@ -47,7 +47,7 @@ class DAOTest extends DAO with LazyLogger {
     Some(questions.find(q => q._1 == questionId).get._2)
   }
 
-  override def createQuestion(html: String, batchId: Long, uuid: UUID = UUID.randomUUID(), dateTime: DateTime = new DateTime(), permutationId: Long): Long = {
+  override def createQuestion(html: String, batchId: Long, uuid: UUID = UUID.randomUUID(), dateTime: DateTime = new DateTime(), permutationId: Long, secret: String): Long = {
     questions = questions ::: List[(Long, String)]((questions.size + 1).toLong -> UUID.randomUUID().toString)
     questionToPermutationId = questionToPermutationId ::: List[(Long, Long)](questions.size.toLong -> permutationId)
     answers = answers ::: List[(Long, String)]((questions.size.toLong -> "{\"confidence\":\"7\", \"isRelated\":\"yes\", \"isCheckedBefore\":\"yes\", \"descriptionIsRelated\":\"test\", \"answer\":\"yes\"}"))

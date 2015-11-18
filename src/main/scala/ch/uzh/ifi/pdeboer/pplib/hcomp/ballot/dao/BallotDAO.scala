@@ -59,9 +59,9 @@ class BallotDAO extends DAO {
     }
   }
 
-  override def createQuestion(html: String, batchId: Long, uuid: UUID = UUID.randomUUID(), dateTime: DateTime = new DateTime(), permutationId: Long): Long = {
+  override def createQuestion(html: String, batchId: Long, uuid: UUID = UUID.randomUUID(), dateTime: DateTime = new DateTime(), permutationId: Long, secret: String = ""): Long = {
     DB localTx { implicit session =>
-      sql"INSERT INTO question(batch_id, html, create_time, uuid, permutation) VALUES(${batchId}, ${html}, ${dateTime}, ${uuid.toString}, ${permutationId})".updateAndReturnGeneratedKey().apply()
+      sql"INSERT INTO question(batch_id, html, create_time, uuid, permutation, secret) VALUES(${batchId}, ${html}, ${dateTime}, ${uuid.toString}, ${permutationId}, ${secret})".updateAndReturnGeneratedKey().apply()
     }
   }
 

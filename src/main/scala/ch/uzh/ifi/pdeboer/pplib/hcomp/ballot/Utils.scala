@@ -1,6 +1,7 @@
 package ch.uzh.ifi.pdeboer.pplib.hcomp.ballot
 
 import java.io.{File, FileInputStream}
+import java.security.SecureRandom
 
 import org.apache.commons.codec.binary.Base64
 
@@ -14,6 +15,12 @@ object Utils {
 		val imageData = new Array[Byte](image.length().asInstanceOf[Int])
 		imageInFile.read(imageData)
 		"data:image/png;base64," + Base64.encodeBase64String(imageData)
+	}
+
+	def generateSecret(size: Int = 256): String = {
+		val b = new Array[Byte](size)
+		new SecureRandom().nextBytes(b)
+		Base64.encodeBase64URLSafeString(b)
 	}
 
 }
