@@ -19,23 +19,23 @@ import scala.xml.NodeSeq
 
 
 /**
- * Created by mattia on 01.09.15.
- */
+  * Created by mattia on 01.09.15.
+  */
 case class Algorithm250(dao: DAO, ballotPortalAdapter: HCompPortalAdapter) {
 
 	def executePermutation(p: Permutation) = {
 		val answers: List[ParsedAnswer] = buildAndExecuteQuestion(new File(p.pdfPath), new File(p.snippetFilename), p.id)
-    if (isFinalAnswerYesYes(answers)) {
-      dao.updateStateOfPermutationId(p.id, p.id)
-      dao.getAllOpenByGroupName(p.groupName).foreach(g => {
-        dao.updateStateOfPermutationId(g.id, p.id, 1)
-      })
-      val groupName = p.groupName.split("/")
-      val secondExclusionMatches = groupName.slice(0, 2).mkString("/")
-      dao.getAllOpenGroupsStartingWith(secondExclusionMatches).filter(_.methodIndex.equalsIgnoreCase(p.methodIndex)).foreach(g => {
-        dao.updateStateOfPermutationId(g.id, p.id, 2)
-      })
-    } else {
+		if (isFinalAnswerYesYes(answers)) {
+			dao.updateStateOfPermutationId(p.id, p.id)
+			dao.getAllOpenByGroupName(p.groupName).foreach(g => {
+				dao.updateStateOfPermutationId(g.id, p.id, 1)
+			})
+			val groupName = p.groupName.split("/")
+			val secondExclusionMatches = groupName.slice(0, 2).mkString("/")
+			dao.getAllOpenGroupsStartingWith(secondExclusionMatches).filter(_.methodIndex.equalsIgnoreCase(p.methodIndex)).foreach(g => {
+				dao.updateStateOfPermutationId(g.id, p.id, 2)
+			})
+		} else {
 			dao.updateStateOfPermutationId(p.id, -1)
 		}
 	}
@@ -62,19 +62,17 @@ case class Algorithm250(dao: DAO, ballotPortalAdapter: HCompPortalAdapter) {
 		val snippetImg = ImageIO.read(snippetFile)
 		val snippetHeight = snippetImg.getHeight
 
-		val pdfContentType = new MimetypesFileTypeMap().getContentType(pdfFile.getName)
 		val snippetContentType = new MimetypesFileTypeMap().getContentType(snippetFile.getName)
 		val javascriptContentType = "application/javascript"
 
-		val pdfAsset = Asset(pdfBinary, pdfContentType, pdfFile.getName)
 		val snippetAsset = Asset(snippetByteArray, snippetContentType, snippetFile.getName)
 		val jsAsset = Asset(javascriptByteArray, javascriptContentType, "script.js")
 
 		val properties = new BallotProperties(Batch(allowedAnswersPerTurker = 1), List(
-			pdfAsset, snippetAsset, jsAsset), permutationId, propertiesForDecoratedPortal = new HCompQueryProperties(50))
+			snippetAsset, jsAsset), permutationId, propertiesForDecoratedPortal = new HCompQueryProperties(50))
 
 		val ballotHtmlPage: NodeSeq =
-			SnippetHTMLTemplate.generateHTMLPage(snippetAsset.url, pdfAsset.url, jsAsset.url)
+			SnippetHTMLTemplate.generateHTMLPage(snippetAsset.url, jsAsset.url)
 
 		val process = new ContestWithBeatByKVotingProcess(Map(
 			K.key -> 4,
@@ -93,8 +91,8 @@ case class Algorithm250(dao: DAO, ballotPortalAdapter: HCompPortalAdapter) {
 
 	def isFinalAnswerYesYes(answers: List[ParsedAnswer]): Boolean = {
 		val cleanedAnswers = answers.filter(_.likert >= Constants.LIKERT_VALUE_CLEANED_ANSWERS)
-    val yesYes = cleanedAnswers.count(ans => AnswerParser.evaluateAnswer(ans.q1).contains(true) && AnswerParser.evaluateAnswer(ans.q2).contains(true))
-    val no = cleanedAnswers.size - yesYes
-    yesYes > no
+		val yesYes = cleanedAnswers.count(ans => AnswerParser.evaluateAnswer(ans.q1).contains(true) && AnswerParser.evaluateAnswer(ans.q2).contains(true))
+		val no = cleanedAnswers.size - yesYes
+		yesYes > no
 	}
 }

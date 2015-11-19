@@ -7,7 +7,7 @@ import scala.xml.NodeSeq
  */
 object SnippetHTMLTemplate {
 
-	def generateHTMLPage(imgAssetUrl: String, pdfAssetUrl: String, jsAssetUrl: String): NodeSeq = {
+	def generateHTMLPage(imgAssetUrl: String, jsAssetUrl: String): NodeSeq = {
 
 		<div ng-controller="QuestionCtrl">
 

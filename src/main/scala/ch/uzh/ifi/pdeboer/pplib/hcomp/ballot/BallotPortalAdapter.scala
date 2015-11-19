@@ -124,10 +124,8 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 				snippetHeight
 			}
 
-			val pdfFileName = actualProperties.assets.find(_.contentType.equalsIgnoreCase("application/pdf")).get.filename
-
 			val newJsPlaceholder: String = "jsPlaceholder\"> var relativeHeightMethod = " + methodHeight + ";\n var relativeHeightPrerequisite = " + prerequisiteHeight + ";\n var snippetHeight = \"" + imageHeight + "px\";" +
-				"\n\\$(function() { \\$(\"form\").append(\'<input type=\\\"hidden\\\" name=\\\"pdfFileName\\\" value=\\\"" + pdfFileName + "\\\">\') })"
+					"\n\\$(function() { \\$(\"form\") })"
 
 			var htmlWithValidLinks: String = htmlToDisplayOnBallotPage.toString().replaceAll("jsPlaceholder\">", newJsPlaceholder)
 
