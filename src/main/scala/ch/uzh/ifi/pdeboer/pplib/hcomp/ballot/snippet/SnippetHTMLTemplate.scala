@@ -7,12 +7,9 @@ import scala.xml.NodeSeq
   */
 object SnippetHTMLTemplate {
 
-	def generateTemplatePage(imgAssetUrl: String, jsAssetUrl: String): NodeSeq = generateHTMLPage(imgAssetUrl, jsAssetUrl, generateTemplate = true)
-
-	def generateHTMLPage(imgAssetUrl: String, jsAssetUrl: String, generateTemplate: Boolean = false): NodeSeq = {
-
+	def generateHTMLPage(imgAssetUrl: String, jsAssetUrl: String, isTemplate: Boolean = false): NodeSeq = {
 		<div ng-controller="QuestionCtrl">
-			{if (generateTemplate) {
+			{if (isTemplate) {
 			<p>
 				<i>
 					You have not accepted this HIT yet. Please note that, once you have accepted this HIT, another Snippet will be displayed (i.e. this is just a sample). The task will remain the same though.
@@ -143,7 +140,7 @@ object SnippetHTMLTemplate {
 					</div>
 				</div>
 
-				<hr style="width:100%"/>{if (!generateTemplate) {
+				<hr style="width:100%"/>{if (!isTemplate) {
 					<input type="submit" class="btn btn-large btn-primary" style="width:150px;float:right;" value="Submit Answer"/>
 			}}
 			</form>

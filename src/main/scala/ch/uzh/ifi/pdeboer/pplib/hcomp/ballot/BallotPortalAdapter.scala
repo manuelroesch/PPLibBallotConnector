@@ -132,7 +132,7 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 
 			val questionUUID = UUID.randomUUID()
 			val questionId = dao.createQuestion(htmlWithValidLinks, batchIdFromDB, questionUUID, permutationId = actualProperties.permutationId, secret = secret)
-			val link = s"$baseURL/showQuestion?q=$questionUUID&amp;s=$secret"
+			val link = s"$baseURL/showMTQuestion?q=$questionUUID&amp;s=$secret"
 			assetsId.foreach(assetId => dao.mapQuestionToAssets(questionId, assetId._2))
 			(questionId, link)
 		}

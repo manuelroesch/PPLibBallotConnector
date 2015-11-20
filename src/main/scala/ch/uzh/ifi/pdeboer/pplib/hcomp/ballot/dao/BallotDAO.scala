@@ -151,10 +151,9 @@ class BallotDAO extends DAO {
 
   override def createPermutation(permutation: Permutation): Long = {
     DB localTx { implicit session =>
-      sql"""INSERT INTO permutations(group_name, method_index, snippet_filename, pdf_path, method_on_top, relative_height_top, relative_height_bottom)
-      VALUES (group_name = ${permutation.groupName}, method_index = ${permutation.methodIndex},
-      snippet_filename = ${permutation.snippetFilename}, pdf_path = ${permutation.pdfPath}, method_on_top = ${permutation.methodOnTop},
-      relative_height_top = ${permutation.relativeHeightTop}, relative_height_bottom = ${permutation.relativeHeightBottom})"""
+      sql"""INSERT INTO permutations(create_time, group_name, method_index, snippet_filename, pdf_path, method_on_top, relative_height_top, relative_height_bottom)
+      VALUES(NOW(), ${permutation.groupName}, ${permutation.methodIndex}, ${permutation.snippetFilename}, ${permutation.pdfPath}, ${permutation.methodOnTop},
+      ${permutation.relativeHeightTop}, ${permutation.relativeHeightBottom})"""
           .updateAndReturnGeneratedKey().apply()
     }
   }

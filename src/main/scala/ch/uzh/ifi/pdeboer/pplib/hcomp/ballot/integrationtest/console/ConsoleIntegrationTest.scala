@@ -5,7 +5,7 @@ import java.io.File
 import ch.uzh.ifi.pdeboer.pplib.hcomp._
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot._
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.dao.BallotDAO
-import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.persistence.{Permutation, DBSettings}
+import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.persistence.{DBSettings, Permutation}
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.report.Report
 import ch.uzh.ifi.pdeboer.pplib.util.CollectionUtils._
 import ch.uzh.ifi.pdeboer.pplib.util.LazyLogger
@@ -31,13 +31,21 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 	val algorithm250 = Algorithm250(dao, ballotPortalAdapter)
 
 	if (args.length == 1 && args(0) == "inittemplate") {
+		logger.info("init template")
 		val template: File = new File("template/perm.csv")
 		if (template.exists()) {
-			val templatePermutations = Source.fromFile(template).getLines().drop(1).map(l => dao.createPermutation(Permutation.fromCSVLine(l)))
-			templatePermutations.foreach(permutationId => algorithm250.buildQuestion(dao.getPermutationById(permutationId).get, isTemplate = true))
-			assert(templatePermutations.contains(1L), "Our template didn't get ID 1. Please adapt DB. Current template IDs: " + templatePermutations.mkString(","))
+			val templatePermutations = Source.fromFile(template).getLines().drop(1).map(l => {
+				val perm: Permutation = Permutation.fromCSVLine(l)
+				dao.createPermutation(perm)
+			})
+			templatePermutations.foreach(permutationId => {
+				val q = algorithm250.buildQuestion(dao.getPermutationById(permutationId).get, isTemplate = true)
+				ballotPortalAdapter.sendQuery(HTMLQuery(q._2, 1, "", ""), q._1)
+			})
+			Thread.sleep(1000)
+			assert(!templatePermutations.contains(1L), "Our template didn't get ID 1. Please adapt DB. Current template IDs: " + templatePermutations.mkString(","))
 		}
-		logger.info("init template")
+		logger.info("done")
 		System.exit(0)
 	} else if (args.length == 2) {
 		logger.info("Loading new permutations")
