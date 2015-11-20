@@ -3,21 +3,28 @@ package ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.snippet
 import scala.xml.NodeSeq
 
 /**
- * Created by mattia on 01.09.15.
- */
+  * Created by mattia on 01.09.15.
+  */
 object SnippetHTMLTemplate {
 
-	def generateHTMLPage(imgAssetUrl: String, jsAssetUrl: String): NodeSeq = {
+	def generateTemplatePage(imgAssetUrl: String, jsAssetUrl: String): NodeSeq = generateHTMLPage(imgAssetUrl, jsAssetUrl, generateTemplate = true)
+
+	def generateHTMLPage(imgAssetUrl: String, jsAssetUrl: String, generateTemplate: Boolean = false): NodeSeq = {
 
 		<div ng-controller="QuestionCtrl">
-
+			{if (generateTemplate) {
 			<p>
-				Thank you for participating in our survey.
-				<br/>
-				Our goal is to see whether you are able to grasp some of the main concepts in the field of statistics without needing to be an expert in that field - just by basic text understanding. For that matter, we have prepared multiple such surveys; in all of which you can participate
-				<b>at most once</b>
-				.
+				<i>
+					You have not accepted this HIT yet. Please note that, once you have accepted this HIT, another Snippet will be displayed (i.e. this is just a sample). The task will remain the same though.
+				</i>
 			</p>
+		}}<p>
+			Thank you for participating in our survey.
+			<br/>
+			Our goal is to see whether you are able to grasp some of the main concepts in the field of statistics without needing to be an expert in that field - just by basic text understanding. For that matter, we have prepared multiple such surveys; in all of which you can participate
+			<b>at most once</b>
+			.
+		</p>
 			<hr style="width:100%"/>
 			<p>
 				In the field of statistics, one generally uses
@@ -136,8 +143,9 @@ object SnippetHTMLTemplate {
 					</div>
 				</div>
 
-				<hr style="width:100%"/>
-				<input type="submit" class="btn btn-large btn-primary" style="width:150px;float:right;" value="Submit Answer"/>
+				<hr style="width:100%"/>{if (!generateTemplate) {
+					<input type="submit" class="btn btn-large btn-primary" style="width:150px;float:right;" value="Submit Answer"/>
+			}}
 			</form>
 			<br/>
 			<br/>

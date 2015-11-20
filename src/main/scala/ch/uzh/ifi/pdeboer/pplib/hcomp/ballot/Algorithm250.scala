@@ -23,7 +23,7 @@ import scala.xml.NodeSeq
 case class Algorithm250(dao: DAO, ballotPortalAdapter: HCompPortalAdapter) {
 
 	def executePermutation(p: Permutation) = {
-		val answers: List[ParsedAnswer] = buildAndExecuteQuestion(new File(p.pdfPath), new File(p.snippetFilename), p.id)
+		val answers: List[ParsedAnswer] = buildAndExecuteQuestion(p)
 		if (isFinalAnswerYesYes(answers)) {
 			dao.updateStateOfPermutationId(p.id, p.id)
 			dao.getAllOpenByGroupName(p.groupName).foreach(g => {
@@ -40,10 +40,26 @@ case class Algorithm250(dao: DAO, ballotPortalAdapter: HCompPortalAdapter) {
 	}
 
 
-	def buildAndExecuteQuestion(pdfFile: File, snippetFile: File, permutationId: Long): List[ParsedAnswer] = {
+	def buildAndExecuteQuestion(permutation: Permutation): List[ParsedAnswer] = {
+		val (properties: BallotProperties, ballotHtmlPage: NodeSeq) = buildQuestion(permutation)
 
-		val permutation = dao.getPermutationById(permutationId).get
+		val process = new ContestWithBeatByKVotingProcess(Map(
+			K.key -> 4,
+			PORTAL_PARAMETER.key -> ballotPortalAdapter,
+			MAX_ITERATIONS.key -> 30,
+			QUESTION_PRICE.key -> properties,
+			QUERY_BUILDER_KEY -> new SnippetHTMLQueryBuilder(ballotHtmlPage, "Can you grasp some of the main concepts in the field of statistics without necessary prior knowledge in the field - just by basic text understanding? ")
+		))
 
+		process.process(IndexedPatch.from(List(SnippetHTMLQueryBuilder.POSITIVE, SnippetHTMLQueryBuilder.NEGATIVE)))
+
+		process.portal.queries.map(_.answer.get.is[HTMLQueryAnswer]).map(a => {
+			ParsedAnswer(a.answers.get("isRelated"), a.answers.get("isCheckedBefore"), a.answers.get("confidence").get.toInt, a.answers.get("descriptionIsRelated").get)
+		})
+	}
+
+	def buildQuestion(permutation: Permutation, isTemplate: Boolean = false): (BallotProperties, NodeSeq) = {
+		val snippetFile: File = new File(permutation.snippetFilename)
 		val snippetInputStream: InputStream = new FileInputStream(snippetFile)
 		val snippetByteArray = Stream.continually(snippetInputStream.read()).takeWhile(-1 !=).map(_.toByte).toArray
 		snippetInputStream.close()
@@ -61,24 +77,11 @@ case class Algorithm250(dao: DAO, ballotPortalAdapter: HCompPortalAdapter) {
 		val jsAsset = Asset(javascriptByteArray, javascriptContentType, "script.js")
 
 		val properties = new BallotProperties(Batch(allowedAnswersPerTurker = 1), List(
-			snippetAsset, jsAsset), permutationId, propertiesForDecoratedPortal = new HCompQueryProperties(50))
+			snippetAsset, jsAsset), permutation.id, propertiesForDecoratedPortal = new HCompQueryProperties(50))
 
 		val ballotHtmlPage: NodeSeq =
-			SnippetHTMLTemplate.generateHTMLPage(snippetAsset.url, jsAsset.url)
-
-		val process = new ContestWithBeatByKVotingProcess(Map(
-			K.key -> 4,
-			PORTAL_PARAMETER.key -> ballotPortalAdapter,
-			MAX_ITERATIONS.key -> 30,
-			QUESTION_PRICE.key -> properties,
-			QUERY_BUILDER_KEY -> new SnippetHTMLQueryBuilder(ballotHtmlPage, "Can you grasp some of the main concepts in the field of statistics without necessary prior knowledge in the field - just by basic text understanding? ")
-		))
-
-		process.process(IndexedPatch.from(List(SnippetHTMLQueryBuilder.POSITIVE, SnippetHTMLQueryBuilder.NEGATIVE)))
-
-		process.portal.queries.map(_.answer.get.is[HTMLQueryAnswer]).map(a => {
-			ParsedAnswer(a.answers.get("isRelated"), a.answers.get("isCheckedBefore"), a.answers.get("confidence").get.toInt, a.answers.get("descriptionIsRelated").get)
-		})
+			SnippetHTMLTemplate.generateHTMLPage(snippetAsset.url, jsAsset.url, isTemplate)
+		(properties, ballotHtmlPage)
 	}
 
 	def isFinalAnswerYesYes(answers: List[ParsedAnswer]): Boolean = {
