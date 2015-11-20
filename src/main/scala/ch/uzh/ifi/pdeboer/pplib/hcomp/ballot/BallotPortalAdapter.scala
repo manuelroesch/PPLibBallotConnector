@@ -127,7 +127,7 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 			val secret = Utils.generateSecret()
 
 			assetsId.foreach(asset => {
-				htmlWithValidLinks = htmlWithValidLinks.replaceAll(asset._1, "../assetsBallot/" + asset._2 + "/" + secret)
+				htmlWithValidLinks = htmlWithValidLinks.replaceAll(asset._1, "asset://" + asset._2 + "/" + secret)
 			})
 
 			val questionUUID = UUID.randomUUID()
