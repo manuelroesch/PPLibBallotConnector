@@ -2,7 +2,6 @@ package ch.uzh.ifi.pdeboer.pplib.hcomp.ballot
 
 import java.io.{File, FileInputStream, InputStream}
 import javax.activation.MimetypesFileTypeMap
-import javax.imageio.ImageIO
 
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.dao.DAO
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.integrationtest.console.Constants
@@ -45,10 +44,6 @@ case class Algorithm250(dao: DAO, ballotPortalAdapter: HCompPortalAdapter) {
 
 		val permutation = dao.getPermutationById(permutationId).get
 
-		val pdfInputStream: InputStream = new FileInputStream(pdfFile)
-		val pdfBinary = Stream.continually(pdfInputStream.read).takeWhile(-1 !=).map(_.toByte).toArray
-		pdfInputStream.close()
-
 		val snippetInputStream: InputStream = new FileInputStream(snippetFile)
 		val snippetByteArray = Stream.continually(snippetInputStream.read()).takeWhile(-1 !=).map(_.toByte).toArray
 		snippetInputStream.close()
@@ -58,9 +53,6 @@ case class Algorithm250(dao: DAO, ballotPortalAdapter: HCompPortalAdapter) {
 		} else {
 			SnippetHTMLTemplate.generateJavascript.toString.map(_.toByte).toArray
 		}
-
-		val snippetImg = ImageIO.read(snippetFile)
-		val snippetHeight = snippetImg.getHeight
 
 		val snippetContentType = new MimetypesFileTypeMap().getContentType(snippetFile.getName)
 		val javascriptContentType = "application/javascript"

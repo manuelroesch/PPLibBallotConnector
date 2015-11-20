@@ -74,13 +74,8 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 				val (questionId: Long, link: String) = createQuestion(actualProperties, batchIdFromDB, htmlToDisplayOnBallotPage, methodHeight, prerequisiteHeight, snippetHeight)
 
 				val answer = decorated.sendQueryAndAwaitResult(
-					FreetextQuery(
-						s"""
-							   Hey there. Thank you for being interested in this task! In the following <a href=\"$link\">URL</a> you'll find a Survey showing you a text snippet and asking you if two terms (highlighted in the text) do have a relationship of some sorts.<br/>
-							   Please accept the hit, fill in the survey and, once finished, enter the confirmation code below such that we can pay you. <br/>
-							   Please note that you will only be able to submit one assignment for this survey. In case you're unsure if you've already participated, click on the link and the system will tell you if you're not eligible.  <br /> If you did not accept the HIT prior to filling the survey, you may be presented with an error after submitting it, so please FIRST accept and THEN work :)
-							   <a href=\"$link\">$link</a>""".stripMargin, "", "Are these two words in the text related?"), actualProperties.propertiesForDecoratedPortal)
-					.get.asInstanceOf[FreetextAnswer]
+					ExternalQuery(link, "Are these two words in the text related?", "code", "target"), actualProperties.propertiesForDecoratedPortal)
+						.get.is[FreetextAnswer]
 
 				val answerId = dao.getAnswerIdByOutputCode(answer.answer.trim)
 
