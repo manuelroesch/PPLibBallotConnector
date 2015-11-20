@@ -16,7 +16,7 @@ case class SnippetHTMLValidator(baseURL: String) extends LazyLogging {
 
 	def updateForm(node: Node): Node = node match {
 		case elem@Elem(_, "form", _, _, child@_*) => {
-			elem.asInstanceOf[Elem] % Attribute(None, "action", Text(baseURL + "storeAnswer"), Null) %
+			elem.asInstanceOf[Elem] % Attribute(None, "action", Text(baseURL + "/storeAnswer"), Null) %
 				Attribute(None, "method", Text("get"), Null) copy (child = child map updateForm)
 		}
 		case elem@Elem(_, _, _, _, child@_*) => {
