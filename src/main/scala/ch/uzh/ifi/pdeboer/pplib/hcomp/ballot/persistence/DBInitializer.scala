@@ -4,8 +4,8 @@ import ch.uzh.ifi.pdeboer.pplib.util.LazyLogger
 import scalikejdbc._
 
 /**
- * Created by mattia on 07.07.15.
- */
+  * Created by mattia on 07.07.15.
+  */
 object DBInitializer extends LazyLogger {
 
 	def run() {
@@ -33,6 +33,20 @@ object DBInitializer extends LazyLogger {
 					DB autoCommit { implicit s =>
 						sql"CREATE TABLE batch (id BIGINT NOT NULL AUTO_INCREMENT,allowed_answers_per_turker INT NOT NULL, uuid VARCHAR(255) NOT NULL, PRIMARY KEY(id));".execute().apply()
 						logger.debug("Table batch created")
+					}
+			}
+
+
+			//log TABLE
+			try {
+				sql"SELECT 1 FROM log LIMIT 1".map(_.long(1)).single.apply()
+				logger.debug("Table permutation already initialized")
+			}
+			catch {
+				case e: java.sql.SQLException =>
+					DB autoCommit { implicit s =>
+						sql"CREATE TABLE log (id INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,`accesstime` DATETIME NOT NULL,`url` VARCHAR(1024) NOT NULL DEFAULT '',`ip` VARCHAR(254) NOT NULL DEFAULT '',`USER` INT(11) DEFAULT NULL,PRIMARY KEY (`id`),KEY `accesstime` (`accesstime`) ) ENGINE=InnoDB DEFAULT CHARSET=utf8;".execute().apply()
+						logger.debug("Table log created")
 					}
 			}
 
