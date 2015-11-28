@@ -5,7 +5,7 @@ import java.io.File
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.persistence.Permutation
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.report.Report
 import com.typesafe.config.ConfigFactory
-import org.junit.Assert
+import org.junit.{Test, Assert}
 
 import scala.io.Source
 
