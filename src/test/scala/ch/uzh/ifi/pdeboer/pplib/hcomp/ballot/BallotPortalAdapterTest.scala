@@ -5,13 +5,13 @@ import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.persistence.Permutation
 import org.junit.{Assert, Test}
 
 /**
- * Created by mattia on 07.07.15.
- */
+  * Created by mattia on 07.07.15.
+  */
 class BallotPortalAdapterTest {
 
 	@Test
 	def testProcessQuery: Unit = {
-    val dao = new DAOTest()
+		val dao = new DAOTest()
 		val b = new BallotPortalAdapter(new PortalAdapterTest(), dao, "http://www.andreas.ifi.uzh.ch:9000/")
 		val query = HTMLQuery(<div>
 			<h1>test</h1> <form something="cool">
@@ -19,16 +19,16 @@ class BallotPortalAdapterTest {
 			</form>
 		</div>)
 
-    val permutation1 = Permutation(1, "pdfFile/Assumption/15:555", "METHOD_15:9898", getClass.getResource("/pngFile.png").getPath, getClass.getResource("/pdfFile.pdf").getPath, false, 0, 0, 0.0, 0.0)
+		val permutation1 = Permutation(1, "pdfFile/Assumption/15:555", "METHOD_15:9898", getClass.getResource("/pngFile.png").getPath, getClass.getResource("/pdfFile.pdf").getPath, false, 0, 0, 0.0, 0.0, 10)
 		dao.createPermutation(permutation1)
 
-    val prop = new BallotProperties(Batch(), List(Asset(Array.empty[Byte], "application/pdf", "empty filename")), permutation1.id)
+		val prop = new BallotProperties(Batch(), List(Asset(Array.empty[Byte], "application/pdf", "empty filename")), permutation1.id)
 
-    val ans = b.processQuery(query, prop)
+		val ans = b.processQuery(query, prop)
 
 		Assert.assertEquals(ans.asInstanceOf[Option[HTMLQueryAnswer]].get.answers.get("answer").get, "yes")
-    Assert.assertTrue((ans.asInstanceOf[Option[HTMLQueryAnswer]].get.query.asInstanceOf[HTMLQuery].html \\ "form").toString contains "something=\"cool\"")
-    Assert.assertTrue((ans.asInstanceOf[Option[HTMLQueryAnswer]].get.query.asInstanceOf[HTMLQuery].html \\ "form").toString contains "action=\"http://www.andreas.ifi.uzh.ch:9000/storeAnswer\"")
+		Assert.assertTrue((ans.asInstanceOf[Option[HTMLQueryAnswer]].get.query.asInstanceOf[HTMLQuery].html \\ "form").toString contains "something=\"cool\"")
+		Assert.assertTrue((ans.asInstanceOf[Option[HTMLQueryAnswer]].get.query.asInstanceOf[HTMLQuery].html \\ "form").toString contains "action=\"http://www.andreas.ifi.uzh.ch:9000/storeAnswer\"")
 	}
 
 	@Test
@@ -36,8 +36,8 @@ class BallotPortalAdapterTest {
 		val dao = new DAOTest()
 		val b = new BallotPortalAdapter(new PortalAdapterTest(), dao, "http://www.andreas.ifi.uzh.ch:9000/")
 
-    val permutation1 = Permutation(1, "pdfFile/Assumption/15:555", "METHOD_15:9898", getClass.getResource("/pngFile.png").getPath, getClass.getResource("/pdfFile.pdf").getPath, false, 0, 0, 0.0, 0.0)
-    dao.createPermutation(permutation1)
+		val permutation1 = Permutation(1, "pdfFile/Assumption/15:555", "METHOD_15:9898", getClass.getResource("/pngFile.png").getPath, getClass.getResource("/pdfFile.pdf").getPath, false, 0, 0, 0.0, 0.0, 10)
+		dao.createPermutation(permutation1)
 
 		val ans = b.processQuery(HTMLQuery(<div>
 			<h1>test</h1> <form>
@@ -55,24 +55,24 @@ class BallotPortalAdapterTest {
 
 	@Test
 	def testWithoutForm: Unit = {
-    val dao = new DAOTest
-    val b = new BallotPortalAdapter(new PortalAdapterTest(), dao, "http://www.andreas.ifi.uzh.ch:9000/")
+		val dao = new DAOTest
+		val b = new BallotPortalAdapter(new PortalAdapterTest(), dao, "http://www.andreas.ifi.uzh.ch:9000/")
 
-    val permutation1 = Permutation(1, "pdfFile/Assumption/15:555", "METHOD_15:9898", getClass.getResource("/pngFile.png").getPath, getClass.getResource("/pdfFile.pdf").getPath, false, 0, 0, 0.0, 0.0)
-    dao.createPermutation(permutation1)
+		val permutation1 = Permutation(1, "pdfFile/Assumption/15:555", "METHOD_15:9898", getClass.getResource("/pngFile.png").getPath, getClass.getResource("/pdfFile.pdf").getPath, false, 0, 0, 0.0, 0.0, 10)
+		dao.createPermutation(permutation1)
 
-    val ans = b.processQuery(HTMLQuery(<h1>test</h1>), new BallotProperties(Batch(), List(Asset(Array.empty[Byte], "application/pdf", "empty filename")), 1))
+		val ans = b.processQuery(HTMLQuery(<h1>test</h1>), new BallotProperties(Batch(), List(Asset(Array.empty[Byte], "application/pdf", "empty filename")), 1))
 
 		Assert.assertEquals(ans, None)
 	}
 
 	@Test
 	def testDeepFormStructure: Unit = {
-    val dao = new DAOTest
+		val dao = new DAOTest
 		val b = new BallotPortalAdapter(new PortalAdapterTest(), dao, "http://www.andreas.ifi.uzh.ch:9000/")
 
-    val permutation1 = Permutation(1, "pdfFile/Assumption/15:555", "METHOD_15:9898", getClass.getResource("/pngFile.png").getPath, getClass.getResource("/pdfFile.pdf").getPath, false, 0, 0, 0.0, 0.0)
-    dao.createPermutation(permutation1)
+		val permutation1 = Permutation(1, "pdfFile/Assumption/15:555", "METHOD_15:9898", getClass.getResource("/pngFile.png").getPath, getClass.getResource("/pdfFile.pdf").getPath, false, 0, 0, 0.0, 0.0, 10)
+		dao.createPermutation(permutation1)
 
 		val ans = b.processQuery(HTMLQuery(<div>
 			<h1>test</h1> <div>
@@ -88,12 +88,12 @@ class BallotPortalAdapterTest {
 
 	@Test
 	def testWithInvalidInputAttribute: Unit = {
-    val dao = new DAOTest
+		val dao = new DAOTest
 
 		val b = new BallotPortalAdapter(new PortalAdapterTest(), dao, "http://www.andreas.ifi.uzh.ch:9000/")
 
-    val permutation1 = Permutation(1, "pdfFile/Assumption/15:555", "METHOD_15:9898", getClass.getResource("/pngFile.png").getPath, getClass.getResource("/pdfFile.pdf").getPath, false, 0, 0, 0.0, 0.0)
-    dao.createPermutation(permutation1)
+		val permutation1 = Permutation(1, "pdfFile/Assumption/15:555", "METHOD_15:9898", getClass.getResource("/pngFile.png").getPath, getClass.getResource("/pdfFile.pdf").getPath, false, 0, 0, 0.0, 0.0, 10)
+		dao.createPermutation(permutation1)
 
 		val ans = b.processQuery(HTMLQuery(<div>
 			<h1>test</h1> <div>
@@ -108,37 +108,37 @@ class BallotPortalAdapterTest {
 	}
 
 	@Test
-  def testWithoutFormsInput: Unit = {
-    val dao = new DAOTest
+	def testWithoutFormsInput: Unit = {
+		val dao = new DAOTest
 
-    val b = new BallotPortalAdapter(new PortalAdapterTest(), dao, "http://www.andreas.ifi.uzh.ch:9000/")
+		val b = new BallotPortalAdapter(new PortalAdapterTest(), dao, "http://www.andreas.ifi.uzh.ch:9000/")
 
-    val permutation1 = Permutation(1, "pdfFile/Assumption/15:555", "METHOD_15:9898", getClass.getResource("/pngFile.png").getPath, getClass.getResource("/pdfFile.pdf").getPath, false, 0, 0, 0.0, 0.0)
-    dao.createPermutation(permutation1)
+		val permutation1 = Permutation(1, "pdfFile/Assumption/15:555", "METHOD_15:9898", getClass.getResource("/pngFile.png").getPath, getClass.getResource("/pdfFile.pdf").getPath, false, 0, 0, 0.0, 0.0, 10)
+		dao.createPermutation(permutation1)
 
-    val ans = b.processQuery(HTMLQuery(<div>
-      <h1>test</h1> <form></form>
-    </div>), new BallotProperties(Batch(), List(Asset(Array.empty[Byte], "application/pdf", "empty filename")), 1))
-    Assert.assertEquals(ans, None)
-  }
+		val ans = b.processQuery(HTMLQuery(<div>
+			<h1>test</h1> <form></form>
+		</div>), new BallotProperties(Batch(), List(Asset(Array.empty[Byte], "application/pdf", "empty filename")), 1))
+		Assert.assertEquals(ans, None)
+	}
 
-  @Test
-  def testWithActionInput: Unit = {
-    val dao = new DAOTest
+	@Test
+	def testWithActionInput: Unit = {
+		val dao = new DAOTest
 
-    val b = new BallotPortalAdapter(new PortalAdapterTest(), dao, "http://www.andreas.ifi.uzh.ch:9000/")
+		val b = new BallotPortalAdapter(new PortalAdapterTest(), dao, "http://www.andreas.ifi.uzh.ch:9000/")
 
-    val permutation1 = Permutation(1, "pdfFile/Assumption/15:555", "METHOD_15:9898", getClass.getResource("/pngFile.png").getPath, getClass.getResource("/pdfFile.pdf").getPath, false, 0, 0, 0.0, 0.0)
-    dao.createPermutation(permutation1)
+		val permutation1 = Permutation(1, "pdfFile/Assumption/15:555", "METHOD_15:9898", getClass.getResource("/pngFile.png").getPath, getClass.getResource("/pdfFile.pdf").getPath, false, 0, 0, 0.0, 0.0, 10)
+		dao.createPermutation(permutation1)
 
-    val ans = b.processQuery(HTMLQuery(<div>
-      <h1>test</h1> <form action="http://www.google.com/">
-        <input type="submit" name="answer" value="yes"/>
-      </form>
-    </div>), new BallotProperties(Batch(), List(Asset(Array.empty[Byte], "application/pdf", "empty filename")), 1))
-    Assert.assertEquals(ans.asInstanceOf[Option[HTMLQueryAnswer]].get.answers.get("answer").get, "yes")
-    Assert.assertTrue((ans.asInstanceOf[Option[HTMLQueryAnswer]].get.query.asInstanceOf[HTMLQuery].html \\ "form").toString contains "action=\"http://www.andreas.ifi.uzh.ch:9000/storeAnswer\"")
-  }
+		val ans = b.processQuery(HTMLQuery(<div>
+			<h1>test</h1> <form action="http://www.google.com/">
+				<input type="submit" name="answer" value="yes"/>
+			</form>
+		</div>), new BallotProperties(Batch(), List(Asset(Array.empty[Byte], "application/pdf", "empty filename")), 1))
+		Assert.assertEquals(ans.asInstanceOf[Option[HTMLQueryAnswer]].get.answers.get("answer").get, "yes")
+		Assert.assertTrue((ans.asInstanceOf[Option[HTMLQueryAnswer]].get.query.asInstanceOf[HTMLQuery].html \\ "form").toString contains "action=\"http://www.andreas.ifi.uzh.ch:9000/storeAnswer\"")
+	}
 }
 
 class PortalAdapterTest() extends HCompPortalAdapter with AnswerRejection {

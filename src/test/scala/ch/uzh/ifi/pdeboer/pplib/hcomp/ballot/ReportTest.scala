@@ -5,7 +5,7 @@ import java.io.File
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.persistence.Permutation
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.report.Report
 import com.typesafe.config.ConfigFactory
-import org.junit.{Assert, Test}
+import org.junit.Assert
 
 import scala.io.Source
 
@@ -22,10 +22,10 @@ class ReportTest {
     val ballotPortalAdapter = new BallotPortalAdapter(new PortalAdapterTest(), dao, "http://www.andreas.ifi.uzh.ch:9000/")
     val alg = Algorithm250(dao, ballotPortalAdapter)
 
-    val permutation1 = Permutation(1, "pdfFile/Assumption/15:555", "METHOD_15:9898", getClass.getResource("/pngFile.png").getPath, getClass.getResource("/pdfFile.pdf").getPath, false, 0, 0, 0.0, 0.0)
-    val permutation2 = Permutation(2, "pdfFile/Assumption/7:123", "METHOD_15:9898", getClass.getResource("/pngFile.png").getPath, getClass.getResource("/pdfFile.pdf").getPath, false, 0, 0, 0.0, 0.0)
-    val permutation3 = Permutation(3, "pdfFile/Assumption/15:555", "AnotherMethod_1:123123", getClass.getResource("/pngFile.png").getPath, getClass.getResource("/pdfFile.pdf").getPath, false, 0, 0, 0.0, 0.0)
-    val permutation4 = Permutation(4, "pdfFileTest/Assumption/12:7878", "SpecialMethod_1:1", getClass.getResource("/pngFileTest.png").getPath, getClass.getResource("/pdfFileTest.pdf").getPath, false, 0, 0, 0.0, 0.0)
+    val permutation1 = Permutation(1, "pdfFile/Assumption/15:555", "METHOD_15:9898", getClass.getResource("/pngFile.png").getPath, getClass.getResource("/pdfFile.pdf").getPath, false, 0, 0, 0.0, 0.0, 10)
+    val permutation2 = Permutation(2, "pdfFile/Assumption/7:123", "METHOD_15:9898", getClass.getResource("/pngFile.png").getPath, getClass.getResource("/pdfFile.pdf").getPath, false, 0, 0, 0.0, 0.0, 10)
+    val permutation3 = Permutation(3, "pdfFile/Assumption/15:555", "AnotherMethod_1:123123", getClass.getResource("/pngFile.png").getPath, getClass.getResource("/pdfFile.pdf").getPath, false, 0, 0, 0.0, 0.0, 10)
+    val permutation4 = Permutation(4, "pdfFileTest/Assumption/12:7878", "SpecialMethod_1:1", getClass.getResource("/pngFileTest.png").getPath, getClass.getResource("/pdfFileTest.pdf").getPath, false, 0, 0, 0.0, 0.0, 10)
 
     dao.createPermutation(permutation1)
     dao.createPermutation(permutation2)

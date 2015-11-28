@@ -59,7 +59,7 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 	}).toSeq
 
 	groups.mpar.foreach(group => {
-		group._2.foreach(permutation => {
+		group._2.sortBy(_.distanceMinIndexMax).foreach(permutation => {
 			if (dao.getPermutationById(permutation.id).map(_.state).getOrElse(-1) == 0) {
 				algorithm250.executePermutation(permutation)
 			}

@@ -29,7 +29,7 @@ class BallotIntegrationTest {
 		val countAnswers: Int = dao.countAllAnswers()
 		val countBatches: Int = dao.countAllBatches()
 
-		val permutationId = dao.createPermutation(Permutation(0, "group", "method", "snippetPath", "pdfPath", methodOnTop = true, 0, 0, 0.0, 100.0))
+		val permutationId = dao.createPermutation(Permutation(0, "group", "method", "snippetPath", "pdfPath", methodOnTop = true, 0, 0, 0.0, 100.0, 10))
 
 		val decoratedPortalAdapter = new IntegrationPortalAdapter(dao)
 		val ballotPortalAdapter = new BallotPortalAdapter(decoratedPortalAdapter, dao, "http://localhost:8081/")

@@ -178,9 +178,9 @@ class DAOTest extends DAO with LazyLogger {
     println(s"Updating permutation: $id, state: $becauseOfId, excluded_step(0/1/2): $excludedByStep")
     permutations = permutations.map(p => {
       if(p.id == id && p.state == 0 && p.excluded_step == 0){
-        Permutation(p.id, p.groupName, p.methodIndex, p.snippetFilename, p.pdfPath, p.methodOnTop, becauseOfId, excludedByStep, p.relativeHeightTop, p.relativeHeightBottom)
+        Permutation(p.id, p.groupName, p.methodIndex, p.snippetFilename, p.pdfPath, p.methodOnTop, becauseOfId, excludedByStep, p.relativeHeightTop, p.relativeHeightBottom, p.distanceMinIndexMax)
       }else {
-        Permutation(p.id, p.groupName, p.methodIndex, p.snippetFilename, p.pdfPath, p.methodOnTop, p.state, p.excluded_step, p.relativeHeightTop, p.relativeHeightBottom)
+        Permutation(p.id, p.groupName, p.methodIndex, p.snippetFilename, p.pdfPath, p.methodOnTop, p.state, p.excluded_step, p.relativeHeightTop, p.relativeHeightBottom, p.distanceMinIndexMax)
       }
     })
   }
