@@ -6,8 +6,8 @@ import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.persistence.{Answer, Permutation, Q
 import org.joda.time.DateTime
 
 /**
- * Created by mattia on 06.07.15.
- */
+  * Created by mattia on 06.07.15.
+  */
 trait DAO {
 
 	def getAssetIdsByQuestionId(questionId: Long): List[Long]
@@ -42,7 +42,10 @@ trait DAO {
 
 	def getAllQuestions: List[Question]
 
-	def getAssetPDFFileNameByQuestionId(qId: Long): Option[String]
+	def getAssetPDFFileNameByQuestionId(qId: Long): Option[String] = {
+		val perm: Long = getPermutationIdByQuestionId(qId).getOrElse(-1L)
+		getAllPermutations().find(p => p.id == perm).map(p => p.groupName.substring(0, p.groupName.indexOf("/")))
+	}
 
 	def allAnswers(): List[Answer]
 
@@ -70,6 +73,6 @@ trait DAO {
 
 	def getPermutationIdByQuestionId(qId: Long): Option[Long]
 
-	def getAllAnswersBySnippet(fileName: String): List[Answer]
+	def getAllAnswersForSnippet(fileName: String): List[Answer]
 
 }

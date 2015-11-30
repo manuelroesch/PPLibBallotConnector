@@ -199,16 +199,6 @@ class BallotDAO extends DAO {
     }
   }
 
-  override def getAssetPDFFileNameByQuestionId(qId: Long): Option[String] = {
-    val assetIds = getAssetIdsByQuestionId(qId)
-    DB readOnly { implicit session =>
-      val assets = assetIds.map(a => {
-        sql"SELECT filename FROM assets WHERE id = ${a}".map(rs => rs.string("filename")).single().apply()
-      })
-      assets.find(_.get.endsWith(".pdf")).get
-    }
-  }
-
   override def getAllPermutationsWithStateEquals(state: Long): List[Permutation] = {
     DB readOnly { implicit session =>
       sql"SELECT * FROM permutations WHERE state = ${state}".map(rs =>
@@ -231,7 +221,7 @@ class BallotDAO extends DAO {
     }
   }
 
-  override def getAllAnswersBySnippet(fileName: String): List[Answer] = {
+  override def getAllAnswersForSnippet(fileName: String): List[Answer] = {
     allAnswers.filter(f => f.answerJson.contains(fileName))
   }
 

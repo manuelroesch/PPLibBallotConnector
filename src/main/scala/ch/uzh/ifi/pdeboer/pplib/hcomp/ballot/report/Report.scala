@@ -4,7 +4,6 @@ import java.io.File
 
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.dao.DAO
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.integrationtest.console.Constants
-import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.persistence.Answer
 import com.github.tototoshi.csv.CSVWriter
 import com.typesafe.config.ConfigFactory
 
@@ -30,9 +29,8 @@ object Report {
 			val permutationId = dao.getPermutationIdByQuestionId(answersForSnippet._2.head.questionId).get
 			val allPermutationsDisabledByActualAnswer = dao.getAllPermutationsWithStateEquals(permutationId).filterNot(_.excluded_step == 0)
 			val snippetName = answersForSnippet._1
-			val allAnswerOfSnippet: List[Answer] = dao.getAllAnswersBySnippet(snippetName)
 
-			val allAnswersParsed: List[ParsedAnswer] = AnswerParser.parseJSONAnswers(allAnswerOfSnippet)
+      val allAnswersParsed: List[ParsedAnswer] = AnswerParser.parseJSONAnswers(answersForSnippet._2)
 
 			val overallSummary = SummarizedAnswersFormat.summarizeAnswers(allAnswersParsed)
 

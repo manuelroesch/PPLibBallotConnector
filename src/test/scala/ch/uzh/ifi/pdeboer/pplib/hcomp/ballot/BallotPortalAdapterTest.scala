@@ -12,7 +12,7 @@ class BallotPortalAdapterTest {
 	@Test
 	def testProcessQuery: Unit = {
 		val dao = new DAOTest()
-		val b = new BallotPortalAdapter(new PortalAdapterTest(), dao, "http://www.andreas.ifi.uzh.ch:9000/")
+		val b = new BallotPortalAdapter(new PortalAdapterTest(), dao, "http://www.andreas.ifi.uzh.ch:9000")
 		val query = HTMLQuery(<div>
 			<h1>test</h1> <form something="cool">
 				<input type="submit" name="answer" value="yes"/>
@@ -126,7 +126,7 @@ class BallotPortalAdapterTest {
 	def testWithActionInput: Unit = {
 		val dao = new DAOTest
 
-		val b = new BallotPortalAdapter(new PortalAdapterTest(), dao, "http://www.andreas.ifi.uzh.ch:9000/")
+		val b = new BallotPortalAdapter(new PortalAdapterTest(), dao, "http://www.andreas.ifi.uzh.ch:9000")
 
 		val permutation1 = Permutation(1, "pdfFile/Assumption/15:555", "METHOD_15:9898", getClass.getResource("/pngFile.png").getPath, getClass.getResource("/pdfFile.pdf").getPath, false, 0, 0, 0.0, 0.0, 10)
 		dao.createPermutation(permutation1)
