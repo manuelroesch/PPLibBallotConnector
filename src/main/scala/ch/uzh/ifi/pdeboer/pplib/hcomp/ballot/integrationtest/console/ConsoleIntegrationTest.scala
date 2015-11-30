@@ -30,6 +30,8 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 	  */
 	val algorithm250 = Algorithm250(dao, ballotPortalAdapter)
 
+	private val DEFAULT_TEMPLATE_ID: Long = 1L
+
 	if (args.length == 1 && args(0) == "inittemplate") {
 		logger.info("init template")
 		val template: File = new File("template/perm.csv")
@@ -43,7 +45,7 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 				ballotPortalAdapter.sendQuery(HTMLQuery(q._2, 1, "", ""), q._1)
 			})
 			Thread.sleep(1000)
-			assert(!templatePermutations.contains(1L), "Our template didn't get ID 1. Please adapt DB. Current template IDs: " + templatePermutations.mkString(","))
+			assert(!templatePermutations.contains(DEFAULT_TEMPLATE_ID), "Our template didn't get ID 1. Please adapt DB. Current template IDs: " + templatePermutations.mkString(","))
 		}
 		logger.info("done")
 		System.exit(0)
@@ -54,12 +56,12 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 		logger.info("Resuming last run...")
 	}
 
-	val groups = dao.getAllPermutations().groupBy(gr => {
+	val groups = dao.getAllPermutations().filter(_.id != DEFAULT_TEMPLATE_ID).groupBy(gr => {
 		gr.groupName.split("/").apply(0)
-	}).toSeq
+	}).map(g => (g._1, g._2.sortBy(_.distanceMinIndexMax))).toList
 
 	groups.mpar.foreach(group => {
-		group._2.sortBy(_.distanceMinIndexMax).foreach(permutation => {
+		group._2.foreach(permutation => {
 			if (dao.getPermutationById(permutation.id).map(_.state).getOrElse(-1) == 0) {
 				algorithm250.executePermutation(permutation)
 			}
