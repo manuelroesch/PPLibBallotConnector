@@ -43,12 +43,15 @@ case class Algorithm250(dao: DAO, ballotPortalAdapter: HCompPortalAdapter) {
 	def buildAndExecuteQuestion(permutation: Permutation): List[ParsedAnswer] = {
 		val (properties: BallotProperties, ballotHtmlPage: NodeSeq) = buildQuestion(permutation)
 
+		val description: String = "Can you grasp some of the main concepts in the field of statistics without necessary prior knowledge in the field - just by basic text understanding?"
+		val title: String = s"Are these two words related? {Batch ${properties.permutationId}}"
 		val process = new ContestWithBeatByKVotingProcess(Map(
 			K.key -> 4,
 			PORTAL_PARAMETER.key -> ballotPortalAdapter,
 			MAX_ITERATIONS.key -> 30,
+			MEMOIZER_NAME.key -> Some("bbk_mem_" + properties.permutationId),
 			QUESTION_PRICE.key -> properties,
-			QUERY_BUILDER_KEY -> new SnippetHTMLQueryBuilder(ballotHtmlPage, "Can you grasp some of the main concepts in the field of statistics without necessary prior knowledge in the field - just by basic text understanding?")
+			QUERY_BUILDER_KEY -> new SnippetHTMLQueryBuilder(ballotHtmlPage, description, title)
 		))
 
 		process.process(IndexedPatch.from(List(SnippetHTMLQueryBuilder.POSITIVE, SnippetHTMLQueryBuilder.NEGATIVE)))

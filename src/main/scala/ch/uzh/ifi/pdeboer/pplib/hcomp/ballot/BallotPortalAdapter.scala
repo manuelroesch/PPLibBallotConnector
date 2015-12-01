@@ -74,7 +74,7 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 				val (questionId: Long, link: String) = createQuestion(actualProperties, batchIdFromDB, htmlToDisplayOnBallotPage, methodHeight, prerequisiteHeight, snippetHeight)
 
 				val answer = decorated.sendQueryAndAwaitResult(
-					ExternalQuery(link, "Are these two words in the text related?", "code", "target"), actualProperties.propertiesForDecoratedPortal)
+					ExternalQuery(link, query.title, "code", "target"), actualProperties.propertiesForDecoratedPortal)
 						.get.is[FreetextAnswer]
 
 				val answerId = dao.getAnswerIdByOutputCode(answer.answer.trim)

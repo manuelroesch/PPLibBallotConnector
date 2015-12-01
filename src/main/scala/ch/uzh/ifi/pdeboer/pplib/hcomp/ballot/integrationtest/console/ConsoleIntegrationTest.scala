@@ -52,6 +52,8 @@ object ConsoleIntegrationTest extends App with LazyLogger {
 	} else if (args.length == 2) {
 		logger.info("Loading new permutations")
 		DBSettings.loadPermutations(args(0), args(1))
+		logger.info("Removing state information of previous runs")
+		new File("state").listFiles().foreach(f => f.delete())
 	} else {
 		logger.info("Resuming last run...")
 	}
