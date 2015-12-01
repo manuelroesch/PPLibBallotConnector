@@ -15,6 +15,11 @@ object SnippetHTMLTemplate {
 					You have not accepted this HIT yet. Please note that, once you have accepted this HIT, another Snippet will be displayed (i.e. this is just a sample). The task will remain the same though.
 				</i>
 			</p>
+					<p>
+						You are only allowed to work on one HIT per batch. We generally start multiple batches at once, so in case you get an error message, please just look for another of our hits.
+						The PREVIEW mode (where this message is displayed) should tell you if you're eligible to work on a HIT. If you get an error message only after accepting the HIT, it means that your browser doesn't relay your Turker ID to us. In that case, you can force it to store this information by opening a separate Tab and logging in here:
+						<a href="https://taliesin.ifi.uzh.ch/ballot/logout">https://taliesin.ifi.uzh.ch/ballot/logout</a>
+					</p>
 		}}<p>
 			Thank you for participating in our survey.
 			<br/>
