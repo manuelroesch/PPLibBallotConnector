@@ -10,6 +10,8 @@ import org.joda.time.DateTime
   */
 trait DAO {
 
+	def getQuestionIDsAnsweredSince(date: DateTime): List[Long]
+
 	def getAssetIdsByQuestionId(questionId: Long): List[Long]
 
 	def createAsset(binary: Array[Byte], contentType: String, filename: String): Long

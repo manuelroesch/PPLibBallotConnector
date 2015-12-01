@@ -8,6 +8,7 @@ import ch.uzh.ifi.pdeboer.pplib.hcomp._
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.dao.{BallotDAO, DAO}
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.report.AnswerParser
 import ch.uzh.ifi.pdeboer.pplib.hcomp.ballot.snippet.SnippetHTMLValidator
+import org.joda.time.DateTime
 
 import scala.xml._
 
@@ -18,11 +19,10 @@ import scala.xml._
 class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection, val dao: DAO = new BallotDAO(),
 						  val baseURL: String) extends HCompPortalAdapter {
 
-	// Think about moving this variable somewhere else
-	var numRetriesProcessQuery = 10
+	private var maxRetriesAfterRejectedAnswers = 10
+	private var questionIdToQuery = collection.mutable.HashMap.empty[Long, HCompQuery]
 
 	override def processQuery(query: HCompQuery, properties: HCompQueryProperties): Option[HCompAnswer] = {
-
 		val (actualProperties, batchIdFromDB) =
 			this.synchronized {
 				val actualProperties: BallotProperties = properties match {
@@ -73,8 +73,11 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 
 				val (questionId: Long, link: String) = createQuestion(actualProperties, batchIdFromDB, htmlToDisplayOnBallotPage, methodHeight, prerequisiteHeight, snippetHeight)
 
+				val externalQuery: ExternalQuery = ExternalQuery(link, query.title, "code", "target")
+
+				addQueryToLog(questionId, externalQuery)
 				val answer = decorated.sendQueryAndAwaitResult(
-					ExternalQuery(link, query.title, "code", "target"), actualProperties.propertiesForDecoratedPortal)
+					externalQuery, actualProperties.propertiesForDecoratedPortal)
 						.get.is[FreetextAnswer]
 
 				val answerId = dao.getAnswerIdByOutputCode(answer.answer.trim)
@@ -89,8 +92,8 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 				else {
 					decorated.rejectAnswer(answer, "Invalid code")
 					logger.info(s"rejecting answer $answer of worker ${answer.responsibleWorkers.mkString(",")} to question $questionId")
-					if (numRetriesProcessQuery > 0) {
-						numRetriesProcessQuery -= 1
+					if (maxRetriesAfterRejectedAnswers > 0) {
+						maxRetriesAfterRejectedAnswers -= 1
 						processQuery(query, actualProperties)
 					} else {
 						logger.error("Query reached the maximum number of retry attempts.")
@@ -147,6 +150,34 @@ class BallotPortalAdapter(val decorated: HCompPortalAdapter with AnswerRejection
 
 	override def cancelQuery(query: HCompQuery): Unit = decorated.cancelQuery(query)
 
+	def addQueryToLog(questionId: Long, query: HCompQuery): Unit = {
+		dao.synchronized {
+			questionIdToQuery += questionId -> query
+		}
+	}
+
+	def forcePoll(questionId: Long): Unit = {
+		val q = questionIdToQuery(questionId)
+		decorated match {
+			case portal: ForcedQueryPolling => portal.poll(q)
+		}
+	}
+
+	new Thread() {
+		setDaemon(true)
+
+		override def run(): Unit = {
+			while (true) {
+				val lastCheck = DateTime.now()
+				Thread.sleep(1000)
+				try {
+					dao.getQuestionIDsAnsweredSince(lastCheck).foreach(q => forcePoll(q))
+				} catch {
+					case e: Exception => logger.error("exception when polling", e)
+				}
+			}
+		}
+	}.start()
 }
 
 object BallotPortalAdapter {

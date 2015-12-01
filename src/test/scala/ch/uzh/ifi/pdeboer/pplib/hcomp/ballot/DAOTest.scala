@@ -182,4 +182,6 @@ class DAOTest extends DAO with LazyLogger {
 	override def getAllOpenByGroupName(groupName: String): List[Permutation] = {
 		permutations.filter(p => p.state == 0 && p.groupName.equalsIgnoreCase(groupName))
 	}
+
+	override def getQuestionIDsAnsweredSince(date: DateTime): List[Long] = Nil
 }

@@ -225,4 +225,7 @@ class BallotDAO extends DAO {
     allAnswers.filter(f => f.answerJson.contains(fileName))
   }
 
+  override def getQuestionIDsAnsweredSince(date: DateTime): List[Long] = DB readOnly { implicit session =>
+    sql"SELECT question_id FROM answer WHERE time > ${date}".map(rs => rs.long("question_id")).list().apply()
+  }
 }

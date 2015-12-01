@@ -110,7 +110,7 @@ object DBInitializer extends LazyLogger {
 			catch {
 				case e: java.sql.SQLException =>
 					DB autoCommit { implicit s =>
-						sql"CREATE TABLE answer (id BIGINT NOT NULL AUTO_INCREMENT, question_id BIGINT NOT NULL, user_id BIGINT NOT NULL, time DATETIME NOT NULL, answer_json LONGTEXT NOT NULL, expected_output_code BIGINT NOT NULL, accepted BOOL NOT NULL DEFAULT 0, PRIMARY KEY(id), FOREIGN KEY(question_id) REFERENCES question(id), FOREIGN KEY(user_id) REFERENCES user(id));".execute().apply()
+						sql"CREATE TABLE answer (id BIGINT NOT NULL AUTO_INCREMENT, question_id BIGINT NOT NULL, user_id BIGINT NOT NULL, time DATETIME NOT NULL, answer_json LONGTEXT NOT NULL, expected_output_code BIGINT NOT NULL, accepted BOOL NOT NULL DEFAULT 0, PRIMARY KEY(id), FOREIGN KEY(question_id) REFERENCES question(id), FOREIGN KEY(user_id) REFERENCES user(id),  KEY `time` (`time`));".execute().apply()
 						logger.debug("Table answer created")
 					}
 			}
